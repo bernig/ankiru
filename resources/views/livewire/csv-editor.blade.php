@@ -1,10 +1,10 @@
-<div class="min-h-screen bg-zinc-50 p-6 dark:bg-zinc-900">
+<div class="min-h-screen ">
 
     {{-- ── Header bar ── --}}
     <div class="mx-auto mb-6 flex max-w-full items-center justify-between gap-4">
         <div class="flex items-center gap-3">
             <flux:icon.table-cells class="size-7 text-zinc-500 dark:text-zinc-400" />
-            <flux:heading size="xl">CSV Editor</flux:heading>
+            <flux:heading size="xl">{{$title??"CSV Editor"}}</flux:heading>
             @if ($hasCsvLoaded && $originalFileName)
                 <flux:badge class="text-xs" variant="outline">{{ $originalFileName }}</flux:badge>
             @endif
@@ -69,70 +69,76 @@
                 </span>
             </div>
         @endif
-        <div class="flex w-full flex-col">
-            <flux:table container:class="mx-auto rounded border border-zinc-200  max-w-full dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-sm text-sm">
+
+        <div class="flex flex-col">
+            <flux:table container:class="w-full rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-sm text-sm">
                 <flux:table.rows>
-                    @forelse ($csvRows as $rowIndex => $row)
-                        <flux:table.row class="dark:hover:bg-zinc-750 group border-b border-zinc-100 hover:bg-zinc-50 dark:border-zinc-700" :key="'row-'.$rowIndex">
+                    @forelse ($this->paginatedRows as $rowIndex => $row)
+                        <flux:table.row wire:key="row-{{ $rowIndex }}" class="dark:hover:bg-zinc-750 group border-b border-zinc-100 hover:bg-zinc-50 dark:border-zinc-700">
                             @foreach ($row as $columnIndex => $cellValue)
-                                <flux:table.cell class="py-1! whitespace-nowrap" x-data="{ editing: false }" x-on:click="if (!$wire.isRussianAccentMode) { editing = true; $nextTick(() => $refs.input.focus()) }" x-bind:class="{
-                                    'cursor-text': !$wire.isRussianAccentMode,
-                                    'bg-amber-50 dark:bg-amber-900/20 ring-1 ring-inset ring-amber-300 dark:ring-amber-600': $wire.isRussianAccentMode && window.csvAccentMode.cellNeedsAccent($wire.csvRows[{{ $rowIndex }}]?.[{{ $columnIndex }}] ?? ''),
-                                    'bg-green-50 dark:bg-green-900/20 ring-2 ring-inset ring-green-400 dark:ring-green-500': {{ $columnIndex }} === 1 && !$wire.isRussianAccentMode && $wire.stressCorrectionStatus[{{ $rowIndex }}] === 'corrected',
+                                <flux:table.cell class="py-1! whitespace-normal w-1/2" x-data="{ editing: false }" x-on:click="if (!$wire.isRussianAccentMode && !($wire.accentModeRowIndex === {{ $rowIndex }} && {{ $columnIndex }} === 1)) { editing = true; $nextTick(() => $refs.input.focus()) }" x-bind:class="{
+                                    'cursor-text': !$wire.isRussianAccentMode && !($wire.accentModeRowIndex === {{ $rowIndex }} && {{ $columnIndex }} === 1),
+                                    'bg-amber-50 dark:bg-amber-900/20 ring-1 ring-inset ring-amber-300 dark:ring-amber-600': ($wire.isRussianAccentMode || ($wire.accentModeRowIndex === {{ $rowIndex }} && {{ $columnIndex }} === 1)) && window.csvAccentMode.cellNeedsAccent($wire.csvRows[{{ $rowIndex }}]?.[{{ $columnIndex }}] ?? ''),
+                                    'bg-green-50 dark:bg-green-900/20 ring-2 ring-inset ring-green-400 dark:ring-green-500': {{ $columnIndex }} === 1 && !$wire.isRussianAccentMode && $wire.accentModeRowIndex !== {{ $rowIndex }} && $wire.stressCorrectionStatus[{{ $rowIndex }}] === 'corrected',
                                 }">
                                     {{-- Normal display: render <b> and other inline markup --}}
-                                    <div class="px-2 text-zinc-800 dark:text-zinc-100" x-show="!editing && !$wire.isRussianAccentMode" x-html="$wire.csvRows[{{ $rowIndex }}][{{ $columnIndex }}] !== undefined && $wire.csvRows[{{ $rowIndex }}][{{ $columnIndex }}] !== ''
+                                    <div class="px-2 text-zinc-800 dark:text-zinc-100" x-show="!editing && !$wire.isRussianAccentMode && !($wire.accentModeRowIndex === {{ $rowIndex }} && {{ $columnIndex }} === 1)" x-html="$wire.csvRows[{{ $rowIndex }}][{{ $columnIndex }}] !== undefined && $wire.csvRows[{{ $rowIndex }}][{{ $columnIndex }}] !== ''
                                             ? $wire.csvRows[{{ $rowIndex }}][{{ $columnIndex }}]
                                             : '<span class=\'text-zinc-400\'>—</span>'"></div>
 
-                                    {{-- Accent mode display: vowels are clickable spans --}}
-                                    <div class="cursor-default px-2 text-zinc-800 dark:text-zinc-100" x-show="$wire.isRussianAccentMode" x-html="window.csvAccentMode.buildHtml($wire.csvRows[{{ $rowIndex }}]?.[{{ $columnIndex }}] ?? '')" @click="window.csvAccentMode.handleClick($event, $wire, 'cell', {{ $rowIndex }}, {{ $columnIndex }})"></div>
+                                    {{-- Accent mode display: vowels are clickable spans (global mode or per-row mode for column 1) --}}
+                                    <div class="cursor-default px-2 text-zinc-800 dark:text-zinc-100" x-show="$wire.isRussianAccentMode || ($wire.accentModeRowIndex === {{ $rowIndex }} && {{ $columnIndex }} === 1)" x-html="window.csvAccentMode.buildHtml($wire.csvRows[{{ $rowIndex }}]?.[{{ $columnIndex }}] ?? '')" @click="window.csvAccentMode.invalidateCache($wire.csvRows[{{ $rowIndex }}]?.[{{ $columnIndex }}] ?? ''); window.csvAccentMode.handleClick($event, $wire, 'cell', {{ $rowIndex }}, {{ $columnIndex }})"></div>
 
                                     {{-- Edit input: raw text so <b> tags are visible and editable --}}
-                                    <input class="mx-1 w-full rounded border border-blue-500 bg-white px-2 py-1 text-zinc-800 outline-none transition-colors dark:bg-zinc-900 dark:text-zinc-100" x-show="editing && !$wire.isRussianAccentMode" x-ref="input" :value="$wire.csvRows[{{ $rowIndex }}][{{ $columnIndex }}]" @blur="$wire.updateCell({{ $rowIndex }}, {{ $columnIndex }}, $event.target.value); editing = false" @keydown.enter="$el.blur()" @keydown.escape="editing = false" @click.stop placeholder="—" />
+                                    <input class="mx-1 w-full rounded border border-blue-500 bg-white px-2 py-1 text-zinc-800 outline-none transition-colors dark:bg-zinc-900 dark:text-zinc-100" x-show="editing && !$wire.isRussianAccentMode && !($wire.accentModeRowIndex === {{ $rowIndex }} && {{ $columnIndex }} === 1)" x-ref="input" :value="$wire.csvRows[{{ $rowIndex }}][{{ $columnIndex }}]" @blur="window.csvAccentMode.invalidateCache($wire.csvRows[{{ $rowIndex }}]?.[{{ $columnIndex }}] ?? ''); $wire.updateCell({{ $rowIndex }}, {{ $columnIndex }}, $event.target.value); editing = false" @keydown.enter="$el.blur()" @keydown.escape="editing = false" @click.stop placeholder="—" />
                                 </flux:table.cell>
                             @endforeach
 
-                            {{-- Row actions: translate + correct-stress + delete buttons — hidden in accent mode --}}
+                            {{-- Row actions: per-row accent mode + translate + correct-stress + delete buttons --}}
                             <flux:table.cell class="py-1! whitespace-nowrap" align="end">
-                                @if (!$isRussianAccentMode)
-                                    {{-- Translate button: visible when left column has text and right column is empty --}}
-                                    @if (!empty(trim($row[0] ?? '')) && empty(trim($row[1] ?? '')))
-                                        <button class="cursor-default cursor-pointer rounded p-1 text-violet-500 opacity-0 transition-opacity hover:text-violet-700 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 dark:text-violet-400 dark:hover:text-violet-300" title="Translate with ChatGPT" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
-                                            <span wire:loading wire:target="translateWithChatGpt({{ $rowIndex }})">
+                                {{-- Per-row accent mode button: toggles accent mode for the right column of this row --}}
+                                @if (!empty(trim($row[1] ?? '')))
+                                    <button class="cursor-pointer rounded p-1 transition-opacity {{ $accentModeRowIndex === $rowIndex ? 'text-amber-500 dark:text-amber-400' : 'text-zinc-400 opacity-0 hover:text-amber-500 group-hover:opacity-100 dark:hover:text-amber-400' }}" title="{{ $accentModeRowIndex === $rowIndex ? 'Disable accent mode for this row' : 'Enable accent mode for this row' }}" wire:click="toggleRowAccentMode({{ $rowIndex }})">
+                                        <flux:icon.language />
+                                    </button>
+                                @endif
+
+                                {{-- Translate button: visible when left column has text and right column is empty --}}
+                                @if (!empty(trim($row[0] ?? '')) && empty(trim($row[1] ?? '')))
+                                    <button class="cursor-default cursor-pointer rounded p-1 text-violet-500 opacity-0 transition-opacity hover:text-violet-700 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 dark:text-violet-400 dark:hover:text-violet-300" title="Translate with ChatGPT" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
+                                        <span wire:loading wire:target="translateWithChatGpt({{ $rowIndex }})">
+                                            <flux:icon.arrow-path class="animate-spin" />
+                                        </span>
+                                        <span wire:loading.remove wire:target="translateWithChatGpt({{ $rowIndex }})">
+                                            <flux:icon.sparkles />
+                                        </span>
+                                    </button>
+                                @endif
+
+                                {{-- Correct-stress button: visible when right column has text --}}
+                                @if (!empty(trim($row[1] ?? '')))
+                                    @if (($stressCorrectionStatus[$rowIndex] ?? null) === 'ok')
+                                        {{-- Green checkmark: stress marks were already correct --}}
+                                        <span class="inline-flex items-center p-1 text-green-500 opacity-0 group-hover:opacity-100 dark:text-green-400" title="Stress marks are correct">
+                                            <flux:icon.check-circle />
+                                        </span>
+                                    @else
+                                        <button class="cursor-pointer rounded p-1 text-violet-500 opacity-0 transition-opacity hover:text-violet-700 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 dark:text-violet-400 dark:hover:text-violet-300" title="Fix stress marks with ChatGPT" wire:click="correctStressMarks({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="correctStressMarks({{ $rowIndex }})">
+                                            {{-- Spinner while correcting --}}
+                                            <span wire:loading wire:target="correctStressMarks({{ $rowIndex }})">
                                                 <flux:icon.arrow-path class="animate-spin" />
                                             </span>
-                                            <span wire:loading.remove wire:target="translateWithChatGpt({{ $rowIndex }})">
+                                            {{-- Sparkles icon when idle --}}
+                                            <span wire:loading.remove wire:target="correctStressMarks({{ $rowIndex }})">
                                                 <flux:icon.sparkles />
                                             </span>
                                         </button>
                                     @endif
-
-                                    {{-- Correct-stress button: visible when right column has text --}}
-                                    @if (!empty(trim($row[1] ?? '')))
-                                        @if (($stressCorrectionStatus[$rowIndex] ?? null) === 'ok')
-                                            {{-- Green checkmark: stress marks were already correct --}}
-                                            <span class="inline-flex items-center p-1 text-green-500 opacity-0 group-hover:opacity-100 dark:text-green-400" title="Stress marks are correct">
-                                                <flux:icon.check-circle />
-                                            </span>
-                                        @else
-                                            <button class="cursor-pointer rounded p-1 text-violet-500 opacity-0 transition-opacity hover:text-violet-700 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 dark:text-violet-400 dark:hover:text-violet-300" title="Fix stress marks with ChatGPT" wire:click="correctStressMarks({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="correctStressMarks({{ $rowIndex }})">
-                                                {{-- Spinner while correcting --}}
-                                                <span wire:loading wire:target="correctStressMarks({{ $rowIndex }})">
-                                                    <flux:icon.arrow-path class="animate-spin" />
-                                                </span>
-                                                {{-- Sparkles icon when idle --}}
-                                                <span wire:loading.remove wire:target="correctStressMarks({{ $rowIndex }})">
-                                                    <flux:icon.sparkles />
-                                                </span>
-                                            </button>
-                                        @endif
-                                    @endif
-
-                                    <button class="cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100 dark:hover:text-red-400" title="Delete row" wire:click="deleteRow({{ $rowIndex }})">
-                                        <flux:icon.trash  />
-                                    </button>
                                 @endif
+
+                                <button class="cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100 dark:hover:text-red-400" title="Delete row" wire:click="deleteRow({{ $rowIndex }})">
+                                    <flux:icon.trash  />
+                                </button>
                             </flux:table.cell>
                         </flux:table.row>
                     @empty
@@ -153,18 +159,18 @@
             @endif
 
             {{-- ── Footer toolbar ── --}}
-            <div class="mx-auto mt-4 flex flex-col items-center justify-between gap-4">
+            <div class="mx-auto mt-4 flex w-full flex-col items-center gap-3">
+                {{-- Flux pagination (shown only when there is more than one page) --}}
+                @if ($this->totalPages > 1)
+                    <flux:pagination class="w-full" :paginator="$this->paginatedRows" />
+                @endif
+
+                {{-- Action row: Add row button (hidden in global accent mode) --}}
                 @if (!$isRussianAccentMode)
                     <flux:button wire:click="addRow" icon="plus">
                         Add row
                     </flux:button>
-                @else
-                    <div></div>
                 @endif
-
-                <flux:text class="text-xs text-zinc-400 dark:text-zinc-500">
-                    {{ count($csvRows) }} {{ Str::plural('row', count($csvRows)) }}
-                </flux:text>
             </div>
         </div>
     @endif
@@ -238,6 +244,15 @@
             const CYRILLIC_WORD_RE = /[а-яёА-ЯЁ]+/g;
 
             /**
+             * Memoization caches: keyed by raw text → result.
+             * These are pure functions so the same input always yields the same output.
+             * With ~200 rows the map stays small and avoids repeating expensive string walks
+             * on every Alpine reactive tick.
+             */
+            const _buildHtmlCache = new Map();
+            const _cellNeedsAccentCache = new Map();
+
+            /**
              * Walk rawText character-by-character, respecting <b>…</b> tags, and return
              * an array of {text, bold} segments.
              *
@@ -305,10 +320,23 @@
              * <span class="rv-vowel-accented"> (already stressed) with a data-vowel-pos
              * attribute holding its 0-based index in the stripped plain text.
              *
+             * Results are memoized by raw text to avoid repeating the string walk on every
+             * Alpine reactive tick.
+             *
              * @param  {string} rawText  Raw cell value (may contain <b>…</b> accent tags).
              * @returns {string}         HTML string safe for x-html.
              */
             function buildHtml(rawText) {
+                if (_buildHtmlCache.has(rawText)) {
+                    return _buildHtmlCache.get(rawText);
+                }
+
+                const result = _computeBuildHtml(rawText);
+                _buildHtmlCache.set(rawText, result);
+                return result;
+            }
+
+            function _computeBuildHtml(rawText) {
                 if (!rawText || rawText.trim() === '') {
                     return '<span style="color:#a1a1aa">—</span>';
                 }
@@ -374,6 +402,8 @@
              * 2 syllables (= more than 2 vowels) that carries no <b> accent mark.
              *
              * Used to decide whether to outline a cell in amber in accent mode.
+             * Results are memoized by raw text to avoid repeating the walk on every
+             * Alpine reactive tick.
              *
              * @param  {string} rawText
              * @returns {boolean}
@@ -381,7 +411,16 @@
             function cellNeedsAccent(rawText) {
                 if (!rawText || typeof rawText !== 'string') return false;
 
-                // Build a char-level view: [{c, bold}, …], walking over <b>…</b> tags.
+                if (_cellNeedsAccentCache.has(rawText)) {
+                    return _cellNeedsAccentCache.get(rawText);
+                }
+
+                const result = _computeCellNeedsAccent(rawText);
+                _cellNeedsAccentCache.set(rawText, result);
+                return result;
+            }
+
+            function _computeCellNeedsAccent(rawText) {
                 const chars = [];
                 let inBold = false;
                 let i = 0;
@@ -433,10 +472,23 @@
                 return wordNeedsAccent(wordChars);
             }
 
+            /**
+             * Invalidate both memoization caches for the given raw text value.
+             * Call this after programmatically changing a cell's content so that the
+             * next render reflects the updated accent state.
+             *
+             * @param {string} rawText
+             */
+            function invalidateCache(rawText) {
+                _buildHtmlCache.delete(rawText);
+                _cellNeedsAccentCache.delete(rawText);
+            }
+
             return {
                 buildHtml,
                 handleClick,
-                cellNeedsAccent
+                cellNeedsAccent,
+                invalidateCache
             };
 
         }());

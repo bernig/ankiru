@@ -2,16 +2,27 @@
 
 namespace App\Livewire;
 
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CsvEditor extends Component
 {
     use WithFileUploads;
+
+    /**
+     * Alias the trait's setPage so we can override it with clamping logic
+     * while still delegating to the original implementation.
+     */
+    use WithPagination {
+        setPage as paginationSetPage;
+    }
 
     /*const TRANSLATION_PROMPT = <<<'PROMPT'
 You are a professional French → Russian translator.
@@ -90,6 +101,9 @@ PROMPT;
     /** Path to the temp file used for auto-saving between sessions */
     private const TEMP_FILE_PATH = 'csv_editor_temp.json';
 
+    /** Number of rows displayed per page. */
+    private const PER_PAGE = 50;
+
     /** @var TemporaryUploadedFile|null */
     public $uploadedCsvFile = null;
 
@@ -107,6 +121,12 @@ PROMPT;
     public bool $hasCsvLoaded = false;
 
     public bool $isRussianAccentMode = false;
+
+    /**
+     * Row index for which per-row accent mode is active (-1 = none).
+     * Allows enabling accent mode for a single row without toggling it globally.
+     */
+    public int $accentModeRowIndex = -1;
 
     /** Row index currently being translated via ChatGPT (-1 = none). */
     public int $translatingRowIndex = -1;
@@ -183,16 +203,69 @@ PROMPT;
 
         $this->hasCsvLoaded = true;
         $this->uploadedCsvFile = null;
+        $this->resetPage();
 
         $this->autoSaveToTempFile();
     }
 
     /**
      * Toggle Russian accent mode on or off.
+     * Also clears any active per-row accent mode.
      */
     public function toggleRussianAccentMode(): void
     {
         $this->isRussianAccentMode = ! $this->isRussianAccentMode;
+        $this->accentModeRowIndex = -1;
+    }
+
+    /**
+     * Toggle per-row accent mode for the given row's right column.
+     * Disables itself when the same row is clicked again.
+     */
+    public function toggleRowAccentMode(int $rowIndex): void
+    {
+        $this->accentModeRowIndex = ($this->accentModeRowIndex === $rowIndex) ? -1 : $rowIndex;
+    }
+
+    /**
+     * Rows visible on the current page wrapped in a LengthAwarePaginator so
+     * flux:pagination can consume it directly. Original array keys are
+     * preserved so all row-index-based actions still work.
+     */
+    #[Computed]
+    public function paginatedRows(): LengthAwarePaginator
+    {
+        $currentPage = $this->getPage();
+        $offset = ($currentPage - 1) * self::PER_PAGE;
+        $slicedItems = array_slice($this->csvRows, $offset, self::PER_PAGE, true);
+
+        return new LengthAwarePaginator(
+            $slicedItems,
+            count($this->csvRows),
+            self::PER_PAGE,
+            $currentPage,
+            ['path' => request()->url()]
+        );
+    }
+
+    /**
+     * Total number of pages given the current row count and page size.
+     */
+    #[Computed]
+    public function totalPages(): int
+    {
+        return max(1, (int) ceil(count($this->csvRows) / self::PER_PAGE));
+    }
+
+    /**
+     * Navigate to the given page number (clamped to valid range).
+     * Overrides WithPagination::setPage() to prevent out-of-range navigation.
+     *
+     * @param  int|string  $page
+     */
+    public function setPage($page, $pageName = 'page'): void
+    {
+        $this->paginationSetPage(max(1, min((int) $page, $this->totalPages)), $pageName);
     }
 
     /**
@@ -235,13 +308,16 @@ PROMPT;
     }
 
     /**
-     * Append an empty row filled with empty strings for each column.
+     * Append an empty row filled with empty strings for each column,
+     * then navigate to the last page where the new row appears.
      */
     public function addRow(): void
     {
         $columnCount = count(reset($this->csvRows) ?: []) ?: 2;
         $this->csvRows[] = array_fill(0, $columnCount, '');
         $this->autoSaveToTempFile();
+        // Land on the last page so the new row is immediately visible.
+        $this->setPage($this->totalPages);
     }
 
     /**
@@ -382,9 +458,14 @@ PROMPT;
     {
         unset($this->csvRows[$rowIndex]);
         $this->csvRows = array_values($this->csvRows);
-        // Row indices have shifted — clear all correction statuses to avoid stale highlights.
+        // Row indices have shifted — clear all correction statuses and per-row accent mode to avoid stale state.
         $this->stressCorrectionStatus = [];
+        $this->accentModeRowIndex = -1;
         $this->autoSaveToTempFile();
+        // Clamp the current page in case the last page was emptied by this deletion.
+        if ($this->getPage() > $this->totalPages) {
+            $this->setPage($this->totalPages);
+        }
     }
 
     /**
@@ -413,6 +494,7 @@ PROMPT;
         $this->validationError = '';
         $this->hasCsvLoaded = false;
         $this->uploadedCsvFile = null;
+        $this->resetPage();
 
         $this->clearTempFile();
     }
@@ -420,7 +502,7 @@ PROMPT;
     public function render(): View
     {
         return view('livewire.csv-editor')
-            ->layout('layouts.app', ['title' => 'CSV Editor']);
+            ->layout('layouts.app');
     }
 
     // -------------------------------------------------------------------------
