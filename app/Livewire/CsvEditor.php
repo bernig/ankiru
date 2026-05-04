@@ -84,21 +84,27 @@ PROMPT;
 You are a Russian stress-mark reviewer and native-pronunciation expert.
 
 Input: Russian text with stress marks encoded as <b>vowel</b> (one bold vowel per word marks the stress).
+You may also receive the original French source sentence as semantic context; use it only to disambiguate meaning, and only edit the Russian text.
 
 Task: review and correct every stress mark so that it reflects standard contemporary Russian pronunciation.
 
 Tagging rules:
 • Only words with ≥2 vowels get a mark
-• Exactly ONE stressed vowel per word
-• "ё" is ALWAYS stressed → must be <b>ё</b>
-• No tags on: abbreviations, numbers, punctuation
+• Eligible words should contain exactly ONE stressed vowel mark, unless the stress is genuinely uncertain from context
+• "ё" is ALWAYS stressed → must be written as <b>ё</b>
+• No tags on abbreviations, numbers, or punctuation
 • Vowels: а е ё и о у ы э ю я
 
 Pronunciation rules (apply these with the highest priority):
 • Use the stress that matches standard contemporary spoken Russian (modern literary norm)
-• Read the full sentence for context; if a word's stress depends on meaning or grammatical form, choose the stress that fits THIS sentence (e.g. за́мок vs замо́к, ру́ки vs руки́, до́рог vs доро́г)
+• Read the full sentence for context; if a word's stress depends on meaning or grammatical form, choose the stress that fits THIS sentence
 • Prioritise natural, native-speaker pronunciation over dictionary headword placement when the two differ in colloquial use
-• Preserve the original wording; only change a word's form if the current form is grammatically incompatible with correct stress placement and sounds unnatural as written
+
+Strict preservation rules (do not violate these):
+• Do NOT rewrite, paraphrase, reorder, or alter any word — your only permitted action is moving, adding, or removing a <b>...</b> tag around a single vowel
+• Do NOT change spelling, capitalisation, punctuation, spaces, or any character except by adding, moving, or removing the literal tags <b> and </b>
+• If you are uncertain about the correct stress for a word, remove its tag entirely — do not guess; an untagged word is always safer than a wrong tag
+• Never change the grammatical form of a word (case, number, tense, aspect, etc.) even if an alternative form would carry a “nicer” stress
 
 Return ONLY the corrected text with <b>...</b> tags. No explanations.
 If already correct, return the text unchanged.
@@ -243,7 +249,7 @@ PROMPT;
     {
         $currentPage = $this->getPage();
         $offset = ($currentPage - 1) * self::PER_PAGE;
-        $slicedItems = array_slice($this->csvRows, $offset, self::PER_PAGE, true);
+        $slicedItems = collect(array_slice($this->csvRows, $offset, self::PER_PAGE, true));
 
         return new LengthAwarePaginator(
             $slicedItems,
@@ -406,9 +412,10 @@ PROMPT;
             return;
         }
 
-        $russianText = $this->csvRows[$rowIndex][1] ?? '';
+        $frenchText = trim($this->csvRows[$rowIndex][0] ?? '');
+        $russianText = trim($this->csvRows[$rowIndex][1] ?? '');
 
-        if (empty(trim($russianText))) {
+        if ($russianText === '') {
             return;
         }
 
@@ -417,11 +424,23 @@ PROMPT;
         try {
             $openAiModel = config('services.openai.model', 'gpt-4o-mini');
 
+            $stressCorrectionInput = <<<TEXT
+French source for meaning/context only:
+---
+{$frenchText}
+---
+
+Russian text to review and correct stress marks in:
+---
+{$russianText}
+---
+TEXT;
+
             $response = Http::withToken($openAiApiKey)
                 ->timeout(30)
                 ->post('https://api.openai.com/v1/responses', [
                     'model' => $openAiModel,
-                    'input' => $russianText,
+                    'input' => $stressCorrectionInput,
                     'instructions' => self::STRESS_CORRECTION_PROMPT,
                     'temperature' => 0,
                 ]);

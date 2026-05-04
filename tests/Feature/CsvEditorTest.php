@@ -333,8 +333,9 @@ test('shows an error when the openai api key is not configured for stress correc
         ->call('correctStressMarks', 0)
         ->assertSet('translationError', 'OpenAI API key is not configured. Please set OPENAI_API_KEY in your .env file.');
 });
-test('corrects stress marks and records corrected status when the text changes', function () {
+test('corrects stress marks and sends french context with the russian text', function () {
     config(['services.openai.api_key' => 'test-api-key']);
+
     Http::fake([
         'api.openai.com/*' => Http::response([
             'output' => [
@@ -342,6 +343,7 @@ test('corrects stress marks and records corrected status when the text changes',
             ],
         ], 200),
     ]);
+
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille depuis chez moi.', 'Я работаю из дома.']])
         ->set('hasCsvLoaded', true)
@@ -349,6 +351,18 @@ test('corrects stress marks and records corrected status when the text changes',
         ->assertSet('csvRows.0.1', 'Я раб<b>о</b>таю из д<b>о</b>ма.')
         ->assertSet('stressCorrectionStatus.0', 'corrected')
         ->assertSet('correctingStressRowIndex', -1);
+
+    Http::assertSent(function ($request) {
+        $requestData = $request->data();
+
+        expect($requestData['instructions'])->toBe(CsvEditor::STRESS_CORRECTION_PROMPT);
+        expect($requestData['input'])->toContain('French source');
+        expect($requestData['input'])->toContain('Je travaille depuis chez moi.');
+        expect($requestData['input'])->toContain('Russian text to review and correct stress marks in:');
+        expect($requestData['input'])->toContain('Я работаю из дома.');
+
+        return true;
+    });
 });
 test('records ok status when chatgpt returns the text unchanged', function () {
     config(['services.openai.api_key' => 'test-api-key']);
