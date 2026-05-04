@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\CsvEditor;
+use App\Services\OpenAiTranslationService;
 use App\Services\RussianTextToSpeechService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
@@ -339,7 +340,7 @@ test('corrects stress marks and sends french context with the russian text', fun
     Http::assertSent(function ($request) {
         $requestData = $request->data();
 
-        expect($requestData['instructions'])->toBe(CsvEditor::STRESS_CORRECTION_PROMPT);
+        expect($requestData['instructions'])->toBe(OpenAiTranslationService::STRESS_CORRECTION_PROMPT);
         expect($requestData['input'])->toContain('French source');
         expect($requestData['input'])->toContain('Je travaille depuis chez moi.');
         expect($requestData['input'])->toContain('Russian text to review and correct stress marks in:');

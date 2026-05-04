@@ -350,7 +350,6 @@
         .rv-vowel-accented:hover {
             color: #b45309;
         }
-
     </style>
 @endonce
 

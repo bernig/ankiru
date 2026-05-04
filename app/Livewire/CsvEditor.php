@@ -3,9 +3,10 @@
 namespace App\Livewire;
 
 use App\Services\AnkiPackageExporterService;
+use App\Services\OpenAiTranslationService;
+use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -26,92 +27,6 @@ class CsvEditor extends Component
     use WithPagination {
         setPage as paginationSetPage;
     }
-
-    /*const TRANSLATION_PROMPT = <<<'PROMPT'
-You are a professional French → Russian translator.
-
-TASK:
-Translate the French text into natural, fluent Russian. Preserve meaning and tone. Do not translate literally.
-
-STRESS MARKING RULES:
-After translating, mark lexical stress in Russian words using <b>...</b>:
-
-• Vowels: а е ё и о у ы э ю я
-• Only words with TWO OR MORE vowels are tagged
-• Mark EXACTLY ONE stressed vowel per eligible word
-• Words with ONE vowel → no tag
-• Never mark more than one vowel per word
-• The tagged character must be a vowel (never a consonant)
-
-IMPORTANT:
-• Use correct Russian stress (not random or mechanical)
-• If you are unsure about the stress position, do NOT add any tag for that word
-• The letter "ё" is ALWAYS stressed → always wrap it in <b>ё</b> if present
-• Do not tag:
-
-* abbreviations (e.g., ПК, США)
-* numbers
-* punctuation
-
-OUTPUT:
-Return ONLY the final Russian translation with stress tags. No explanations.
-
-EXAMPLE:
-Input: Je pense que je vais acheter un nouveau PC.
-Output: Я д<b>у</b>маю, что купл<b>ю</b> н<b>о</b>вый ПК.
-
-PROMPT;*/
-
-    const TRANSLATION_PROMPT = <<<'PROMPT'
-You are a professional French → Russian translator.
-
-Translate into natural Russian (not literal).
-
-Mark stress using <b>...</b>:
-• Vowels: а е ё и о у ы э ю я
-• Only words with ≥2 vowels
-• Exactly ONE stressed vowel per word
-• 1 vowel → no tag
-• Never tag consonants
-
-Rules:
-• Use correct stress
-• If unsure → no tag
-• "ё" is always stressed → <b>ё</b>
-• No tags for abbreviations, numbers, punctuation
-
-Output only the final Russian text with tags.
-PROMPT;
-
-    const STRESS_CORRECTION_PROMPT = <<<'PROMPT'
-You are a Russian stress-mark reviewer and native-pronunciation expert.
-
-Input: Russian text with stress marks encoded as <b>vowel</b> (one bold vowel per word marks the stress).
-You may also receive the original French source sentence as semantic context; use it only to disambiguate meaning, and only edit the Russian text.
-
-Task: review and correct every stress mark so that it reflects standard contemporary Russian pronunciation.
-
-Tagging rules:
-• Only words with ≥2 vowels get a mark
-• Eligible words should contain exactly ONE stressed vowel mark, unless the stress is genuinely uncertain from context
-• "ё" is ALWAYS stressed → must be written as <b>ё</b>
-• No tags on abbreviations, numbers, or punctuation
-• Vowels: а е ё и о у ы э ю я
-
-Pronunciation rules (apply these with the highest priority):
-• Use the stress that matches standard contemporary spoken Russian (modern literary norm)
-• Read the full sentence for context; if a word's stress depends on meaning or grammatical form, choose the stress that fits THIS sentence
-• Prioritise natural, native-speaker pronunciation over dictionary headword placement when the two differ in colloquial use
-
-Strict preservation rules (do not violate these):
-• Do NOT rewrite, paraphrase, reorder, or alter any word — your only permitted action is moving, adding, or removing a <b>...</b> tag around a single vowel
-• Do NOT change spelling, capitalisation, punctuation, spaces, or any character except by adding, moving, or removing the literal tags <b> and </b>
-• If you are uncertain about the correct stress for a word, remove its tag entirely — do not guess; an untagged word is always safer than a wrong tag
-• Never change the grammatical form of a word (case, number, tense, aspect, etc.) even if an alternative form would carry a “nicer” stress
-
-Return ONLY the corrected text with <b>...</b> tags. No explanations.
-If already correct, return the text unchanged.
-PROMPT;
 
     /** Path to the temp file used for auto-saving between sessions */
     private const TEMP_FILE_PATH = 'csv_editor_temp.json';
@@ -141,7 +56,7 @@ PROMPT;
     /** Row index currently having stress corrected via ChatGPT (-1 = none). */
     public int $correctingStressRowIndex = -1;
 
-    /** Error message from the last ChatGPT translation attempt. */
+    /** Error message from the last ChatGPT translation or stress-correction attempt. */
     public string $translationError = '';
 
     /** Row index currently generating TTS audio (-1 = none). */
@@ -156,6 +71,27 @@ PROMPT;
      */
     public int $ttsModalRowIndex = -1;
 
+    private OpenAiTranslationService $translationService;
+
+    private RussianAccentService $accentService;
+
+    private RussianTextToSpeechService $ttsService;
+
+    /**
+     * Called by Livewire before every action (mount and subsequent requests).
+     * Services are re-injected on each hydration cycle because they are not
+     * serialised as component state.
+     */
+    public function boot(
+        OpenAiTranslationService $translationService,
+        RussianAccentService $accentService,
+        RussianTextToSpeechService $ttsService,
+    ): void {
+        $this->translationService = $translationService;
+        $this->accentService = $accentService;
+        $this->ttsService = $ttsService;
+    }
+
     public function mount(): void
     {
         $this->restoreFromTempFile();
@@ -163,7 +99,7 @@ PROMPT;
 
     /**
      * Livewire lifecycle hook: called automatically after uploadedCsvFile is set.
-     * This enables autoupload behaviour without a submit button.
+     * Enables auto-upload behaviour without a submit button.
      */
     public function updatedUploadedCsvFile(): void
     {
@@ -205,7 +141,7 @@ PROMPT;
 
         $columnCount = count($parsed[0]);
 
-        // Normalise each row to match the first row's column count
+        // Normalise each row to match the first row's column count.
         $this->csvRows = array_map(function (array $row) use ($columnCount): array {
             $normalised = array_pad($row, $columnCount, '');
 
@@ -272,7 +208,7 @@ PROMPT;
             return;
         }
 
-        $this->csvRows[$rowIndex][$columnIndex] = $this->moveAccentToPosition(
+        $this->csvRows[$rowIndex][$columnIndex] = $this->accentService->moveAccentToPosition(
             $this->csvRows[$rowIndex][$columnIndex],
             $charPosition
         );
@@ -316,14 +252,6 @@ PROMPT;
     {
         $this->translationError = '';
 
-        $openAiApiKey = config('services.openai.api_key');
-
-        if (empty($openAiApiKey)) {
-            $this->translationError = 'OpenAI API key is not configured. Please set OPENAI_API_KEY in your .env file.';
-
-            return;
-        }
-
         $frenchText = $this->csvRows[$rowIndex][0] ?? '';
 
         if (empty(trim($frenchText))) {
@@ -333,36 +261,11 @@ PROMPT;
         $this->translatingRowIndex = $rowIndex;
 
         try {
-            $openAiModel = config('services.openai.model', 'gpt-4o-mini');
-
-            $response = Http::withToken($openAiApiKey)
-                ->timeout(30)
-                ->post('https://api.openai.com/v1/responses', [
-                    'model' => $openAiModel,
-                    'input' => $frenchText,
-                    'instructions' => self::TRANSLATION_PROMPT,
-                    'temperature' => 0,
-                ]);
-
-            if (! $response->successful()) {
-                $this->translationError = 'ChatGPT API returned an error: '.$response->status().'. Check your API key and quota.';
-
-                return;
-            }
-
-            $translatedText = $response->json('output.0.content.0.text');
-
-            if (! is_string($translatedText) || empty(trim($translatedText))) {
-                $this->translationError = 'ChatGPT returned an empty translation.';
-
-                return;
-            }
-
-            $this->csvRows[$rowIndex][1] = trim($translatedText);
+            $translatedText = $this->translationService->translateFrenchToRussian($frenchText);
+            $this->csvRows[$rowIndex][1] = $translatedText;
             $this->autoSaveToTempFile();
-
         } catch (\Exception $exception) {
-            $this->translationError = 'Translation failed: '.$exception->getMessage();
+            $this->translationError = $exception->getMessage();
         } finally {
             $this->translatingRowIndex = -1;
         }
@@ -370,20 +273,11 @@ PROMPT;
 
     /**
      * Ask ChatGPT to review and fix stress marks in column 1 of the given row.
-     * Updates the cell if corrections were made, and records the outcome in
-     * $stressCorrectionStatus so the view can reflect the result visually.
+     * The French source in column 0 is sent as semantic context.
      */
     public function correctStressMarks(int $rowIndex): void
     {
         $this->translationError = '';
-
-        $openAiApiKey = config('services.openai.api_key');
-
-        if (empty($openAiApiKey)) {
-            $this->translationError = 'OpenAI API key is not configured. Please set OPENAI_API_KEY in your .env file.';
-
-            return;
-        }
 
         $frenchText = trim($this->csvRows[$rowIndex][0] ?? '');
         $russianText = trim($this->csvRows[$rowIndex][1] ?? '');
@@ -395,52 +289,14 @@ PROMPT;
         $this->correctingStressRowIndex = $rowIndex;
 
         try {
-            $openAiModel = config('services.openai.model', 'gpt-4o-mini');
-
-            $stressCorrectionInput = <<<TEXT
-French source for meaning/context only:
----
-{$frenchText}
----
-
-Russian text to review and correct stress marks in:
----
-{$russianText}
----
-TEXT;
-
-            $response = Http::withToken($openAiApiKey)
-                ->timeout(30)
-                ->post('https://api.openai.com/v1/responses', [
-                    'model' => $openAiModel,
-                    'input' => $stressCorrectionInput,
-                    'instructions' => self::STRESS_CORRECTION_PROMPT,
-                    'temperature' => 0,
-                ]);
-
-            if (! $response->successful()) {
-                $this->translationError = 'ChatGPT API returned an error: '.$response->status().'. Check your API key and quota.';
-
-                return;
-            }
-
-            $correctedText = $response->json('output.0.content.0.text');
-
-            if (! is_string($correctedText) || empty(trim($correctedText))) {
-                $this->translationError = 'ChatGPT returned an empty response.';
-
-                return;
-            }
-
-            $correctedText = trim($correctedText);
+            $correctedText = $this->translationService->correctRussianStressMarks($russianText, $frenchText);
 
             if ($correctedText !== $russianText) {
                 $this->csvRows[$rowIndex][1] = $correctedText;
                 $this->autoSaveToTempFile();
             }
-
         } catch (\Exception $exception) {
-            $this->translationError = 'Stress correction failed: '.$exception->getMessage();
+            $this->translationError = $exception->getMessage();
         } finally {
             $this->correctingStressRowIndex = -1;
         }
@@ -450,23 +306,10 @@ TEXT;
      * Generate (or retrieve from cache) high-quality TTS audio for the Russian
      * phrase in column 1 of the given row, then dispatch a browser event so
      * Alpine.js can play the returned audio URL immediately.
-     *
-     * Uses the corrected Russian text (with <b> stress tags) as the source of
-     * truth. Tags are stripped inside the service before the API call, but are
-     * included in the cache key so phonetically identical phrases with different
-     * stress annotations remain independently addressable.
      */
     public function generateTtsAudio(int $rowIndex): void
     {
         $this->ttsError = '';
-
-        $openAiApiKey = config('services.openai.api_key');
-
-        if (empty($openAiApiKey)) {
-            $this->ttsError = 'OpenAI API key is not configured. Please set OPENAI_API_KEY in your .env file.';
-
-            return;
-        }
 
         $rawRussianText = $this->csvRows[$rowIndex][1] ?? '';
         $normalizedText = trim(str_replace(['<b>', '</b>'], '', $rawRussianText));
@@ -475,23 +318,22 @@ TEXT;
             return;
         }
 
+        if (empty(config('services.openai.api_key'))) {
+            $this->ttsError = 'OpenAI API key is not configured. Please set OPENAI_API_KEY in your .env file.';
+
+            return;
+        }
+
         $this->ttsGeneratingRowIndex = $rowIndex;
 
         try {
-            /** @var RussianTextToSpeechService $ttsService */
-            $ttsService = app(RussianTextToSpeechService::class);
+            $this->ttsService->generateAudio($rawRussianText);
 
-            $ttsService->generateAudio($rawRussianText);
-
-            $cacheKey = $ttsService->hashRawString($rawRussianText);
-
-            // Append a cache-busting timestamp so browsers always fetch the latest
-            // audio file, even if a previous version was cached under the same URL.
+            $cacheKey = $this->ttsService->hashRawString($rawRussianText);
+            // Append a cache-busting timestamp so browsers always fetch the latest audio.
             $audioUrl = route('tts.serve', $cacheKey).'?v='.time();
 
-            // Dispatch a browser event; Alpine.js will pick it up and play the audio.
             $this->dispatch('tts-audio-ready', audioUrl: $audioUrl);
-
         } catch (\Exception $exception) {
             $this->ttsError = 'Audio generation failed: '.$exception->getMessage();
         } finally {
@@ -501,8 +343,7 @@ TEXT;
 
     /**
      * Delete the cached TTS audio file for the Russian phrase in column 1 of the
-     * given row. After deletion the UI icon reverts to "generate", allowing the
-     * user to request fresh audio if needed.
+     * given row. The UI icon then reverts to "generate".
      */
     public function deleteTtsAudio(int $rowIndex): void
     {
@@ -512,15 +353,12 @@ TEXT;
             return;
         }
 
-        /** @var RussianTextToSpeechService $ttsService */
-        $ttsService = app(RussianTextToSpeechService::class);
-        $ttsService->deleteAudio($rawRussianText);
+        $this->ttsService->deleteAudio($rawRussianText);
     }
 
     /**
      * Return true when a cached audio file exists for the Russian phrase in
-     * column 1 of the given row. Used in the Blade template to decide which
-     * icon and action to show on the TTS button.
+     * column 1 of the given row.
      */
     public function ttsAudioExistsForRow(int $rowIndex): bool
     {
@@ -530,19 +368,13 @@ TEXT;
             return false;
         }
 
-        /** @var RussianTextToSpeechService $ttsService */
-        $ttsService = app(RussianTextToSpeechService::class);
-
-        return $ttsService->audioFileExists($rawRussianText);
+        return $this->ttsService->audioFileExists($rawRussianText);
     }
 
     /**
      * Open the TTS audio player modal for the given row.
-     *
-     * Sets ttsModalRowIndex so the Blade template can render the modal content,
-     * then dispatches open-tts-modal with the current audio URL (or null when no
-     * cached file exists yet). Alpine picks up the event to set the audio src
-     * and show the modal.
+     * Dispatches open-tts-modal with the current audio URL (or null when no
+     * cached file exists yet).
      */
     public function openTtsModal(int $rowIndex): void
     {
@@ -551,15 +383,10 @@ TEXT;
         $rawRussianText = $this->csvRows[$rowIndex][1] ?? '';
         $audioUrl = null;
 
-        if (! empty(trim($rawRussianText))) {
-            /** @var RussianTextToSpeechService $ttsService */
-            $ttsService = app(RussianTextToSpeechService::class);
-
-            if ($ttsService->audioFileExists($rawRussianText)) {
-                $cacheKey = $ttsService->hashRawString($rawRussianText);
-                $lastModified = Storage::disk('local')->lastModified("tts/{$cacheKey}.mp3");
-                $audioUrl = route('tts.serve', $cacheKey).'?v='.$lastModified;
-            }
+        if (! empty(trim($rawRussianText)) && $this->ttsService->audioFileExists($rawRussianText)) {
+            $cacheKey = $this->ttsService->hashRawString($rawRussianText);
+            $lastModified = Storage::disk('local')->lastModified("tts/{$cacheKey}.mp3");
+            $audioUrl = route('tts.serve', $cacheKey).'?v='.$lastModified;
         }
 
         $this->dispatch('open-tts-modal', audioUrl: $audioUrl);
@@ -568,27 +395,21 @@ TEXT;
     /**
      * Delete the existing cached audio and immediately regenerate it,
      * producing a fresh recording for the current Russian phrase.
-     *
-     * Delegates to generateTtsAudio which dispatches tts-audio-ready so
-     * the modal's audio player updates its source automatically.
      */
     public function refreshTtsAudio(int $rowIndex): void
     {
-        /** @var RussianTextToSpeechService $ttsService */
-        $ttsService = app(RussianTextToSpeechService::class);
-        $ttsService->deleteAudio($this->csvRows[$rowIndex][1] ?? '');
-
+        $this->ttsService->deleteAudio($this->csvRows[$rowIndex][1] ?? '');
         $this->generateTtsAudio($rowIndex);
     }
 
     /**
-     * Delete a row by its index and re-index the rows array.     */
+     * Delete a row by its index and re-index the rows array.
+     */
     public function deleteRow(int $rowIndex): void
     {
         unset($this->csvRows[$rowIndex]);
         $this->csvRows = array_values($this->csvRows);
-        // Row indices have shifted — clear per-row state to avoid stale references.
-        // Close the audio modal if it was open for the deleted (or now-shifted) row.
+        // Close the audio modal — indices have shifted, references would be stale.
         $this->ttsModalRowIndex = -1;
         $this->autoSaveToTempFile();
         // Clamp the current page in case the last page was emptied by this deletion.
@@ -602,9 +423,8 @@ TEXT;
      */
     public function downloadCsv(): StreamedResponse
     {
-        $downloadFileName = $this->buildDownloadFileName();
-
         $csvContent = $this->buildCsvContent();
+        $downloadFileName = $this->buildBaseFileName().'_edited_'.now()->format('Ymd_His').'.csv';
 
         return response()->streamDownload(function () use ($csvContent): void {
             echo $csvContent;
@@ -616,58 +436,19 @@ TEXT;
     /**
      * Build and download a full Anki-compatible .apkg package.
      *
-     * The package contains a SQLite collection database (collection.anki2) with one
-     * note per CSV row, plus all TTS audio files that have been cached for those rows.
-     * It can be imported directly into AnkiDroid and Anki Desktop.
-     *
-     * Rows without cached TTS audio are exported as text-only cards.
+     * The package contains a SQLite collection database with one note per CSV
+     * row, plus all TTS audio files that have been cached for those rows.
      */
     public function downloadAnkiPackage(): StreamedResponse
     {
-        /** @var RussianTextToSpeechService $ttsService */
-        $ttsService = app(RussianTextToSpeechService::class);
-
         /** @var AnkiPackageExporterService $exporter */
         $exporter = app(AnkiPackageExporterService::class);
 
-        /**
-         * Build the card data array expected by the exporter service.
-         *
-         * @var array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}> $cards
-         */
-        $cards = [];
-
-        foreach ($this->csvRows as $row) {
-            $frenchText = $row[0] ?? '';
-            $rawRussianText = $row[1] ?? '';
-
-            // Strip <b> stress tags — Anki does not render them as bold in basic fields.
-            $plainRussianText = trim(str_replace(['<b>', '</b>'], '', $rawRussianText));
-
-            $backFieldValue = $plainRussianText;
-            $mp3StoragePath = null;
-            $mp3FileName = null;
-
-            // Append the Anki sound reference when a cached MP3 exists for this phrase.
-            if (! empty(trim($rawRussianText)) && $ttsService->audioFileExists($rawRussianText)) {
-                $cacheKey = $ttsService->hashRawString($rawRussianText);
-                $mp3FileName = "{$cacheKey}.mp3";
-                $mp3StoragePath = "tts/{$mp3FileName}";
-                $backFieldValue .= " [sound:{$mp3FileName}]";
-            }
-
-            $cards[] = [
-                'front' => $frenchText,
-                'back' => $backFieldValue,
-                'mp3StoragePath' => $mp3StoragePath,
-                'mp3FileName' => $mp3FileName,
-            ];
-        }
-
+        $cards = $this->buildAnkiCardsFromRows();
         $deckName = pathinfo($this->originalFileName, PATHINFO_FILENAME) ?: 'French-Russian';
         $apkgPath = $exporter->export($cards, $deckName);
 
-        $downloadFileName = $this->buildApkgDownloadFileName();
+        $downloadFileName = $this->buildBaseFileName().'_'.now()->format('Ymd_His').'.apkg';
 
         return response()->streamDownload(function () use ($apkgPath): void {
             readfile($apkgPath);
@@ -703,85 +484,14 @@ TEXT;
     // -------------------------------------------------------------------------
 
     /**
-     * Return true when the Russian text in column 1 of the given row contains at
-     * least one word with more than 2 vowels that has no <b>…</b> stress mark.
-     *
-     * Mirrors the JS `cellNeedsAccent` logic so the server-side condition is
-     * always consistent with what Alpine highlights in the UI.
+     * Return true when the Russian text in column 1 of the given row needs a
+     * stress mark added (delegates to RussianAccentService).
      */
     public function rowNeedsStressCorrection(int $rowIndex): bool
     {
-        $rawText = $this->csvRows[$rowIndex][1] ?? '';
-
-        if (empty(trim($rawText))) {
-            return false;
-        }
-
-        $russianVowels = 'аеёиоуыэюяАЕЁИОУЫЭЮЯ';
-
-        $inBold = false;
-        $wordTotalVowels = 0;
-        $wordAccentedVowels = 0;
-        $inCyrillicWord = false;
-
-        /**
-         * Evaluate the current word: returns true when it needs an accent.
-         * Always resets the word-level counters.
-         */
-        $flushWord = function () use (&$wordTotalVowels, &$wordAccentedVowels, &$inCyrillicWord): bool {
-            $needsAccent = $inCyrillicWord && $wordTotalVowels > 2 && $wordAccentedVowels === 0;
-            $wordTotalVowels = 0;
-            $wordAccentedVowels = 0;
-            $inCyrillicWord = false;
-
-            return $needsAccent;
-        };
-
-        $i = 0;
-        $length = mb_strlen($rawText);
-
-        while ($i < $length) {
-            $remaining = mb_substr($rawText, $i);
-
-            if (str_starts_with($remaining, '<b>')) {
-                $inBold = true;
-                $i += 3;
-
-                continue;
-            }
-
-            if (str_starts_with($remaining, '</b>')) {
-                $inBold = false;
-                $i += 4;
-
-                continue;
-            }
-
-            $char = mb_substr($rawText, $i, 1);
-            $isCyrillicChar = preg_match('/[а-яёА-ЯЁ]/u', $char) === 1;
-
-            if ($isCyrillicChar) {
-                $inCyrillicWord = true;
-
-                if (mb_strpos($russianVowels, $char) !== false) {
-                    $wordTotalVowels++;
-
-                    if ($inBold) {
-                        $wordAccentedVowels++;
-                    }
-                }
-            } else {
-                // Non-Cyrillic character: word boundary reached — evaluate the completed word.
-                if ($flushWord()) {
-                    return true;
-                }
-            }
-
-            $i++;
-        }
-
-        // Evaluate any trailing word after the loop ends.
-        return $flushWord();
+        return $this->accentService->textNeedsStressCorrection(
+            $this->csvRows[$rowIndex][1] ?? ''
+        );
     }
 
     // -------------------------------------------------------------------------
@@ -795,9 +505,7 @@ TEXT;
      */
     private function parseCsvContent(string $content): array|false
     {
-        // Normalise line endings
         $normalisedContent = str_replace(["\r\n", "\r"], "\n", $content);
-
         $lines = explode("\n", trim($normalisedContent));
 
         if (count($lines) === 0) {
@@ -805,13 +513,13 @@ TEXT;
         }
 
         $rows = [];
+
         foreach ($lines as $line) {
             if (trim($line) === '') {
                 continue;
             }
 
-            $row = str_getcsv($line);
-            $rows[] = array_map('strval', $row);
+            $rows[] = array_map('strval', str_getcsv($line));
         }
 
         return count($rows) > 0 ? $rows : false;
@@ -840,31 +548,54 @@ TEXT;
     }
 
     /**
-     * Generate a download file name based on the original file name.
+     * Derive the base file name (without extension) used for all download file names.
+     * Falls back to 'export' when no original file name is available.
      */
-    private function buildDownloadFileName(): string
+    private function buildBaseFileName(): string
     {
         $baseName = pathinfo($this->originalFileName, PATHINFO_FILENAME);
 
-        if (empty($baseName)) {
-            $baseName = 'export';
-        }
-
-        return $baseName.'_edited_'.now()->format('Ymd_His').'.csv';
+        return empty($baseName) ? 'export' : $baseName;
     }
 
     /**
-     * Generate a download file name for the Anki .apkg package.
+     * Build the card data array expected by AnkiPackageExporterService
+     * from the current CSV rows, attaching cached MP3 references where available.
+     *
+     * @return array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}>
      */
-    private function buildApkgDownloadFileName(): string
+    private function buildAnkiCardsFromRows(): array
     {
-        $baseName = pathinfo($this->originalFileName, PATHINFO_FILENAME);
+        $cards = [];
 
-        if (empty($baseName)) {
-            $baseName = 'export';
+        foreach ($this->csvRows as $row) {
+            $frenchText = $row[0] ?? '';
+            $rawRussianText = $row[1] ?? '';
+
+            // Strip <b> stress tags — Anki does not render them as bold in basic fields.
+            $plainRussianText = trim(str_replace(['<b>', '</b>'], '', $rawRussianText));
+
+            $backFieldValue = $plainRussianText;
+            $mp3StoragePath = null;
+            $mp3FileName = null;
+
+            // Append the Anki sound reference when a cached MP3 exists for this phrase.
+            if (! empty(trim($rawRussianText)) && $this->ttsService->audioFileExists($rawRussianText)) {
+                $cacheKey = $this->ttsService->hashRawString($rawRussianText);
+                $mp3FileName = "{$cacheKey}.mp3";
+                $mp3StoragePath = "tts/{$mp3FileName}";
+                $backFieldValue .= " [sound:{$mp3FileName}]";
+            }
+
+            $cards[] = [
+                'front' => $frenchText,
+                'back' => $backFieldValue,
+                'mp3StoragePath' => $mp3StoragePath,
+                'mp3FileName' => $mp3FileName,
+            ];
         }
 
-        return $baseName.'_'.now()->format('Ymd_His').'.apkg';
+        return $cards;
     }
 
     /**
@@ -921,108 +652,5 @@ TEXT;
         if (file_exists($tempFilePath)) {
             unlink($tempFilePath);
         }
-    }
-
-    /**
-     * Move the <b> accent marker to the Russian vowel at the given plain-text
-     * position, touching ONLY the word that contains that position.
-     * Accent markers on all other words in the same cell are preserved.
-     *
-     * @param  string  $rawText  Cell content possibly containing <b>…</b> tags.
-     * @param  int  $charPosition  0-based Unicode character index in stripped text.
-     */
-    private function moveAccentToPosition(string $rawText, int $charPosition): string
-    {
-        $russianVowels = 'аеёиоуыэюяАЕЁИОУЫЭЮЯ';
-
-        // Strip tags to build the plain text used for validation and word detection.
-        $plainText = str_replace(['<b>', '</b>'], '', $rawText);
-        $plainLength = mb_strlen($plainText);
-
-        if ($charPosition < 0 || $charPosition >= $plainLength) {
-            return $rawText;
-        }
-
-        $targetChar = mb_substr($plainText, $charPosition, 1);
-
-        // Reject non-vowel positions silently.
-        if (mb_strpos($russianVowels, $targetChar) === false) {
-            return $rawText;
-        }
-
-        // Find the Cyrillic word [wordStart, wordEnd) that contains charPosition.
-        $wordStart = $charPosition;
-        while ($wordStart > 0 && $this->isCyrillicChar(mb_substr($plainText, $wordStart - 1, 1))) {
-            $wordStart--;
-        }
-
-        $wordEnd = $charPosition + 1; // exclusive upper bound
-        while ($wordEnd < $plainLength && $this->isCyrillicChar(mb_substr($plainText, $wordEnd, 1))) {
-            $wordEnd++;
-        }
-
-        // Walk the rawText segment by segment, rebuilding character by character.
-        // – Characters inside the target word: strip any existing bold, place
-        //   bold only on the clicked vowel.
-        // – Characters outside the target word: preserve their original bold state.
-        $result = '';
-        $plainPos = 0;
-
-        foreach ($this->parseRawTextSegments($rawText) as ['text' => $segText, 'bold' => $segBold]) {
-            $segLength = mb_strlen($segText);
-
-            for ($j = 0; $j < $segLength; $j++) {
-                $ch = mb_substr($segText, $j, 1);
-                $pos = $plainPos + $j;
-
-                if ($pos === $charPosition) {
-                    $result .= '<b>'.$ch.'</b>';
-                } elseif ($pos >= $wordStart && $pos < $wordEnd) {
-                    // Inside the target word but not the accent: remove bold.
-                    $result .= $ch;
-                } else {
-                    // Outside the target word: preserve original bold state.
-                    $result .= $segBold ? '<b>'.$ch.'</b>' : $ch;
-                }
-            }
-
-            $plainPos += $segLength;
-        }
-
-        return $result;
-    }
-
-    /**
-     * Parse a raw text string with <b>…</b> tags into flat segments.
-     *
-     * @return array<int, array{text: string, bold: bool}>
-     */
-    private function parseRawTextSegments(string $rawText): array
-    {
-        $segments = [];
-        $isBold = false;
-
-        // Split on <b> / </b> delimiters, keeping the delimiters in the result.
-        $parts = preg_split('/(<\/?b>)/', $rawText, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [];
-
-        foreach ($parts as $part) {
-            if ($part === '<b>') {
-                $isBold = true;
-            } elseif ($part === '</b>') {
-                $isBold = false;
-            } elseif ($part !== '') {
-                $segments[] = ['text' => $part, 'bold' => $isBold];
-            }
-        }
-
-        return $segments;
-    }
-
-    /**
-     * Return true when the given single character is a Cyrillic letter.
-     */
-    private function isCyrillicChar(string $char): bool
-    {
-        return preg_match('/[а-яёА-ЯЁ]/u', $char) === 1;
     }
 }
