@@ -119,9 +119,13 @@
                             </flux:table.cell>
 
                             {{-- ── Column 1: Russian text (accent mode) ── --}}
+                            @php
+                                $rowHasAudio = !empty(trim($row[1] ?? '')) && $this->ttsAudioExistsForRow($rowIndex);
+                            @endphp
                             <flux:table.cell class="p-1! w-1/2 whitespace-normal" x-bind:class="{
                                 'bg-amber-50 dark:bg-amber-900/20': editingColumnIndex !== 1 && window.csvAccentMode.cellNeedsAccent($wire.csvRows[{{ $rowIndex }}]?.[1] ?? ''),
-                                'bg-green-50 dark:bg-green-900/20': editingColumnIndex !== 1 && $wire.stressCorrectionStatus[{{ $rowIndex }}] === 'corrected',
+                                'bg-green-50 dark:bg-green-900/20': editingColumnIndex !== 1 && !window.csvAccentMode.cellNeedsAccent($wire.csvRows[{{ $rowIndex }}]?.[1] ?? '') && ($wire.csvRows[{{ $rowIndex }}]?.[1] ?? '').trim() !== '' && {{ $rowHasAudio ? 'true' : 'false' }},
+                                'bg-blue-50 dark:bg-blue-900/20': editingColumnIndex !== 1 && $wire.stressCorrectionStatus[{{ $rowIndex }}] === 'corrected',
                             }">
                                 {{-- Accent HTML display — vowels are clickable spans --}}
                                 <div class="cursor-default px-2 text-zinc-800 dark:text-zinc-100" x-show="editingColumnIndex !== 1" x-html="window.csvAccentMode.buildHtml($wire.csvRows[{{ $rowIndex }}]?.[1] ?? '')" @click="window.csvAccentMode.invalidateCache($wire.csvRows[{{ $rowIndex }}]?.[1] ?? ''); window.csvAccentMode.handleClick($event, $wire, 'cell', {{ $rowIndex }}, 1)"></div>
