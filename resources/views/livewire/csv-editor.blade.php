@@ -1,4 +1,10 @@
-<div class="min-h-screen">
+<div class="min-h-screen" x-data="{ ttsAudioUrl: null }" x-on:tts-audio-ready.window="
+         ttsAudioUrl = $event.detail.audioUrl;
+         $nextTick(() => { if ($refs.ttsPlayer) { $refs.ttsPlayer.load(); $refs.ttsPlayer.play(); } });
+     ">
+
+    {{-- Hidden audio element driven by Alpine.js when TTS audio is ready --}}
+    <audio class="hidden" x-ref="ttsPlayer" :src="ttsAudioUrl"></audio>
 
     {{-- ── Header bar ── --}}
     <div class="mx-auto mb-6 flex max-w-full items-center justify-between gap-4">
@@ -94,12 +100,24 @@
                                 </flux:table.cell>
                             @endforeach
 
-                            {{-- Row actions: per-row accent mode + translate + correct-stress + delete buttons --}}
+                            {{-- Row actions: per-row accent mode + TTS playback + translate + correct-stress + delete buttons --}}
                             <flux:table.cell class="py-1! whitespace-nowrap" align="end">
                                 {{-- Per-row accent mode button: toggles accent mode for the right column of this row --}}
                                 @if (!empty(trim($row[1] ?? '')))
                                     <button class="{{ $accentModeRowIndex === $rowIndex ? 'text-amber-500 dark:text-amber-400' : 'text-zinc-400 opacity-0 hover:text-amber-500 group-hover:opacity-100 dark:hover:text-amber-400' }} cursor-pointer rounded p-1 transition-opacity" title="{{ $accentModeRowIndex === $rowIndex ? 'Disable accent mode for this row' : 'Enable accent mode for this row' }}" wire:click="toggleRowAccentMode({{ $rowIndex }})">
                                         <flux:icon.language />
+                                    </button>
+                                @endif
+
+                                {{-- TTS play button: generates and plays the Russian phrase using high-quality neural TTS --}}
+                                @if (!empty(trim($row[1] ?? '')))
+                                    <button class="cursor-pointer rounded p-1 text-sky-500 opacity-0 transition-opacity hover:text-sky-700 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 dark:text-sky-400 dark:hover:text-sky-300" title="Play Russian pronunciation" wire:click="generateTtsAudio({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="generateTtsAudio({{ $rowIndex }})">
+                                        <span wire:loading wire:target="generateTtsAudio({{ $rowIndex }})">
+                                            <flux:icon.arrow-path class="animate-spin" />
+                                        </span>
+                                        <span wire:loading.remove wire:target="generateTtsAudio({{ $rowIndex }})">
+                                            <flux:icon.speaker-wave />
+                                        </span>
                                     </button>
                                 @endif
 
@@ -155,6 +173,14 @@
                 <div class="mb-3 flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800 dark:border-red-600 dark:bg-red-900/20 dark:text-red-300">
                     <flux:icon.exclamation-triangle class="size-4 shrink-0" />
                     <span>{{ $translationError }}</span>
+                </div>
+            @endif
+
+            {{-- TTS error banner --}}
+            @if ($ttsError)
+                <div class="mb-3 flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800 dark:border-red-600 dark:bg-red-900/20 dark:text-red-300">
+                    <flux:icon.exclamation-triangle class="size-4 shrink-0" />
+                    <span>{{ $ttsError }}</span>
                 </div>
             @endif
 

@@ -1,8 +1,10 @@
 <?php
 
 use App\Livewire\CsvEditor;
+use App\Services\RussianTextToSpeechService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 function sampleRows(): array
@@ -379,4 +381,126 @@ test('records ok status when chatgpt returns the text unchanged', function () {
         ->set('hasCsvLoaded', true)
         ->call('correctStressMarks', 0)
         ->assertSet('stressCorrectionStatus.0', 'ok');
+});
+// ── Russian TTS (Text-to-Speech) ────────────────────────────────────────────
+test('does not call the tts api when the russian column is empty', function () {
+    config(['services.openai.api_key' => 'test-api-key']);
+    Storage::fake('local');
+    Http::fake();
+
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je travaille.', '']])
+        ->set('hasCsvLoaded', true)
+        ->call('generateTtsAudio', 0);
+
+    Http::assertNothingSent();
+});
+
+test('generates tts audio from the russian phrase and dispatches a playback event', function () {
+    config(['services.openai.api_key' => 'test-api-key']);
+    Storage::fake('local');
+    Http::fake([
+        'api.openai.com/v1/audio/speech' => Http::response('fake-mp3-binary', 200),
+    ]);
+
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je travaille.', 'Я раб<b>о</b>таю.']])
+        ->set('hasCsvLoaded', true)
+        ->call('generateTtsAudio', 0)
+        ->assertDispatched('tts-audio-ready')
+        ->assertSet('ttsGeneratingRowIndex', -1)
+        ->assertSet('ttsError', '');
+
+    // Verify the API received the normalized text (tags stripped).
+    Http::assertSent(function ($request) {
+        return str_contains($request->url(), '/v1/audio/speech')
+            && $request->data()['input'] === 'Я работаю.'
+            && $request->data()['model'] === 'tts-1-hd';
+    });
+});
+
+test('reuses the cached audio file without calling the tts api a second time', function () {
+    config(['services.openai.api_key' => 'test-api-key']);
+    Storage::fake('local');
+    Http::fake([
+        'api.openai.com/v1/audio/speech' => Http::response('fake-mp3-binary', 200),
+    ]);
+
+    $component = Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je travaille.', 'Я раб<b>о</b>таю.']])
+        ->set('hasCsvLoaded', true);
+
+    // First call: audio is generated and written to (fake) storage.
+    $component->call('generateTtsAudio', 0);
+    Http::assertSentCount(1);
+
+    // Second call: the cached file is found, so no additional HTTP request is made.
+    $component->call('generateTtsAudio', 0);
+    Http::assertSentCount(1);
+});
+
+test('sets a tts error when the openai api returns a failure status', function () {
+    config(['services.openai.api_key' => 'test-api-key']);
+    Storage::fake('local');
+    Http::fake([
+        'api.openai.com/v1/audio/speech' => Http::response([], 500),
+    ]);
+
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je travaille.', 'Я работаю.']])
+        ->set('hasCsvLoaded', true)
+        ->call('generateTtsAudio', 0)
+        ->assertSet('ttsError', 'Audio generation failed: OpenAI TTS API returned an error: 500. Check your API key and quota.')
+        ->assertSet('ttsGeneratingRowIndex', -1);
+});
+
+test('shows a tts error when the openai api key is not configured', function () {
+    config(['services.openai.api_key' => '']);
+
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je travaille.', 'Я работаю.']])
+        ->set('hasCsvLoaded', true)
+        ->call('generateTtsAudio', 0)
+        ->assertSet('ttsError', 'OpenAI API key is not configured. Please set OPENAI_API_KEY in your .env file.');
+});
+
+test('tts audio route serves a cached mp3 file', function () {
+    Storage::fake('local');
+    $cacheKey = hash('sha256', 'Я работаю.');
+    Storage::disk('local')->put("tts/{$cacheKey}.mp3", 'fake-mp3-binary');
+
+    $this->get(route('tts.serve', $cacheKey))
+        ->assertSuccessful()
+        ->assertHeader('Content-Type', 'audio/mpeg');
+});
+
+test('tts audio route returns 404 when the cached file does not exist', function () {
+    Storage::fake('local');
+    $validFormatKey = str_repeat('a', 64); // 64-char hex string
+
+    $this->get(route('tts.serve', $validFormatKey))
+        ->assertNotFound();
+});
+// ── RussianTextToSpeechService Unit-level behaviour ─────────────────────────
+test('tts service builds a deterministic sha256 cache key from raw russian text', function () {
+    $service = new RussianTextToSpeechService;
+    $rawText = 'Я раб<b>о</b>таю.';
+
+    expect($service->buildCacheKey($rawText))->toBe(hash('sha256', $rawText));
+});
+
+test('tts service strips bold tags and trims whitespace when normalizing for speech', function () {
+    $service = new RussianTextToSpeechService;
+
+    expect($service->normalizeForSpeech('  Я раб<b>о</b>таю.  '))->toBe('Я работаю.');
+});
+
+test('tts service uses different cache keys for phrases with different stress positions', function () {
+    $service = new RussianTextToSpeechService;
+
+    $phraseWithStressOnO = 'раб<b>о</b>таю';
+    $phraseWithStressOnA = 'работ<b>а</b>ю';
+
+    expect($service->buildCacheKey($phraseWithStressOnO))
+        ->not->toBe($service->buildCacheKey($phraseWithStressOnA));
 });

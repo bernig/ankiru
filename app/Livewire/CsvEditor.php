@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Services\RussianTextToSpeechService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
@@ -148,6 +149,12 @@ PROMPT;
 
     /** Error message from the last ChatGPT translation attempt. */
     public string $translationError = '';
+
+    /** Row index currently generating TTS audio (-1 = none). */
+    public int $ttsGeneratingRowIndex = -1;
+
+    /** Error message from the last TTS generation attempt. */
+    public string $ttsError = '';
 
     /**
      * Tracks stress correction outcomes per row (transient, not persisted).
@@ -477,8 +484,57 @@ TEXT;
     }
 
     /**
-     * Delete a row by its index and re-index the rows array.
+     * Generate (or retrieve from cache) high-quality TTS audio for the Russian
+     * phrase in column 1 of the given row, then dispatch a browser event so
+     * Alpine.js can play the returned audio URL immediately.
+     *
+     * Uses the corrected Russian text (with <b> stress tags) as the source of
+     * truth. Tags are stripped inside the service before the API call, but are
+     * included in the cache key so phonetically identical phrases with different
+     * stress annotations remain independently addressable.
      */
+    public function generateTtsAudio(int $rowIndex): void
+    {
+        $this->ttsError = '';
+
+        $openAiApiKey = config('services.openai.api_key');
+
+        if (empty($openAiApiKey)) {
+            $this->ttsError = 'OpenAI API key is not configured. Please set OPENAI_API_KEY in your .env file.';
+
+            return;
+        }
+
+        $rawRussianText = $this->csvRows[$rowIndex][1] ?? '';
+        $normalizedText = trim(str_replace(['<b>', '</b>'], '', $rawRussianText));
+
+        if (empty($normalizedText)) {
+            return;
+        }
+
+        $this->ttsGeneratingRowIndex = $rowIndex;
+
+        try {
+            /** @var RussianTextToSpeechService $ttsService */
+            $ttsService = app(RussianTextToSpeechService::class);
+
+            $ttsService->generateAudio($rawRussianText);
+
+            $cacheKey = $ttsService->buildCacheKey($rawRussianText);
+            $audioUrl = route('tts.serve', $cacheKey);
+
+            // Dispatch a browser event; Alpine.js will pick it up and play the audio.
+            $this->dispatch('tts-audio-ready', audioUrl: $audioUrl);
+
+        } catch (\Exception $exception) {
+            $this->ttsError = 'Audio generation failed: '.$exception->getMessage();
+        } finally {
+            $this->ttsGeneratingRowIndex = -1;
+        }
+    }
+
+    /**
+     * Delete a row by its index and re-index the rows array.     */
     public function deleteRow(int $rowIndex): void
     {
         unset($this->csvRows[$rowIndex]);
