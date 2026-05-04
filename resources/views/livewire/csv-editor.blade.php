@@ -162,7 +162,7 @@
             <div class="mx-auto mt-4 flex w-full flex-col items-center gap-3">
                 {{-- Flux pagination (shown only when there is more than one page) --}}
                 @if ($this->totalPages > 1)
-                    <flux:pagination class="w-full" :paginator="$this->paginatedRows" />
+                    <flux:pagination class="w-full" :paginator="$this->paginatedRows" scroll-to />
                 @endif
 
                 {{-- Action row: Add row button (hidden in global accent mode) --}}
