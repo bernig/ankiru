@@ -541,3 +541,139 @@ test('tts service uses different cache keys for phrases with different stress po
     expect($service->hashRawString($phraseWithStressOnO))
         ->not->toBe($service->hashRawString($phraseWithStressOnA));
 });
+
+test('deletes cached tts audio file from storage', function () {
+    config(['services.openai.api_key' => 'test-api-key']);
+    Storage::fake('local');
+
+    $rawRussianText = 'Я раб<b>о</b>таю.';
+    $cacheKey = hash('sha256', $rawRussianText);
+    Storage::disk('local')->put("tts/{$cacheKey}.mp3", 'fake-mp3-binary');
+
+    // Verify the file exists before deletion.
+    expect(Storage::disk('local')->exists("tts/{$cacheKey}.mp3"))->toBeTrue();
+
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je travaille.', $rawRussianText]])
+        ->set('hasCsvLoaded', true)
+        ->call('deleteTtsAudio', 0);
+
+    // Verify the file was deleted.
+    expect(Storage::disk('local')->exists("tts/{$cacheKey}.mp3"))->toBeFalse();
+});
+
+test('deleting tts audio for a row with no cached file does nothing gracefully', function () {
+    config(['services.openai.api_key' => 'test-api-key']);
+    Storage::fake('local');
+
+    // No file stored — deletion should not throw.
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je travaille.', 'Я работаю.']])
+        ->set('hasCsvLoaded', true)
+        ->call('deleteTtsAudio', 0);
+
+    expect(Storage::disk('local')->allFiles('tts'))->toBeEmpty();
+});
+
+test('tts audio exists for row returns true when cached file is present', function () {
+    Storage::fake('local');
+
+    $rawRussianText = 'Я раб<b>о</b>таю.';
+    $cacheKey = hash('sha256', $rawRussianText);
+    Storage::disk('local')->put("tts/{$cacheKey}.mp3", 'fake-mp3-binary');
+
+    $component = Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je travaille.', $rawRussianText]])
+        ->set('hasCsvLoaded', true);
+
+    expect($component->instance()->ttsAudioExistsForRow(0))->toBeTrue();
+});
+
+test('tts audio exists for row returns false when no cached file exists', function () {
+    Storage::fake('local');
+
+    $component = Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je travaille.', 'Я работаю.']])
+        ->set('hasCsvLoaded', true);
+
+    expect($component->instance()->ttsAudioExistsForRow(0))->toBeFalse();
+});
+
+test('tts service delete audio removes the cached file and returns true', function () {
+    Storage::fake('local');
+
+    $service = new RussianTextToSpeechService;
+    $rawText = 'Я раб<b>о</b>таю.';
+    $hash = $service->hashRawString($rawText);
+    Storage::disk('local')->put("tts/{$hash}.mp3", 'fake-mp3-binary');
+
+    expect($service->deleteAudio($rawText))->toBeTrue();
+    expect(Storage::disk('local')->exists("tts/{$hash}.mp3"))->toBeFalse();
+});
+
+test('tts service delete audio returns false when no file exists', function () {
+    Storage::fake('local');
+
+    $service = new RussianTextToSpeechService;
+
+    expect($service->deleteAudio('Я работаю.'))->toBeFalse();
+});
+
+// ── TTS audio player modal ────────────────────────────────────────────────────
+
+test('openTtsModal sets ttsModalRowIndex and dispatches open-tts-modal event without url when no audio exists', function () {
+    Storage::fake('local');
+
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je travaille.', 'Я работаю.']])
+        ->set('hasCsvLoaded', true)
+        ->call('openTtsModal', 0)
+        ->assertSet('ttsModalRowIndex', 0)
+        ->assertDispatched('open-tts-modal', audioUrl: null);
+});
+
+test('openTtsModal dispatches open-tts-modal event with audio url when cached file exists', function () {
+    Storage::fake('local');
+
+    $rawText = 'Я раб<b>о</b>таю.';
+    $cacheKey = hash('sha256', $rawText);
+    Storage::disk('local')->put("tts/{$cacheKey}.mp3", 'fake-mp3-binary');
+
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je travaille.', $rawText]])
+        ->set('hasCsvLoaded', true)
+        ->call('openTtsModal', 0)
+        ->assertSet('ttsModalRowIndex', 0)
+        ->assertDispatched('open-tts-modal', fn ($name, $params) => str_contains($params['audioUrl'], route('tts.serve', $cacheKey)));
+});
+
+test('refreshTtsAudio deletes the existing file and regenerates fresh audio', function () {
+    config(['services.openai.api_key' => 'test-api-key']);
+    Storage::fake('local');
+    Http::fake([
+        'api.openai.com/v1/audio/speech' => Http::response('fresh-mp3-binary', 200),
+    ]);
+
+    $rawText = 'Я раб<b>о</b>таю.';
+    $cacheKey = hash('sha256', $rawText);
+    Storage::disk('local')->put("tts/{$cacheKey}.mp3", 'old-mp3-binary');
+
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je travaille.', $rawText]])
+        ->set('hasCsvLoaded', true)
+        ->call('refreshTtsAudio', 0)
+        ->assertDispatched('tts-audio-ready')
+        ->assertSet('ttsError', '');
+
+    // Verify audio was regenerated (new content written by the TTS API response).
+    expect(Storage::disk('local')->get("tts/{$cacheKey}.mp3"))->toBe('fresh-mp3-binary');
+});
+
+test('deleteRow resets ttsModalRowIndex to prevent stale references', function () {
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je travaille.', 'Я работаю.'], ['Bonjour.', 'Привет.']])
+        ->set('hasCsvLoaded', true)
+        ->set('ttsModalRowIndex', 0)
+        ->call('deleteRow', 0)
+        ->assertSet('ttsModalRowIndex', -1);
+});

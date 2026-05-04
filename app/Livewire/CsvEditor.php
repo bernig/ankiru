@@ -6,6 +6,7 @@ use App\Services\AnkiPackageExporterService;
 use App\Services\RussianTextToSpeechService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -156,6 +157,12 @@ PROMPT;
 
     /** Error message from the last TTS generation attempt. */
     public string $ttsError = '';
+
+    /**
+     * Row index whose audio is displayed in the TTS player modal (-1 = none).
+     * Reset to -1 whenever a row is deleted to prevent stale references.
+     */
+    public int $ttsModalRowIndex = -1;
 
     /**
      * Tracks stress correction outcomes per row (transient, not persisted).
@@ -522,7 +529,10 @@ TEXT;
             $ttsService->generateAudio($rawRussianText);
 
             $cacheKey = $ttsService->hashRawString($rawRussianText);
-            $audioUrl = route('tts.serve', $cacheKey);
+
+            // Append a cache-busting timestamp so browsers always fetch the latest
+            // audio file, even if a previous version was cached under the same URL.
+            $audioUrl = route('tts.serve', $cacheKey).'?v='.time();
 
             // Dispatch a browser event; Alpine.js will pick it up and play the audio.
             $this->dispatch('tts-audio-ready', audioUrl: $audioUrl);
@@ -535,6 +545,88 @@ TEXT;
     }
 
     /**
+     * Delete the cached TTS audio file for the Russian phrase in column 1 of the
+     * given row. After deletion the UI icon reverts to "generate", allowing the
+     * user to request fresh audio if needed.
+     */
+    public function deleteTtsAudio(int $rowIndex): void
+    {
+        $rawRussianText = $this->csvRows[$rowIndex][1] ?? '';
+
+        if (empty(trim($rawRussianText))) {
+            return;
+        }
+
+        /** @var RussianTextToSpeechService $ttsService */
+        $ttsService = app(RussianTextToSpeechService::class);
+        $ttsService->deleteAudio($rawRussianText);
+    }
+
+    /**
+     * Return true when a cached audio file exists for the Russian phrase in
+     * column 1 of the given row. Used in the Blade template to decide which
+     * icon and action to show on the TTS button.
+     */
+    public function ttsAudioExistsForRow(int $rowIndex): bool
+    {
+        $rawRussianText = $this->csvRows[$rowIndex][1] ?? '';
+
+        if (empty(trim($rawRussianText))) {
+            return false;
+        }
+
+        /** @var RussianTextToSpeechService $ttsService */
+        $ttsService = app(RussianTextToSpeechService::class);
+
+        return $ttsService->audioFileExists($rawRussianText);
+    }
+
+    /**
+     * Open the TTS audio player modal for the given row.
+     *
+     * Sets ttsModalRowIndex so the Blade template can render the modal content,
+     * then dispatches open-tts-modal with the current audio URL (or null when no
+     * cached file exists yet). Alpine picks up the event to set the audio src
+     * and show the modal.
+     */
+    public function openTtsModal(int $rowIndex): void
+    {
+        $this->ttsModalRowIndex = $rowIndex;
+
+        $rawRussianText = $this->csvRows[$rowIndex][1] ?? '';
+        $audioUrl = null;
+
+        if (! empty(trim($rawRussianText))) {
+            /** @var RussianTextToSpeechService $ttsService */
+            $ttsService = app(RussianTextToSpeechService::class);
+
+            if ($ttsService->audioFileExists($rawRussianText)) {
+                $cacheKey = $ttsService->hashRawString($rawRussianText);
+                $lastModified = Storage::disk('local')->lastModified("tts/{$cacheKey}.mp3");
+                $audioUrl = route('tts.serve', $cacheKey).'?v='.$lastModified;
+            }
+        }
+
+        $this->dispatch('open-tts-modal', audioUrl: $audioUrl);
+    }
+
+    /**
+     * Delete the existing cached audio and immediately regenerate it,
+     * producing a fresh recording for the current Russian phrase.
+     *
+     * Delegates to generateTtsAudio which dispatches tts-audio-ready so
+     * the modal's audio player updates its source automatically.
+     */
+    public function refreshTtsAudio(int $rowIndex): void
+    {
+        /** @var RussianTextToSpeechService $ttsService */
+        $ttsService = app(RussianTextToSpeechService::class);
+        $ttsService->deleteAudio($this->csvRows[$rowIndex][1] ?? '');
+
+        $this->generateTtsAudio($rowIndex);
+    }
+
+    /**
      * Delete a row by its index and re-index the rows array.     */
     public function deleteRow(int $rowIndex): void
     {
@@ -543,6 +635,8 @@ TEXT;
         // Row indices have shifted — clear all correction statuses and per-row accent mode to avoid stale state.
         $this->stressCorrectionStatus = [];
         $this->accentModeRowIndex = -1;
+        // Close the audio modal if it was open for the deleted (or now-shifted) row.
+        $this->ttsModalRowIndex = -1;
         $this->autoSaveToTempFile();
         // Clamp the current page in case the last page was emptied by this deletion.
         if ($this->getPage() > $this->totalPages) {

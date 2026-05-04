@@ -1,7 +1,11 @@
-<div class="min-h-screen" x-data="{ ttsAudioUrl: null }" x-on:tts-audio-ready.window="
-         ttsAudioUrl = $event.detail.audioUrl;
-         $nextTick(() => { if ($refs.ttsPlayer) { $refs.ttsPlayer.load(); $refs.ttsPlayer.play(); } });
-     ">
+<div class="min-h-screen" x-data="{ ttsAudioUrl: null, ttsModalAudioSrc: null }" x-on:tts-audio-ready.window="
+        ttsAudioUrl = $event.detail.audioUrl;
+        ttsModalAudioSrc = $event.detail.audioUrl;
+        $nextTick(() => { if ($refs.ttsPlayer) { $refs.ttsPlayer.load(); $refs.ttsPlayer.play(); } });
+    " x-on:open-tts-modal.window="
+        ttsModalAudioSrc = $event.detail.audioUrl || null;
+        $flux.modal('tts-player').show();
+    ">
 
     {{-- Hidden audio element driven by Alpine.js when TTS audio is ready --}}
     <audio class="hidden" x-ref="ttsPlayer" :src="ttsAudioUrl"></audio>
@@ -129,13 +133,10 @@
                                     </button>
                                 @endif
 
-                                {{-- TTS play button: generates and plays the Russian phrase using high-quality neural TTS --}}
+                                {{-- TTS button: always visible when Russian text exists; opens the audio player modal --}}
                                 @if (!empty(trim($row[1] ?? '')))
-                                    <button class="cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-sky-700 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 dark:text-sky-400 dark:hover:text-sky-300" title="Play Russian pronunciation" wire:click="generateTtsAudio({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="generateTtsAudio({{ $rowIndex }})">
-                                        <span wire:loading wire:target="generateTtsAudio({{ $rowIndex }})">
-                                            <flux:icon.arrow-path class="animate-spin" />
-                                        </span>
-                                        <span wire:loading.remove wire:target="generateTtsAudio({{ $rowIndex }})">
+                                    <button class="cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-sky-700 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 dark:text-sky-400 dark:hover:text-sky-300" title="Open audio player" wire:click="openTtsModal({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})">
+                                        <span wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})">
                                             <flux:icon.speaker-wave />
                                         </span>
                                     </button>
@@ -220,6 +221,78 @@
             </div>
         </div>
     @endif
+
+    {{-- ── TTS audio player modal ── --}}
+    @php
+        $ttsModalRussianText = $ttsModalRowIndex >= 0 && isset($csvRows[$ttsModalRowIndex]) ? $csvRows[$ttsModalRowIndex][1] ?? '' : '';
+
+        $ttsModalAudioExists = false;
+        $ttsModalCreatedAt = null;
+
+        if ($ttsModalRowIndex >= 0 && !empty(trim($ttsModalRussianText))) {
+            /** @var \App\Services\RussianTextToSpeechService $ttsServiceForModal */
+            $ttsServiceForModal = app(\App\Services\RussianTextToSpeechService::class);
+            $ttsModalAudioExists = $ttsServiceForModal->audioFileExists($ttsModalRussianText);
+
+            if ($ttsModalAudioExists) {
+                $ttsModalCacheKey = $ttsServiceForModal->hashRawString($ttsModalRussianText);
+                $ttsModalLastModified = Storage::disk('local')->lastModified("tts/{$ttsModalCacheKey}.mp3");
+                $ttsModalCreatedAt = now()->setTimestamp($ttsModalLastModified)->format('j M Y, H:i');
+            }
+        }
+    @endphp
+
+    <flux:modal class="md:w-xl" name="tts-player" x-on:close="
+            ttsModalAudioSrc = null;
+            const player = document.getElementById('tts-modal-audio');
+            if (player) { player.pause(); player.removeAttribute('src'); }
+        ">
+        <div class="flex flex-col gap-5">
+            <flux:heading size="lg">{!! $ttsModalRussianText !!}</flux:heading>
+
+            @if ($ttsModalAudioExists)
+                <div class="flex flex-col gap-2">
+                    {{-- Native audio player; src is driven by Alpine to stay reactive across generate/refresh --}}
+                    <audio class="w-full rounded" id="tts-modal-audio" controls autoplay autofocus lang="ru" :src="ttsModalAudioSrc"></audio>
+
+                    {{-- File creation date in muted text --}}
+                    <flux:text class="text-xs text-zinc-400 dark:text-zinc-500">
+                        Generated {{ $ttsModalCreatedAt }}
+                    </flux:text>
+                </div>
+            @elseif ($ttsModalRowIndex >= 0)
+                <flux:callout variant="warning" icon="speaker-x-mark">
+                    <flux:callout.text>
+                        No audio file generated yet for this phrase.
+                    </flux:callout.text>
+                </flux:callout>
+            @endif
+
+            {{-- Action buttons — inside default slot since flux:modal has no footer slot --}}
+            <div class="flex items-center gap-2">
+                <flux:spacer />
+
+                @if ($ttsModalRowIndex >= 0 && $ttsModalAudioExists)
+                    {{-- Delete: removes the cached file; modal stays open showing the "no audio" state --}}
+                    <flux:button variant="danger" icon="trash" wire:click="deleteTtsAudio({{ $ttsModalRowIndex }})" wire:loading.attr="disabled" wire:target="deleteTtsAudio({{ $ttsModalRowIndex }})" />
+
+                    {{-- Refresh: deletes + regenerates; tts-audio-ready updates the audio player src --}}
+                    <flux:button icon="sparkles" wire:click="refreshTtsAudio({{ $ttsModalRowIndex }})" wire:loading.attr="disabled" wire:loading.class="opacity-60" wire:target="refreshTtsAudio({{ $ttsModalRowIndex }})">
+                        Regenerate
+                    </flux:button>
+                @elseif ($ttsModalRowIndex >= 0)
+                    {{-- Generate: creates audio for the first time --}}
+                    <flux:button variant="primary" icon="speaker-wave" wire:click="generateTtsAudio({{ $ttsModalRowIndex }})" wire:loading.attr="disabled" wire:loading.class="opacity-60" wire:target="generateTtsAudio({{ $ttsModalRowIndex }})">
+                        Generate Audio
+                    </flux:button>
+                @endif
+
+                <flux:modal.close>
+                    <flux:button variant="filled">Close</flux:button>
+                </flux:modal.close>
+            </div>
+        </div>
+    </flux:modal>
 
 </div>
 

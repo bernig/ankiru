@@ -54,6 +54,24 @@ class RussianTextToSpeechService
     }
 
     /**
+     * Delete the cached audio file for the given phrase, if it exists.
+     *
+     * Returns true when the file was found and deleted, false when no cached
+     * file existed for this phrase.
+     */
+    public function deleteAudio(string $rawRussianPhrase): bool
+    {
+        $hash = $this->hashRawString($rawRussianPhrase);
+        $storagePath = "tts/{$hash}.mp3";
+
+        if (! Storage::disk('local')->exists($storagePath)) {
+            return false;
+        }
+
+        return Storage::disk('local')->delete($storagePath);
+    }
+
+    /**
      * Generate (or retrieve from cache) an MP3 audio file for the given Russian
      * phrase. Returns the storage-relative path to the MP3 file.
      *
