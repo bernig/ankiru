@@ -1,10 +1,26 @@
-<div class="min-h-screen" x-data="{ ttsAudioUrl: null, ttsModalAudioSrc: null }" x-on:tts-audio-ready.window="
+<div class="min-h-screen" x-data="{ ttsAudioUrl: null, ttsModalAudioSrc: null, ttsModalOpen: false }" x-on:tts-audio-ready.window="
         ttsAudioUrl = $event.detail.audioUrl;
         ttsModalAudioSrc = $event.detail.audioUrl;
-        $nextTick(() => { if ($refs.ttsPlayer) { $refs.ttsPlayer.load(); $refs.ttsPlayer.play(); } });
+        $nextTick(() => {
+            if (ttsModalOpen) {
+                // Modal is visible: play through the modal player only
+                const modalPlayer = document.getElementById('tts-modal-audio');
+                if (modalPlayer) { modalPlayer.load(); modalPlayer.play(); }
+            } else {
+                // No modal: play the hidden background player
+                if ($refs.ttsPlayer) { $refs.ttsPlayer.load(); $refs.ttsPlayer.play(); }
+            }
+        });
     " x-on:open-tts-modal.window="
         ttsModalAudioSrc = $event.detail.audioUrl || null;
+        ttsModalOpen = true;
         $flux.modal('tts-player').show();
+        if ($event.detail.audioUrl) {
+            $nextTick(() => {
+                const modalPlayer = document.getElementById('tts-modal-audio');
+                if (modalPlayer) { modalPlayer.load(); modalPlayer.play(); }
+            });
+        }
     ">
 
     {{-- Hidden audio element driven by Alpine.js when TTS audio is ready --}}
@@ -81,7 +97,7 @@
                         <flux:table.row class="dark:hover:bg-zinc-750 group border-b border-zinc-100 hover:bg-zinc-50 dark:border-zinc-700" wire:key="row-{{ $rowIndex }}" x-data="{ editingColumnIndex: -1 }">
 
                             {{-- ── Column 0: French text ── --}}
-                            <flux:table.cell class="py-1! w-1/2 whitespace-normal">
+                            <flux:table.cell class="p-1! w-1/2 whitespace-normal">
                                 {{-- Plain text display; clicking opens the edit input --}}
                                 <div class="px-2 text-zinc-800 dark:text-zinc-100" x-show="editingColumnIndex !== 0" x-html="$wire.csvRows[{{ $rowIndex }}][0] !== undefined && $wire.csvRows[{{ $rowIndex }}][0] !== ''
                                              ? $wire.csvRows[{{ $rowIndex }}][0]
@@ -92,7 +108,7 @@
                             </flux:table.cell>
 
                             {{-- ── Pencil column: edit French text ── --}}
-                            <flux:table.cell class="py-1! whitespace-nowrap px-1">
+                            <flux:table.cell class="p-1! whitespace-nowrap px-1">
                                 <div class="flex justify-end gap-1">
                                     <div class="m-0.5 mr-1.5 whitespace-nowrap rounded-full border border-zinc-200 bg-white px-1.5 py-1 opacity-0 transition-opacity group-hover:opacity-100" x-show="editingColumnIndex !== 0">
                                         <button class="cursor-pointer rounded px-0.5 py-1 text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400" title="Edit French text" @click="editingColumnIndex = 0; $nextTick(() => $refs.input_0?.focus())">
@@ -103,7 +119,7 @@
                             </flux:table.cell>
 
                             {{-- ── Column 1: Russian text (accent mode) ── --}}
-                            <flux:table.cell class="py-1! w-1/2 whitespace-normal" x-bind:class="{
+                            <flux:table.cell class="p-1! w-1/2 whitespace-normal" x-bind:class="{
                                 'bg-amber-50 dark:bg-amber-900/20': editingColumnIndex !== 1 && window.csvAccentMode.cellNeedsAccent($wire.csvRows[{{ $rowIndex }}]?.[1] ?? ''),
                                 'bg-green-50 dark:bg-green-900/20': editingColumnIndex !== 1 && $wire.stressCorrectionStatus[{{ $rowIndex }}] === 'corrected',
                             }">
@@ -114,7 +130,7 @@
                             </flux:table.cell>
 
                             {{-- Row actions --}}
-                            <flux:table.cell class="py-0.5!">
+                            <flux:table.cell class="p-0.5!">
                                 <div class="flex justify-end gap-1">
                                     <div class="m-0.5 whitespace-nowrap rounded-full border border-zinc-200 bg-white px-1.5 py-1 opacity-0 transition-opacity group-hover:opacity-100">
                                         {{--
@@ -253,6 +269,7 @@
     @endphp
 
     <flux:modal class="md:w-xl" name="tts-player" x-on:close="
+            ttsModalOpen = false;
             ttsModalAudioSrc = null;
             const player = document.getElementById('tts-modal-audio');
             if (player) { player.pause(); player.removeAttribute('src'); }
@@ -263,7 +280,7 @@
             @if ($ttsModalAudioExists)
                 <div class="flex flex-col gap-2">
                     {{-- Native audio player; src is driven by Alpine to stay reactive across generate/refresh --}}
-                    <audio class="w-full rounded" id="tts-modal-audio" controls autoplay autofocus lang="ru" :src="ttsModalAudioSrc"></audio>
+                    <audio class="w-full rounded" id="tts-modal-audio" controls lang="ru" :src="ttsModalAudioSrc"></audio>
 
                     {{-- File creation date in muted text --}}
                     <flux:text class="text-xs text-zinc-400 dark:text-zinc-500">
@@ -287,7 +304,7 @@
                     <flux:button variant="danger" icon="trash" wire:click="deleteTtsAudio({{ $ttsModalRowIndex }})" wire:loading.attr="disabled" wire:target="deleteTtsAudio({{ $ttsModalRowIndex }})" />
 
                     {{-- Refresh: deletes + regenerates; tts-audio-ready updates the audio player src --}}
-                    <flux:button icon="sparkles" wire:click="refreshTtsAudio({{ $ttsModalRowIndex }})" wire:loading.attr="disabled" wire:loading.class="opacity-60" wire:target="refreshTtsAudio({{ $ttsModalRowIndex }})">
+                    <flux:button icon="sparkles" wire:click="refreshTtsAudio({{ $ttsModalRowIndex }})" wire:loading.attr="disabled" wire:loading.class="opacity-60" wire:target="refreshTtsAudio({{ $ttsModalRowIndex }})" variant="primary">
                         Regenerate
                     </flux:button>
                 @elseif ($ttsModalRowIndex >= 0)
