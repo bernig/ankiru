@@ -129,14 +129,6 @@ test('clamps the current page after deleting the only row on the last page', fun
         ->call('deleteRow', 50)
         ->assertSet('paginators.page', 1);
 });
-test('deleting a row clears per-row accent mode to avoid stale indices', function () {
-    Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
-        ->set('hasCsvLoaded', true)
-        ->set('accentModeRowIndex', 1)
-        ->call('deleteRow', 0)
-        ->assertSet('accentModeRowIndex', -1);
-});
 test('deleting a row clears all stress correction statuses to avoid stale indices', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', sampleRows())
@@ -146,88 +138,35 @@ test('deleting a row clears all stress correction statuses to avoid stale indice
         ->assertSet('stressCorrectionStatus', []);
 });
 // ── Russian Accent Mode ─────────────────────────────────────────────────────
-test('toggles global russian accent mode on', function () {
+test('accent mode is active by default and the edit pencil button is visible for rows with russian text', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', sampleRows())
         ->set('hasCsvLoaded', true)
-        ->call('toggleRussianAccentMode')
-        ->assertSet('isRussianAccentMode', true);
+        ->assertSee('Edit Russian text');
 });
-test('toggles global russian accent mode off when already active', function () {
+test('accent mode pencil button is not rendered when the russian column is empty', function () {
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
+        ->set('csvRows', [['Je travaille.', '']])
         ->set('hasCsvLoaded', true)
-        ->set('isRussianAccentMode', true)
-        ->call('toggleRussianAccentMode')
-        ->assertSet('isRussianAccentMode', false);
+        ->assertDontSee('Edit Russian text');
 });
-test('toggling global accent mode resets the per-row accent mode index', function () {
+test('french pencil button is always rendered for editing the left column', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', sampleRows())
         ->set('hasCsvLoaded', true)
-        ->set('accentModeRowIndex', 1)
-        ->call('toggleRussianAccentMode')
-        ->assertSet('accentModeRowIndex', -1);
+        ->assertSee('Edit French text');
 });
-test('enables per-row accent mode for a specific row', function () {
+test('retranslate button is rendered when both french and russian text exist', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', sampleRows())
         ->set('hasCsvLoaded', true)
-        ->call('toggleRowAccentMode', 1)
-        ->assertSet('accentModeRowIndex', 1);
+        ->assertSee('Regenerate translation with ChatGPT');
 });
-test('clicking the same row again disables per-row accent mode', function () {
+test('retranslate button is not rendered when russian column is empty', function () {
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
+        ->set('csvRows', [['Je travaille.', '']])
         ->set('hasCsvLoaded', true)
-        ->set('accentModeRowIndex', 0)
-        ->call('toggleRowAccentMode', 0)
-        ->assertSet('accentModeRowIndex', -1);
-});
-test('switching per-row accent mode to another row updates the active index', function () {
-    Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
-        ->set('hasCsvLoaded', true)
-        ->set('accentModeRowIndex', 0)
-        ->call('toggleRowAccentMode', 1)
-        ->assertSet('accentModeRowIndex', 1);
-});
-test('hides per-row accent mode buttons when global accent mode is active', function () {
-    Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
-        ->set('hasCsvLoaded', true)
-        ->set('isRussianAccentMode', true)
-        ->assertDontSee('Enable accent mode for this row')
-        ->assertDontSee('Exit accent mode (return to edit mode)');
-});
-test('shows per-row accent mode buttons when global accent mode is inactive', function () {
-    Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
-        ->set('hasCsvLoaded', true)
-        ->set('isRussianAccentMode', false)
-        ->assertSee('Enable accent mode for this row');
-});
-test('per-row accent button title changes to exit message when local accent mode is active for that row', function () {
-    Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
-        ->set('hasCsvLoaded', true)
-        ->set('accentModeRowIndex', 0)
-        ->assertSee('Exit accent mode (return to edit mode)');
-});
-test('per-row accent button title shows enable message when local accent mode is inactive', function () {
-    Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
-        ->set('hasCsvLoaded', true)
-        ->set('accentModeRowIndex', -1)
-        ->assertSee('Enable accent mode for this row');
-});
-test('per-row accent button is hidden when global accent mode is toggled on via the toggle action', function () {
-    Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
-        ->set('hasCsvLoaded', true)
-        ->assertSee('Enable accent mode for this row')
-        ->call('toggleRussianAccentMode')
-        ->assertDontSee('Enable accent mode for this row');
+        ->assertDontSee('Regenerate translation with ChatGPT');
 });
 // ── Accent Placement ────────────────────────────────────────────────────────
 test('places accent on the correct russian vowel', function () {

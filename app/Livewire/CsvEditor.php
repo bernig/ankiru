@@ -135,14 +135,6 @@ PROMPT;
 
     public bool $hasCsvLoaded = false;
 
-    public bool $isRussianAccentMode = false;
-
-    /**
-     * Row index for which per-row accent mode is active (-1 = none).
-     * Allows enabling accent mode for a single row without toggling it globally.
-     */
-    public int $accentModeRowIndex = -1;
-
     /** Row index currently being translated via ChatGPT (-1 = none). */
     public int $translatingRowIndex = -1;
 
@@ -233,25 +225,6 @@ PROMPT;
         $this->resetPage();
 
         $this->autoSaveToTempFile();
-    }
-
-    /**
-     * Toggle Russian accent mode on or off.
-     * Also clears any active per-row accent mode.
-     */
-    public function toggleRussianAccentMode(): void
-    {
-        $this->isRussianAccentMode = ! $this->isRussianAccentMode;
-        $this->accentModeRowIndex = -1;
-    }
-
-    /**
-     * Toggle per-row accent mode for the given row's right column.
-     * Disables itself when the same row is clicked again.
-     */
-    public function toggleRowAccentMode(int $rowIndex): void
-    {
-        $this->accentModeRowIndex = ($this->accentModeRowIndex === $rowIndex) ? -1 : $rowIndex;
     }
 
     /**
@@ -634,7 +607,6 @@ TEXT;
         $this->csvRows = array_values($this->csvRows);
         // Row indices have shifted — clear all correction statuses and per-row accent mode to avoid stale state.
         $this->stressCorrectionStatus = [];
-        $this->accentModeRowIndex = -1;
         // Close the audio modal if it was open for the deleted (or now-shifted) row.
         $this->ttsModalRowIndex = -1;
         $this->autoSaveToTempFile();
