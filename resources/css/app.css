@@ -9,3 +9,33 @@
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Russian accent mode vowel spans ── */
+
+/* Unstressed Russian vowel — clickable in accent mode */
+.rv-vowel {
+    color: #666;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: color 0.1s, background-color 0.1s;
+}
+
+.rv-vowel:hover {
+    color: #1d4ed8;
+    background-color: #dbeafe;
+    text-decoration: underline;
+}
+
+/* Stressed (accented) Russian vowel — already wrapped in <b> */
+.rv-vowel-accented {
+    color: #d97706;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 2px;
+    padding: 0 1px;
+}
+
+.rv-vowel-accented:hover {
+    color: #b45309;
+}
+
