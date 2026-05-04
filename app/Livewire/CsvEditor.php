@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Services\AnkiPackageExporterService;
 use App\Services\RussianTextToSpeechService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Http;
@@ -550,7 +551,7 @@ TEXT;
     }
 
     /**
-     * Trigger a browser download of the current CSV data as a new file.
+     * Trigger a browser download of the current CSV data as a plain CSV file.
      */
     public function downloadCsv(): StreamedResponse
     {
@@ -562,6 +563,70 @@ TEXT;
             echo $csvContent;
         }, $downloadFileName, [
             'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    /**
+     * Build and download a full Anki-compatible .apkg package.
+     *
+     * The package contains a SQLite collection database (collection.anki2) with one
+     * note per CSV row, plus all TTS audio files that have been cached for those rows.
+     * It can be imported directly into AnkiDroid and Anki Desktop.
+     *
+     * Rows without cached TTS audio are exported as text-only cards.
+     */
+    public function downloadAnkiPackage(): StreamedResponse
+    {
+        /** @var RussianTextToSpeechService $ttsService */
+        $ttsService = app(RussianTextToSpeechService::class);
+
+        /** @var AnkiPackageExporterService $exporter */
+        $exporter = app(AnkiPackageExporterService::class);
+
+        /**
+         * Build the card data array expected by the exporter service.
+         *
+         * @var array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}> $cards
+         */
+        $cards = [];
+
+        foreach ($this->csvRows as $row) {
+            $frenchText = $row[0] ?? '';
+            $rawRussianText = $row[1] ?? '';
+
+            // Strip <b> stress tags — Anki does not render them as bold in basic fields.
+            $plainRussianText = trim(str_replace(['<b>', '</b>'], '', $rawRussianText));
+
+            $backFieldValue = $plainRussianText;
+            $mp3StoragePath = null;
+            $mp3FileName = null;
+
+            // Append the Anki sound reference when a cached MP3 exists for this phrase.
+            if (! empty(trim($rawRussianText)) && $ttsService->audioFileExists($rawRussianText)) {
+                $cacheKey = $ttsService->hashRawString($rawRussianText);
+                $mp3FileName = "{$cacheKey}.mp3";
+                $mp3StoragePath = "tts/{$mp3FileName}";
+                $backFieldValue .= " [sound:{$mp3FileName}]";
+            }
+
+            $cards[] = [
+                'front' => $frenchText,
+                'back' => $backFieldValue,
+                'mp3StoragePath' => $mp3StoragePath,
+                'mp3FileName' => $mp3FileName,
+            ];
+        }
+
+        $deckName = pathinfo($this->originalFileName, PATHINFO_FILENAME) ?: 'French-Russian';
+        $apkgPath = $exporter->export($cards, $deckName);
+
+        $downloadFileName = $this->buildApkgDownloadFileName();
+
+        return response()->streamDownload(function () use ($apkgPath): void {
+            readfile($apkgPath);
+            @unlink($apkgPath);
+        }, $downloadFileName, [
+            'Content-Type' => 'application/octet-stream',
         ]);
     }
 
@@ -653,6 +718,20 @@ TEXT;
         }
 
         return $baseName.'_edited_'.now()->format('Ymd_His').'.csv';
+    }
+
+    /**
+     * Generate a download file name for the Anki .apkg package.
+     */
+    private function buildApkgDownloadFileName(): string
+    {
+        $baseName = pathinfo($this->originalFileName, PATHINFO_FILENAME);
+
+        if (empty($baseName)) {
+            $baseName = 'export';
+        }
+
+        return $baseName.'_'.now()->format('Ymd_His').'.apkg';
     }
 
     /**
