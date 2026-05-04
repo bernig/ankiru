@@ -41,7 +41,7 @@ return [
         // TTS: tts-1-hd is the highest-quality neural TTS model from OpenAI.
         // Voice "echo" produces clear, natural-sounding Russian speech.
         // Override via OPENAI_TTS_MODEL / OPENAI_TTS_VOICE in .env.
-        'tts_model' => env('OPENAI_TTS_MODEL', 'tts-1-hd'),
+        'tts_model' => env('OPENAI_TTS_MODEL', 'gpt-4o-mini-tts'),
         'tts_voice' => env('OPENAI_TTS_VOICE', 'echo'),
     ],
 

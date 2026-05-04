@@ -10,9 +10,9 @@ use RuntimeException;
 /**
  * Generates high-quality Russian text-to-speech audio using the OpenAI TTS API.
  *
- * Provider choice: OpenAI `tts-1-hd` model — a neural TTS engine that produces
- * natural, fluent Russian speech. The `tts-1-hd` variant prioritises quality over
- * latency, making it the best option available through the OpenAI API for Russian.
+ * Provider choice: defaults to `gpt-4o-mini-tts`, which natively handles Cyrillic
+ * input and produces natural Russian speech without requiring a language hint.
+ * Override via services.openai.tts_model.
  *
  * Caching strategy: generated MP3 files are stored under storage/app/tts/ with a
  * filename derived from the SHA-256 hash of the raw Russian phrase (including any
@@ -28,7 +28,7 @@ class RussianTextToSpeechService
      * that two phrases that differ only in stress placement are stored separately
      * and can be regenerated independently if needed.
      */
-    public function buildCacheKey(string $rawRussianPhrase): string
+    public function hashRawString(string $rawRussianPhrase): string
     {
         return hash('sha256', $rawRussianPhrase);
     }
@@ -46,23 +46,23 @@ class RussianTextToSpeechService
     /**
      * Return true when a cached audio file already exists for the given phrase.
      */
-    public function hasCachedAudio(string $rawRussianPhrase): bool
+    public function audioFileExists(string $rawRussianPhrase): bool
     {
-        $cacheKey = $this->buildCacheKey($rawRussianPhrase);
+        $hash = $this->hashRawString($rawRussianPhrase);
 
-        return Storage::disk('local')->exists("tts/{$cacheKey}.mp3");
+        return Storage::disk('local')->exists("tts/{$hash}.mp3");
     }
 
     /**
      * Generate (or retrieve from cache) an MP3 audio file for the given Russian
      * phrase. Returns the storage-relative path to the MP3 file.
      *
-     * @throws RuntimeException when the TTS API request fails.
+     * @throws RuntimeException|ConnectionException
      */
     public function generateAudio(string $rawRussianPhrase): string
     {
-        $cacheKey = $this->buildCacheKey($rawRussianPhrase);
-        $storagePath = "tts/{$cacheKey}.mp3";
+        $hash = $this->hashRawString($rawRussianPhrase);
+        $storagePath = "tts/{$hash}.mp3";
 
         // Return the cached file immediately if it already exists.
         if (Storage::disk('local')->exists($storagePath)) {
@@ -80,15 +80,16 @@ class RussianTextToSpeechService
     /**
      * Call the OpenAI TTS API and return raw MP3 binary content.
      *
-     * The `tts-1-hd` model is used for maximum quality. Voice and model are
-     * configurable via services.openai.tts_voice / services.openai.tts_model.
+     * Defaults to `gpt-4o-mini-tts`, which handles Cyrillic natively.
+     * Voice and model are configurable via services.openai.tts_voice /
+     * services.openai.tts_model.
      *
      * @throws RuntimeException|ConnectionException when the API responds with a non-2xx status.
      */
     private function requestAudioFromOpenAi(string $normalizedText): string
     {
         $apiKey = config('services.openai.api_key');
-        $ttsModel = config('services.openai.tts_model', 'tts-1-hd');
+        $ttsModel = config('services.openai.tts_model', 'gpt-4o-mini-tts');
         $ttsVoice = config('services.openai.tts_voice', 'echo');
 
         $response = Http::withToken($apiKey)

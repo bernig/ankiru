@@ -520,7 +520,7 @@ TEXT;
 
             $ttsService->generateAudio($rawRussianText);
 
-            $cacheKey = $ttsService->buildCacheKey($rawRussianText);
+            $cacheKey = $ttsService->hashRawString($rawRussianText);
             $audioUrl = route('tts.serve', $cacheKey);
 
             // Dispatch a browser event; Alpine.js will pick it up and play the audio.

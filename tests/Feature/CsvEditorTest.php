@@ -523,7 +523,7 @@ test('tts service builds a deterministic sha256 cache key from raw russian text'
     $service = new RussianTextToSpeechService;
     $rawText = 'Я раб<b>о</b>таю.';
 
-    expect($service->buildCacheKey($rawText))->toBe(hash('sha256', $rawText));
+    expect($service->hashRawString($rawText))->toBe(hash('sha256', $rawText));
 });
 
 test('tts service strips bold tags and trims whitespace when normalizing for speech', function () {
@@ -538,6 +538,6 @@ test('tts service uses different cache keys for phrases with different stress po
     $phraseWithStressOnO = 'раб<b>о</b>таю';
     $phraseWithStressOnA = 'работ<b>а</b>ю';
 
-    expect($service->buildCacheKey($phraseWithStressOnO))
-        ->not->toBe($service->buildCacheKey($phraseWithStressOnA));
+    expect($service->hashRawString($phraseWithStressOnO))
+        ->not->toBe($service->hashRawString($phraseWithStressOnA));
 });
