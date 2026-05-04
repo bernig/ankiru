@@ -192,6 +192,43 @@ test('switching per-row accent mode to another row updates the active index', fu
         ->call('toggleRowAccentMode', 1)
         ->assertSet('accentModeRowIndex', 1);
 });
+test('hides per-row accent mode buttons when global accent mode is active', function () {
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', sampleRows())
+        ->set('hasCsvLoaded', true)
+        ->set('isRussianAccentMode', true)
+        ->assertDontSee('Enable accent mode for this row')
+        ->assertDontSee('Exit accent mode (return to edit mode)');
+});
+test('shows per-row accent mode buttons when global accent mode is inactive', function () {
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', sampleRows())
+        ->set('hasCsvLoaded', true)
+        ->set('isRussianAccentMode', false)
+        ->assertSee('Enable accent mode for this row');
+});
+test('per-row accent button title changes to exit message when local accent mode is active for that row', function () {
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', sampleRows())
+        ->set('hasCsvLoaded', true)
+        ->set('accentModeRowIndex', 0)
+        ->assertSee('Exit accent mode (return to edit mode)');
+});
+test('per-row accent button title shows enable message when local accent mode is inactive', function () {
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', sampleRows())
+        ->set('hasCsvLoaded', true)
+        ->set('accentModeRowIndex', -1)
+        ->assertSee('Enable accent mode for this row');
+});
+test('per-row accent button is hidden when global accent mode is toggled on via the toggle action', function () {
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', sampleRows())
+        ->set('hasCsvLoaded', true)
+        ->assertSee('Enable accent mode for this row')
+        ->call('toggleRussianAccentMode')
+        ->assertDontSee('Enable accent mode for this row');
+});
 // ── Accent Placement ────────────────────────────────────────────────────────
 test('places accent on the correct russian vowel', function () {
     // Plain text: "работаю" → р(0) а(1) б(2) о(3) т(4) а(5) ю(6)

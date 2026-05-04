@@ -102,16 +102,25 @@
 
                             {{-- Row actions: per-row accent mode + TTS playback + translate + correct-stress + delete buttons --}}
                             <flux:table.cell class="py-1! whitespace-nowrap" align="end">
-                                {{-- Per-row accent mode button: toggles accent mode for the right column of this row --}}
-                                @if (!empty(trim($row[1] ?? '')))
-                                    <button class="{{ $accentModeRowIndex === $rowIndex ? 'text-amber-500 dark:text-amber-400' : 'text-zinc-400 opacity-0 hover:text-amber-500 group-hover:opacity-100 dark:hover:text-amber-400' }} cursor-pointer rounded p-1 transition-opacity" title="{{ $accentModeRowIndex === $rowIndex ? 'Disable accent mode for this row' : 'Enable accent mode for this row' }}" wire:click="toggleRowAccentMode({{ $rowIndex }})">
-                                        <flux:icon.language />
+                                {{--
+                                    Per-row accent mode button: hidden in global accent mode (no need for
+                                    individual controls when all rows are already in accent mode).
+                                    When local accent mode is active for this row, the icon switches to a
+                                    pencil to signal that clicking will return to normal edit mode.
+                                --}}
+                                @if (!empty(trim($row[1] ?? '')) && !$isRussianAccentMode)
+                                    <button class="{{ $accentModeRowIndex === $rowIndex ? 'text-amber-500 dark:text-amber-400' : '' }} cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-amber-500 group-hover:opacity-100 dark:hover:text-amber-400" title="{{ $accentModeRowIndex === $rowIndex ? 'Exit accent mode (return to edit mode)' : 'Enable accent mode for this row' }}" wire:click="toggleRowAccentMode({{ $rowIndex }})">
+                                        @if ($accentModeRowIndex === $rowIndex)
+                                            <flux:icon.pencil />
+                                        @else
+                                            <flux:icon.language />
+                                        @endif
                                     </button>
                                 @endif
 
                                 {{-- TTS play button: generates and plays the Russian phrase using high-quality neural TTS --}}
                                 @if (!empty(trim($row[1] ?? '')))
-                                    <button class="cursor-pointer rounded p-1 text-sky-500 opacity-0 transition-opacity hover:text-sky-700 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 dark:text-sky-400 dark:hover:text-sky-300" title="Play Russian pronunciation" wire:click="generateTtsAudio({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="generateTtsAudio({{ $rowIndex }})">
+                                    <button class="cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-sky-700 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 dark:text-sky-400 dark:hover:text-sky-300" title="Play Russian pronunciation" wire:click="generateTtsAudio({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="generateTtsAudio({{ $rowIndex }})">
                                         <span wire:loading wire:target="generateTtsAudio({{ $rowIndex }})">
                                             <flux:icon.arrow-path class="animate-spin" />
                                         </span>
@@ -123,7 +132,7 @@
 
                                 {{-- Translate button: visible when left column has text and right column is empty --}}
                                 @if (!empty(trim($row[0] ?? '')) && empty(trim($row[1] ?? '')))
-                                    <button class="cursor-default cursor-pointer rounded p-1 text-violet-500 opacity-0 transition-opacity hover:text-violet-700 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 dark:text-violet-400 dark:hover:text-violet-300" title="Translate with ChatGPT" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
+                                    <button class="cursor-default cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-violet-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 dark:text-violet-400 dark:hover:text-violet-300" title="Translate with ChatGPT" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
                                         <span wire:loading wire:target="translateWithChatGpt({{ $rowIndex }})">
                                             <flux:icon.arrow-path class="animate-spin" />
                                         </span>
@@ -141,14 +150,14 @@
                                             <flux:icon.check-circle />
                                         </span>
                                     @else
-                                        <button class="cursor-pointer rounded p-1 text-violet-500 opacity-0 transition-opacity hover:text-violet-700 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 dark:text-violet-400 dark:hover:text-violet-300" title="Fix stress marks with ChatGPT" wire:click="correctStressMarks({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="correctStressMarks({{ $rowIndex }})">
+                                        <button class="cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-orange-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 dark:text-orange-400 dark:hover:text-orange-300" title="Fix stress marks with ChatGPT" wire:click="correctStressMarks({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="correctStressMarks({{ $rowIndex }})">
                                             {{-- Spinner while correcting --}}
                                             <span wire:loading wire:target="correctStressMarks({{ $rowIndex }})">
                                                 <flux:icon.arrow-path class="animate-spin" />
                                             </span>
                                             {{-- Sparkles icon when idle --}}
                                             <span wire:loading.remove wire:target="correctStressMarks({{ $rowIndex }})">
-                                                <flux:icon.sparkles />
+                                                <flux:icon.exclamation-circle />
                                             </span>
                                         </button>
                                     @endif
