@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="bg-zinc-50 p-6 dark:bg-zinc-900" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html class="bg-zinc-50 p-6" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
     <meta charset="utf-8">

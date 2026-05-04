@@ -29,7 +29,7 @@
     {{-- ── Header bar ── --}}
     <div class="mx-auto mb-6 flex max-w-full items-center justify-between gap-4">
         <div class="flex items-center gap-3">
-            <flux:icon.table-cells class="size-7 text-zinc-500 dark:text-zinc-400" />
+            <flux:icon.table-cells class="size-7 text-zinc-500" />
             <flux:heading size="xl">{{ $title ?? 'CSV Editor' }}</flux:heading>
             @if ($hasCsvLoaded && $originalFileName)
                 <flux:badge class="text-xs" variant="outline">{{ $originalFileName }}</flux:badge>
@@ -91,38 +91,35 @@
     @if ($hasCsvLoaded)
 
         <div class="flex flex-col">
-            <flux:table container:class="w-full rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-sm text-sm">
+            <flux:table container:class="w-full rounded border border-zinc-200 bg-white shadow-sm text-sm">
                 <flux:table.rows>
                     @forelse ($this->paginatedRows as $rowIndex => $row)
                         @php
                             $rowHasAudio = !empty(trim($row[1] ?? '')) && $this->ttsAudioExistsForRow($rowIndex);
                         @endphp
 
-                        <flux:table.row class="dark:hover:bg-zinc-750 group border-b border-zinc-100 hover:bg-zinc-50 dark:border-zinc-700"
-                                        x-bind:class="{
-                                            'bg-amber-50 dark:bg-amber-900/20': ($store.csvEditing.rowIndex !== {{ $rowIndex }} || $store.csvEditing.columnIndex !== 1) && window.csvAccentMode.cellNeedsAccent($wire.csvRows[{{ $rowIndex }}]?.[1] ?? ''),
-                                            'bg-green-50 dark:bg-green-900/20': ($store.csvEditing.rowIndex !== {{ $rowIndex }} || $store.csvEditing.columnIndex !== 1) && !window.csvAccentMode.cellNeedsAccent($wire.csvRows[{{ $rowIndex }}]?.[1] ?? '') && ($wire.csvRows[{{ $rowIndex }}]?.[1] ?? '').trim() !== '' && {{ $rowHasAudio ? 'true' : 'false' }},
-                                            'bg-blue-50 dark:bg-blue-900/20': ($store.csvEditing.rowIndex !== {{ $rowIndex }} || $store.csvEditing.columnIndex !== 1) && $wire.stressCorrectionStatus[{{ $rowIndex }}] === 'corrected',
-                                        }"
-                                        wire:key="row-{{ $rowIndex }}"
-                                        x-data="{}">
+                        <flux:table.row class="group border-b border-zinc-100 hover:bg-zinc-50" x-bind:class="{
+                            'bg-amber-50': ($store.csvEditing.rowIndex !== {{ $rowIndex }} || $store.csvEditing.columnIndex !== 1) && window.csvAccentMode.cellNeedsAccent($wire.csvRows[{{ $rowIndex }}]?.[1] ?? ''),
+                            '': ($store.csvEditing.rowIndex !== {{ $rowIndex }} || $store.csvEditing.columnIndex !== 1) && !window.csvAccentMode.cellNeedsAccent($wire.csvRows[{{ $rowIndex }}]?.[1] ?? '') && ($wire.csvRows[{{ $rowIndex }}]?.[1] ?? '').trim() !== '' && {{ $rowHasAudio ? 'true' : 'false' }},
+                            'bg-blue-50/30': ($store.csvEditing.rowIndex !== {{ $rowIndex }} || $store.csvEditing.columnIndex !== 1) && !window.csvAccentMode.cellNeedsAccent($wire.csvRows[{{ $rowIndex }}]?.[1] ?? '') && ($wire.csvRows[{{ $rowIndex }}]?.[1] ?? '').trim() !== '' && !{{ $rowHasAudio ? 'true' : 'false' }},
+                        }" wire:key="row-{{ $rowIndex }}" x-data="{}">
 
                             {{-- ── Column 0: French text ── --}}
                             <flux:table.cell class="p-1! w-1/2 whitespace-normal">
                                 {{-- Plain text display; clicking opens the edit input --}}
-                                <div class="px-2 text-zinc-800 dark:text-zinc-100" x-show="$store.csvEditing.rowIndex !== {{ $rowIndex }} || $store.csvEditing.columnIndex !== 0" x-html="$wire.csvRows[{{ $rowIndex }}][0] !== undefined && $wire.csvRows[{{ $rowIndex }}][0] !== ''
+                                <div class="px-2 text-zinc-800" x-show="$store.csvEditing.rowIndex !== {{ $rowIndex }} || $store.csvEditing.columnIndex !== 0" x-html="$wire.csvRows[{{ $rowIndex }}][0] !== undefined && $wire.csvRows[{{ $rowIndex }}][0] !== ''
                                              ? $wire.csvRows[{{ $rowIndex }}][0]
                                              : '<span class=\'text-zinc-400\'>—</span>'">
                                 </div>
 
-                                <input class="mx-1 w-full rounded border border-blue-500 bg-white px-2 py-1 text-zinc-800 outline-none transition-colors dark:bg-zinc-900 dark:text-zinc-100" x-show="$store.csvEditing.rowIndex === {{ $rowIndex }} && $store.csvEditing.columnIndex === 0" x-ref="input_0" :value="$wire.csvRows[{{ $rowIndex }}][0]" @blur="$wire.updateCell({{ $rowIndex }}, 0, $event.target.value); $store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @keydown.enter="$el.blur()" @keydown.escape="$store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @click.stop placeholder="—" />
+                                <input class="m-1.5! w-full rounded border border-blue-500 bg-white px-2 py-1 text-zinc-800 outline-none transition-colors" x-show="$store.csvEditing.rowIndex === {{ $rowIndex }} && $store.csvEditing.columnIndex === 0" x-ref="input_0" :value="$wire.csvRows[{{ $rowIndex }}][0]" @blur="$wire.updateCell({{ $rowIndex }}, 0, $event.target.value); $store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @keydown.enter="$el.blur()" @keydown.escape="$store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @click.stop placeholder="—" />
                             </flux:table.cell>
 
                             {{-- ── Pencil column: edit French text ── --}}
                             <flux:table.cell class="p-1! whitespace-nowrap px-1">
                                 <div class="flex justify-end gap-1">
                                     <div class="m-0.5 mr-1.5 whitespace-nowrap rounded-full border border-zinc-200 bg-white px-1.5 py-1 opacity-0 transition-opacity group-hover:opacity-100" x-show="$store.csvEditing.rowIndex !== {{ $rowIndex }} || $store.csvEditing.columnIndex !== 0">
-                                        <button class="cursor-pointer rounded px-0.5 py-1 text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400" title="Edit French text" @click="$store.csvEditing.rowIndex = {{ $rowIndex }}; $store.csvEditing.columnIndex = 0; $nextTick(() => $refs.input_0?.focus())">
+                                        <button class="cursor-pointer rounded px-0.5 py-1 text-zinc-400 hover:text-blue-500" title="Edit French text" @click="$store.csvEditing.rowIndex = {{ $rowIndex }}; $store.csvEditing.columnIndex = 0; $nextTick(() => $refs.input_0?.focus())">
                                             <flux:icon.pencil class="size-4" />
                                         </button>
                                     </div>
@@ -130,11 +127,11 @@
                             </flux:table.cell>
 
                             {{-- ── Column 1: Russian text (accent mode) ── --}}
-                            <flux:table.cell class="p-1! w-1/2 whitespace-normal" >
+                            <flux:table.cell class="p-1! w-1/2 whitespace-normal">
                                 {{-- Accent HTML display — vowels are clickable spans --}}
-                                <div class="cursor-default px-2 text-zinc-800 dark:text-zinc-100" x-show="$store.csvEditing.rowIndex !== {{ $rowIndex }} || $store.csvEditing.columnIndex !== 1" x-html="window.csvAccentMode.buildHtml($wire.csvRows[{{ $rowIndex }}]?.[1] ?? '')" @click="window.csvAccentMode.invalidateCache($wire.csvRows[{{ $rowIndex }}]?.[1] ?? ''); window.csvAccentMode.handleClick($event, $wire, 'cell', {{ $rowIndex }}, 1)"></div>
+                                <div class="cursor-default px-2 text-zinc-800" x-show="$store.csvEditing.rowIndex !== {{ $rowIndex }} || $store.csvEditing.columnIndex !== 1" x-html="window.csvAccentMode.buildHtml($wire.csvRows[{{ $rowIndex }}]?.[1] ?? '')" @click="window.csvAccentMode.invalidateCache($wire.csvRows[{{ $rowIndex }}]?.[1] ?? ''); window.csvAccentMode.handleClick($event, $wire, 'cell', {{ $rowIndex }}, 1)"></div>
 
-                                <input class="mx-1 w-full rounded border border-blue-500 bg-white px-2 py-1 text-zinc-800 outline-none transition-colors dark:bg-zinc-900 dark:text-zinc-100" x-show="$store.csvEditing.rowIndex === {{ $rowIndex }} && $store.csvEditing.columnIndex === 1" x-ref="input_1" :value="$wire.csvRows[{{ $rowIndex }}][1]" @blur="window.csvAccentMode.invalidateCache($wire.csvRows[{{ $rowIndex }}]?.[1] ?? ''); $wire.updateCell({{ $rowIndex }}, 1, $event.target.value); $store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @keydown.enter="$el.blur()" @keydown.escape="$store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @click.stop placeholder="—" />
+                                <input class="mx-1 w-full rounded border border-blue-500 bg-white px-2 py-1 text-zinc-800 outline-none transition-colors" x-show="$store.csvEditing.rowIndex === {{ $rowIndex }} && $store.csvEditing.columnIndex === 1" x-ref="input_1" :value="$wire.csvRows[{{ $rowIndex }}][1]" @blur="window.csvAccentMode.invalidateCache($wire.csvRows[{{ $rowIndex }}]?.[1] ?? ''); $wire.updateCell({{ $rowIndex }}, 1, $event.target.value); $store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @keydown.enter="$el.blur()" @keydown.escape="$store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @click.stop placeholder="—" />
                             </flux:table.cell>
 
                             {{-- Row actions --}}
@@ -146,14 +143,14 @@
                                             Hidden while the edit input for that column is active.
                                         --}}
                                         @if (!empty(trim($row[1] ?? '')))
-                                            <button class="cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-blue-500 group-hover:opacity-100 dark:hover:text-blue-400" title="Edit Russian text" x-show="$store.csvEditing.rowIndex !== {{ $rowIndex }} || $store.csvEditing.columnIndex !== 1" @click="$store.csvEditing.rowIndex = {{ $rowIndex }}; $store.csvEditing.columnIndex = 1; $nextTick(() => $refs.input_1?.focus())">
+                                            <button class="cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-blue-500 group-hover:opacity-100" title="Edit Russian text" x-show="$store.csvEditing.rowIndex !== {{ $rowIndex }} || $store.csvEditing.columnIndex !== 1" @click="$store.csvEditing.rowIndex = {{ $rowIndex }}; $store.csvEditing.columnIndex = 1; $nextTick(() => $refs.input_1?.focus())">
                                                 <flux:icon.pencil class="size-4" />
                                             </button>
                                         @endif
 
                                         {{-- TTS button: always visible when Russian text exists; opens the audio player modal --}}
                                         @if (!empty(trim($row[1] ?? '')))
-                                            <button class="cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-sky-700 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 dark:text-sky-400 dark:hover:text-sky-300" title="Open audio player" wire:click="openTtsModal({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})">
+                                            <button class="cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-sky-700 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100" title="Open audio player" wire:click="openTtsModal({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})">
                                                 <span wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})">
                                                     <flux:icon.speaker-wave class="size-4" />
                                                 </span>
@@ -162,7 +159,7 @@
 
                                         {{-- Translate button: visible when French has text and Russian is empty --}}
                                         @if (!empty(trim($row[0] ?? '')) && empty(trim($row[1] ?? '')))
-                                            <button class="cursor-default cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-violet-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 dark:text-violet-400 dark:hover:text-violet-300" title="Translate with ChatGPT" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
+                                            <button class="cursor-default cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-violet-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100" title="Translate with ChatGPT" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
                                                 <span wire:loading wire:target="translateWithChatGpt({{ $rowIndex }})">
                                                     <flux:icon.arrow-path class="size-4 animate-spin" />
                                                 </span>
@@ -174,7 +171,7 @@
 
                                         {{-- Re-translate button: visible when both French and Russian text exist --}}
                                         @if (!empty(trim($row[0] ?? '')) && !empty(trim($row[1] ?? '')))
-                                            <button class="cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-violet-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 dark:text-violet-400 dark:hover:text-violet-300" title="Regenerate translation with ChatGPT" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
+                                            <button class="cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-violet-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100" title="Regenerate translation with ChatGPT" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
                                                 <span wire:loading wire:target="translateWithChatGpt({{ $rowIndex }})">
                                                     <flux:icon.arrow-path class="size-4 animate-spin" />
                                                 </span>
@@ -186,30 +183,23 @@
 
                                         {{-- Correct-stress button: visible when right column has text --}}
                                         @if (!empty(trim($row[1] ?? '')))
-                                            @if (($stressCorrectionStatus[$rowIndex] ?? null) === 'ok')
-                                                {{-- Green checkmark: stress marks were already correct --}}
-                                                <span class="inline-flex items-center p-1 text-green-500 opacity-0 group-hover:opacity-100 dark:text-green-400" title="Stress marks are correct">
-                                                    <flux:icon.check-circle class="size-4" />
+                                            <button class="cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-orange-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100" title="Fix stress marks with ChatGPT" wire:click="correctStressMarks({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="correctStressMarks({{ $rowIndex }})">
+                                                {{-- Spinner while correcting --}}
+                                                <span wire:loading wire:target="correctStressMarks({{ $rowIndex }})">
+                                                    <flux:icon.arrow-path class="size-4 animate-spin" />
                                                 </span>
-                                            @else
-                                                <button class="cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-orange-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 dark:text-orange-400 dark:hover:text-orange-300" title="Fix stress marks with ChatGPT" wire:click="correctStressMarks({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="correctStressMarks({{ $rowIndex }})">
-                                                    {{-- Spinner while correcting --}}
-                                                    <span wire:loading wire:target="correctStressMarks({{ $rowIndex }})">
-                                                        <flux:icon.arrow-path class="size-4 animate-spin" />
-                                                    </span>
-                                                    {{-- Exclamation icon when idle --}}
-                                                    <span wire:loading.remove wire:target="correctStressMarks({{ $rowIndex }})">
-                                                        <flux:icon.exclamation-circle class="size-4" />
-                                                    </span>
-                                                </button>
-                                            @endif
+                                                {{-- Exclamation icon when idle --}}
+                                                <span wire:loading.remove wire:target="correctStressMarks({{ $rowIndex }})">
+                                                    <flux:icon.exclamation-circle class="size-4" />
+                                                </span>
+                                            </button>
                                         @endif
                                     </div>
 
                                     <flux:separator class="my-1.5 opacity-0 transition-opacity group-hover:opacity-75" vertical />
 
                                     <div class="m-0.5 mr-1.5 whitespace-nowrap rounded-full border border-zinc-200 bg-white px-1.5 py-1 opacity-0 transition-opacity group-hover:opacity-100">
-                                        <button class="cursor-pointer rounded px-0.5 py-1 text-zinc-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100 dark:hover:text-red-400" title="Delete row" wire:click="deleteRow({{ $rowIndex }})">
+                                        <button class="cursor-pointer rounded px-0.5 py-1 text-zinc-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100" title="Delete row" wire:click="deleteRow({{ $rowIndex }})">
                                             <flux:icon.trash class="size-4" />
                                         </button>
                                     </div>
@@ -218,7 +208,7 @@
                         </flux:table.row>
                     @empty
                         <flux:table.row>
-                            <flux:table.cell class="px-4 py-8 text-center text-zinc-400 dark:text-zinc-500">
+                            <flux:table.cell class="px-4 py-8 text-center text-zinc-400">
                                 No rows yet. Click "Add row" to add one.
                             </flux:table.cell>
                         </flux:table.row>
@@ -227,7 +217,7 @@
             </flux:table>
             {{-- Translation error banner --}}
             @if ($translationError)
-                <div class="mb-3 flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800 dark:border-red-600 dark:bg-red-900/20 dark:text-red-300">
+                <div class="mb-3 flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800">
                     <flux:icon.exclamation-triangle class="size-4 shrink-0" />
                     <span>{{ $translationError }}</span>
                 </div>
@@ -235,7 +225,7 @@
 
             {{-- TTS error banner --}}
             @if ($ttsError)
-                <div class="mb-3 flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800 dark:border-red-600 dark:bg-red-900/20 dark:text-red-300">
+                <div class="mb-3 flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800">
                     <flux:icon.exclamation-triangle class="size-4 shrink-0" />
                     <span>{{ $ttsError }}</span>
                 </div>
@@ -291,7 +281,7 @@
                     <audio class="w-full rounded" id="tts-modal-audio" controls lang="ru" :src="ttsModalAudioSrc"></audio>
 
                     {{-- File creation date in muted text --}}
-                    <flux:text class="text-xs text-zinc-400 dark:text-zinc-500">
+                    <flux:text class="text-xs text-zinc-400">
                         Generated {{ $ttsModalCreatedAt }}
                     </flux:text>
                 </div>
@@ -361,23 +351,6 @@
             color: #b45309;
         }
 
-        /* Dark-mode overrides — uses class-based dark mode (.dark ancestor) */
-        :where(.dark, .dark *) .rv-vowel {
-            color: #60a5fa;
-        }
-
-        :where(.dark, .dark *) .rv-vowel:hover {
-            color: #93c5fd;
-            background-color: #1e3a5f;
-        }
-
-        :where(.dark, .dark *) .rv-vowel-accented {
-            color: #fbbf24;
-        }
-
-        :where(.dark, .dark *) .rv-vowel-accented:hover {
-            color: #fde68a;
-        }
     </style>
 @endonce
 
@@ -391,7 +364,10 @@
          * being active at the same time.
          */
         document.addEventListener('alpine:init', () => {
-            Alpine.store('csvEditing', { rowIndex: -1, columnIndex: -1 });
+            Alpine.store('csvEditing', {
+                rowIndex: -1,
+                columnIndex: -1
+            });
         });
 
         /**

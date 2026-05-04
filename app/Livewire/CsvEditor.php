@@ -156,14 +156,6 @@ PROMPT;
      */
     public int $ttsModalRowIndex = -1;
 
-    /**
-     * Tracks stress correction outcomes per row (transient, not persisted).
-     * Values: 'corrected' = text was changed, 'ok' = text was already correct.
-     *
-     * @var array<int, string>
-     */
-    public array $stressCorrectionStatus = [];
-
     public function mount(): void
     {
         $this->restoreFromTempFile();
@@ -299,11 +291,6 @@ PROMPT;
 
         $this->csvRows[$rowIndex][$columnIndex] = $value;
 
-        // Clear any correction status when the translated column is manually edited.
-        if ($columnIndex === 1) {
-            unset($this->stressCorrectionStatus[$rowIndex]);
-        }
-
         $this->autoSaveToTempFile();
     }
 
@@ -373,8 +360,6 @@ PROMPT;
 
             $this->csvRows[$rowIndex][1] = trim($translatedText);
             $this->autoSaveToTempFile();
-            // A fresh translation supersedes any previous correction status.
-            unset($this->stressCorrectionStatus[$rowIndex]);
 
         } catch (\Exception $exception) {
             $this->translationError = 'Translation failed: '.$exception->getMessage();
@@ -451,10 +436,7 @@ TEXT;
 
             if ($correctedText !== $russianText) {
                 $this->csvRows[$rowIndex][1] = $correctedText;
-                $this->stressCorrectionStatus[$rowIndex] = 'corrected';
                 $this->autoSaveToTempFile();
-            } else {
-                $this->stressCorrectionStatus[$rowIndex] = 'ok';
             }
 
         } catch (\Exception $exception) {
@@ -605,8 +587,7 @@ TEXT;
     {
         unset($this->csvRows[$rowIndex]);
         $this->csvRows = array_values($this->csvRows);
-        // Row indices have shifted — clear all correction statuses and per-row accent mode to avoid stale state.
-        $this->stressCorrectionStatus = [];
+        // Row indices have shifted — clear per-row state to avoid stale references.
         // Close the audio modal if it was open for the deleted (or now-shifted) row.
         $this->ttsModalRowIndex = -1;
         $this->autoSaveToTempFile();
@@ -715,6 +696,92 @@ TEXT;
     {
         return view('livewire.csv-editor')
             ->layout('layouts.app');
+    }
+
+    // -------------------------------------------------------------------------
+    // Stress-correction helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Return true when the Russian text in column 1 of the given row contains at
+     * least one word with more than 2 vowels that has no <b>…</b> stress mark.
+     *
+     * Mirrors the JS `cellNeedsAccent` logic so the server-side condition is
+     * always consistent with what Alpine highlights in the UI.
+     */
+    public function rowNeedsStressCorrection(int $rowIndex): bool
+    {
+        $rawText = $this->csvRows[$rowIndex][1] ?? '';
+
+        if (empty(trim($rawText))) {
+            return false;
+        }
+
+        $russianVowels = 'аеёиоуыэюяАЕЁИОУЫЭЮЯ';
+
+        $inBold = false;
+        $wordTotalVowels = 0;
+        $wordAccentedVowels = 0;
+        $inCyrillicWord = false;
+
+        /**
+         * Evaluate the current word: returns true when it needs an accent.
+         * Always resets the word-level counters.
+         */
+        $flushWord = function () use (&$wordTotalVowels, &$wordAccentedVowels, &$inCyrillicWord): bool {
+            $needsAccent = $inCyrillicWord && $wordTotalVowels > 2 && $wordAccentedVowels === 0;
+            $wordTotalVowels = 0;
+            $wordAccentedVowels = 0;
+            $inCyrillicWord = false;
+
+            return $needsAccent;
+        };
+
+        $i = 0;
+        $length = mb_strlen($rawText);
+
+        while ($i < $length) {
+            $remaining = mb_substr($rawText, $i);
+
+            if (str_starts_with($remaining, '<b>')) {
+                $inBold = true;
+                $i += 3;
+
+                continue;
+            }
+
+            if (str_starts_with($remaining, '</b>')) {
+                $inBold = false;
+                $i += 4;
+
+                continue;
+            }
+
+            $char = mb_substr($rawText, $i, 1);
+            $isCyrillicChar = preg_match('/[а-яёА-ЯЁ]/u', $char) === 1;
+
+            if ($isCyrillicChar) {
+                $inCyrillicWord = true;
+
+                if (mb_strpos($russianVowels, $char) !== false) {
+                    $wordTotalVowels++;
+
+                    if ($inBold) {
+                        $wordAccentedVowels++;
+                    }
+                }
+            } else {
+                // Non-Cyrillic character: word boundary reached — evaluate the completed word.
+                if ($flushWord()) {
+                    return true;
+                }
+            }
+
+            $i++;
+        }
+
+        // Evaluate any trailing word after the loop ends.
+        return $flushWord();
     }
 
     // -------------------------------------------------------------------------

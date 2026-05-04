@@ -78,21 +78,23 @@ test('updates a cell value in the right column', function () {
         ->call('updateCell', 0, 1, 'Я ост<b>а</b>юсь д<b>о</b>ма.')
         ->assertSet('csvRows.0.1', 'Я ост<b>а</b>юсь д<b>о</b>ма.');
 });
-test('editing the right column clears the stress correction status for that row', function () {
-    Livewire::test(CsvEditor::class)
+test('row needs stress correction returns false after updating column 1 with fully accented text', function () {
+    $component = Livewire::test(CsvEditor::class)
         ->set('csvRows', sampleRows())
         ->set('hasCsvLoaded', true)
-        ->set('stressCorrectionStatus', [0 => 'corrected'])
-        ->call('updateCell', 0, 1, 'Я ост<b>а</b>юсь д<b>о</b>ма.')
-        ->assertSet('stressCorrectionStatus', []);
+        ->call('updateCell', 0, 1, 'Я ост<b>а</b>юсь д<b>о</b>ма.');
+
+    expect($component->instance()->rowNeedsStressCorrection(0))->toBeFalse();
 });
-test('editing the left column does not clear the stress correction status', function () {
-    Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
+test('row needs stress correction is unaffected when only the left column is edited', function () {
+    // Start with Russian text that has no accent on a 3-vowel word.
+    $component = Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je travaille.', 'Я работаю.']])
         ->set('hasCsvLoaded', true)
-        ->set('stressCorrectionStatus', [0 => 'corrected'])
-        ->call('updateCell', 0, 0, 'Je rentre chez moi.')
-        ->assertSet('stressCorrectionStatus.0', 'corrected');
+        ->call('updateCell', 0, 0, 'Je rentre chez moi.');
+
+    // Russian column was not touched — still needs an accent.
+    expect($component->instance()->rowNeedsStressCorrection(0))->toBeTrue();
 });
 // ── Row Management ──────────────────────────────────────────────────────────
 test('adds an empty row at the end', function () {
@@ -129,13 +131,18 @@ test('clamps the current page after deleting the only row on the last page', fun
         ->call('deleteRow', 50)
         ->assertSet('paginators.page', 1);
 });
-test('deleting a row clears all stress correction statuses to avoid stale indices', function () {
-    Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
+test('row needs stress correction resets correctly after a row is deleted and indices shift', function () {
+    // Two rows: first has no accent (needs correction), second has accent (does not).
+    $component = Livewire::test(CsvEditor::class)
+        ->set('csvRows', [
+            ['Je travaille.', 'Я работаю.'],
+            ['Je reste.', 'Я ост<b>а</b>юсь.'],
+        ])
         ->set('hasCsvLoaded', true)
-        ->set('stressCorrectionStatus', [0 => 'ok', 1 => 'corrected'])
-        ->call('deleteRow', 0)
-        ->assertSet('stressCorrectionStatus', []);
+        ->call('deleteRow', 0);
+
+    // After deleting row 0, the former row 1 becomes row 0 — it has an accent.
+    expect($component->instance()->rowNeedsStressCorrection(0))->toBeFalse();
 });
 // ── Russian Accent Mode ─────────────────────────────────────────────────────
 test('accent mode is active by default and the edit pencil button is visible for rows with russian text', function () {
@@ -327,7 +334,6 @@ test('corrects stress marks and sends french context with the russian text', fun
         ->set('hasCsvLoaded', true)
         ->call('correctStressMarks', 0)
         ->assertSet('csvRows.0.1', 'Я раб<b>о</b>таю из д<b>о</b>ма.')
-        ->assertSet('stressCorrectionStatus.0', 'corrected')
         ->assertSet('correctingStressRowIndex', -1);
 
     Http::assertSent(function ($request) {
@@ -342,7 +348,7 @@ test('corrects stress marks and sends french context with the russian text', fun
         return true;
     });
 });
-test('records ok status when chatgpt returns the text unchanged', function () {
+test('row needs stress correction returns false when chatgpt returns already correct text', function () {
     config(['services.openai.api_key' => 'test-api-key']);
     $alreadyCorrectText = 'Я раб<b>о</b>таю из д<b>о</b>ма.';
     Http::fake([
@@ -352,11 +358,12 @@ test('records ok status when chatgpt returns the text unchanged', function () {
             ],
         ], 200),
     ]);
-    Livewire::test(CsvEditor::class)
+    $component = Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille depuis chez moi.', $alreadyCorrectText]])
         ->set('hasCsvLoaded', true)
-        ->call('correctStressMarks', 0)
-        ->assertSet('stressCorrectionStatus.0', 'ok');
+        ->call('correctStressMarks', 0);
+
+    expect($component->instance()->rowNeedsStressCorrection(0))->toBeFalse();
 });
 // ── Russian TTS (Text-to-Speech) ────────────────────────────────────────────
 test('does not call the tts api when the russian column is empty', function () {
@@ -391,7 +398,7 @@ test('generates tts audio from the russian phrase and dispatches a playback even
     Http::assertSent(function ($request) {
         return str_contains($request->url(), '/v1/audio/speech')
             && $request->data()['input'] === 'Я работаю.'
-            && $request->data()['model'] === 'tts-1-hd';
+            && $request->data()['model'] === 'gpt-4o-mini-tts';
     });
 });
 
