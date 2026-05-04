@@ -81,18 +81,24 @@ Output only the final Russian text with tags.
 PROMPT;
 
     const STRESS_CORRECTION_PROMPT = <<<'PROMPT'
-You are a Russian stress-mark reviewer.
+You are a Russian stress-mark reviewer and native-pronunciation expert.
 
 Input: Russian text with stress marks encoded as <b>vowel</b> (one bold vowel per word marks the stress).
 
-Task: review and correct every stress mark.
+Task: review and correct every stress mark so that it reflects standard contemporary Russian pronunciation.
 
-Rules:
+Tagging rules:
 • Only words with ≥2 vowels get a mark
 • Exactly ONE stressed vowel per word
 • "ё" is ALWAYS stressed → must be <b>ё</b>
 • No tags on: abbreviations, numbers, punctuation
 • Vowels: а е ё и о у ы э ю я
+
+Pronunciation rules (apply these with the highest priority):
+• Use the stress that matches standard contemporary spoken Russian (modern literary norm)
+• Read the full sentence for context; if a word's stress depends on meaning or grammatical form, choose the stress that fits THIS sentence (e.g. за́мок vs замо́к, ру́ки vs руки́, до́рог vs доро́г)
+• Prioritise natural, native-speaker pronunciation over dictionary headword placement when the two differ in colloquial use
+• Preserve the original wording; only change a word's form if the current form is grammatically incompatible with correct stress placement and sounds unnatural as written
 
 Return ONLY the corrected text with <b>...</b> tags. No explanations.
 If already correct, return the text unchanged.
