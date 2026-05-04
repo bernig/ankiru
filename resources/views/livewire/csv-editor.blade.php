@@ -1,10 +1,10 @@
-<div class="min-h-screen ">
+<div class="min-h-screen">
 
     {{-- ── Header bar ── --}}
     <div class="mx-auto mb-6 flex max-w-full items-center justify-between gap-4">
         <div class="flex items-center gap-3">
             <flux:icon.table-cells class="size-7 text-zinc-500 dark:text-zinc-400" />
-            <flux:heading size="xl">{{$title??"CSV Editor"}}</flux:heading>
+            <flux:heading size="xl">{{ $title ?? 'CSV Editor' }}</flux:heading>
             @if ($hasCsvLoaded && $originalFileName)
                 <flux:badge class="text-xs" variant="outline">{{ $originalFileName }}</flux:badge>
             @endif
@@ -74,9 +74,9 @@
             <flux:table container:class="w-full rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-sm text-sm">
                 <flux:table.rows>
                     @forelse ($this->paginatedRows as $rowIndex => $row)
-                        <flux:table.row wire:key="row-{{ $rowIndex }}" class="dark:hover:bg-zinc-750 group border-b border-zinc-100 hover:bg-zinc-50 dark:border-zinc-700">
+                        <flux:table.row class="dark:hover:bg-zinc-750 group border-b border-zinc-100 hover:bg-zinc-50 dark:border-zinc-700" wire:key="row-{{ $rowIndex }}">
                             @foreach ($row as $columnIndex => $cellValue)
-                                <flux:table.cell class="py-1! whitespace-normal w-1/2" x-data="{ editing: false }" x-on:click="if (!$wire.isRussianAccentMode && !($wire.accentModeRowIndex === {{ $rowIndex }} && {{ $columnIndex }} === 1)) { editing = true; $nextTick(() => $refs.input.focus()) }" x-bind:class="{
+                                <flux:table.cell class="py-1! w-1/2 whitespace-normal" x-data="{ editing: false }" x-on:click="if (!$wire.isRussianAccentMode && !($wire.accentModeRowIndex === {{ $rowIndex }} && {{ $columnIndex }} === 1)) { editing = true; $nextTick(() => $refs.input.focus()) }" x-bind:class="{
                                     'cursor-text': !$wire.isRussianAccentMode && !($wire.accentModeRowIndex === {{ $rowIndex }} && {{ $columnIndex }} === 1),
                                     'bg-amber-50 dark:bg-amber-900/20 ring-1 ring-inset ring-amber-300 dark:ring-amber-600': ($wire.isRussianAccentMode || ($wire.accentModeRowIndex === {{ $rowIndex }} && {{ $columnIndex }} === 1)) && window.csvAccentMode.cellNeedsAccent($wire.csvRows[{{ $rowIndex }}]?.[{{ $columnIndex }}] ?? ''),
                                     'bg-green-50 dark:bg-green-900/20 ring-2 ring-inset ring-green-400 dark:ring-green-500': {{ $columnIndex }} === 1 && !$wire.isRussianAccentMode && $wire.accentModeRowIndex !== {{ $rowIndex }} && $wire.stressCorrectionStatus[{{ $rowIndex }}] === 'corrected',
@@ -98,7 +98,7 @@
                             <flux:table.cell class="py-1! whitespace-nowrap" align="end">
                                 {{-- Per-row accent mode button: toggles accent mode for the right column of this row --}}
                                 @if (!empty(trim($row[1] ?? '')))
-                                    <button class="cursor-pointer rounded p-1 transition-opacity {{ $accentModeRowIndex === $rowIndex ? 'text-amber-500 dark:text-amber-400' : 'text-zinc-400 opacity-0 hover:text-amber-500 group-hover:opacity-100 dark:hover:text-amber-400' }}" title="{{ $accentModeRowIndex === $rowIndex ? 'Disable accent mode for this row' : 'Enable accent mode for this row' }}" wire:click="toggleRowAccentMode({{ $rowIndex }})">
+                                    <button class="{{ $accentModeRowIndex === $rowIndex ? 'text-amber-500 dark:text-amber-400' : 'text-zinc-400 opacity-0 hover:text-amber-500 group-hover:opacity-100 dark:hover:text-amber-400' }} cursor-pointer rounded p-1 transition-opacity" title="{{ $accentModeRowIndex === $rowIndex ? 'Disable accent mode for this row' : 'Enable accent mode for this row' }}" wire:click="toggleRowAccentMode({{ $rowIndex }})">
                                         <flux:icon.language />
                                     </button>
                                 @endif
@@ -137,7 +137,7 @@
                                 @endif
 
                                 <button class="cursor-pointer rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100 dark:hover:text-red-400" title="Delete row" wire:click="deleteRow({{ $rowIndex }})">
-                                    <flux:icon.trash  />
+                                    <flux:icon.trash />
                                 </button>
                             </flux:table.cell>
                         </flux:table.row>

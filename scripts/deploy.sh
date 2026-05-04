@@ -52,6 +52,7 @@ if [ "$DEV_MODE" = false ]; then
 fi
 
 ensure_directories "lang-custom"
+bash "$SCRIPT_DIR/set_permissions.sh"
 disable_maintenance
 
 log "Deployment completed successfully!"

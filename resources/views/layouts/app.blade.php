@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="bg-zinc-50 p-6 dark:bg-zinc-900">
+<html class="bg-zinc-50 p-6 dark:bg-zinc-900" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
     <meta charset="utf-8">
@@ -11,7 +11,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="min-h-screen max-w-7xl mx-auto">
+<body class="mx-auto min-h-screen max-w-7xl">
     {{ $slot }}
     @fluxScripts
 </body>

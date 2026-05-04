@@ -64,6 +64,7 @@ if [ "$DEV_MODE" = true ]; then
 fi
 
 cache_views
+bash "$SCRIPT_DIR/set_permissions.sh"
 disable_maintenance
 
 log "Update completed successfully!"

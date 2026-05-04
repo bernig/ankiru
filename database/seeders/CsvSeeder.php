@@ -1,6 +1,9 @@
 <?php
+
 namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
+
 class CsvSeeder extends Seeder
 {
     /**
@@ -27,6 +30,7 @@ class CsvSeeder extends Seeder
         ['Je voudrais un verre d\'eau, s\'il vous plait.', 'Дайте мне, пожалуйста, ст<b>а</b>кан в<b>о</b>ды.'],
         ['Mon professeur est tres patient.', 'Мой преподав<b>а</b>тель оч<b>е</b>нь терпел<b>и</b>в.'],
     ];
+
     /**
      * Seed the CSV editor temp file with sample translation data.
      * This allows developers to open the app with data already loaded
@@ -44,6 +48,6 @@ class CsvSeeder extends Seeder
             storage_path('app/csv_editor_temp.json'),
             json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
         );
-        $this->command->info('CSV editor seeded with ' . count(self::SAMPLE_ROWS) . ' sample translation rows.');
+        $this->command->info('CSV editor seeded with '.count(self::SAMPLE_ROWS).' sample translation rows.');
     }
 }

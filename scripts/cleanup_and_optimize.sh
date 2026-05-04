@@ -20,6 +20,5 @@ clear_laravel_caches
 cache_laravel_config
 #cache_filament_components
 generate_ide_helpers
-bash "$SCRIPT_DIR/set_permissions.sh"
 
 log "Development tasks completed successfully!"
