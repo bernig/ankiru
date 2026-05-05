@@ -252,8 +252,9 @@ window.csvAccentMode = (function () {
             if (wc.length === 0) return false;
             const totalVowels = wc.filter(({ c }) => RUSSIAN_VOWELS.has(c)).length;
             const accentedVowels = wc.filter(({ c, bold }) => RUSSIAN_VOWELS.has(c) && bold).length;
-            // Highlight only when there are > 2 vowels and no accent yet.
-            return totalVowels > 2 && accentedVowels === 0;
+            // Highlight only when there are > 1 vowel (two or more) and no accent yet.
+            // Matches the ≥2-vowel rule used by the AI agents and RussianAccentService.
+            return totalVowels > 1 && accentedVowels === 0;
         };
 
         for (const charObj of chars) {

@@ -12,10 +12,11 @@ class RussianAccentService
 
     /**
      * Return true when the given Russian text contains at least one Cyrillic word
-     * with more than two vowels that has no <b>…</b> stress mark.
+     * with two or more vowels that has no <b>…</b> stress mark.
      *
      * Mirrors the JS `cellNeedsAccent` logic so the server-side condition stays
-     * consistent with what Alpine highlights in the UI.
+     * consistent with what Alpine highlights in the UI, and matches the ≥2-vowel
+     * rule used by the AI agents.
      */
     public function textNeedsStressCorrection(string $rawText): bool
     {
@@ -33,7 +34,7 @@ class RussianAccentService
          * Returns true when the word needs a stress mark.
          */
         $flushWord = function () use (&$wordTotalVowels, &$wordAccentedVowels, &$inCyrillicWord): bool {
-            $needsAccent = $inCyrillicWord && $wordTotalVowels > 2 && $wordAccentedVowels === 0;
+            $needsAccent = $inCyrillicWord && $wordTotalVowels > 1 && $wordAccentedVowels === 0;
             $wordTotalVowels = 0;
             $wordAccentedVowels = 0;
             $inCyrillicWord = false;
