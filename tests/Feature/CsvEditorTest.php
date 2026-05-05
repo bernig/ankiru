@@ -30,7 +30,7 @@ test('component renders successfully', function () {
 test('shows the upload panel when no csv is loaded', function () {
     Livewire::test(CsvEditor::class)
         ->assertSet('hasCsvLoaded', false)
-        ->assertSee('Upload a CSV file');
+        ->assertSee(__('csv_editor.upload_heading'));
 });
 test('hides the upload panel and shows rows when a csv is loaded', function () {
     // Cell content is rendered via Alpine x-html (client-side), so assertSee is not
@@ -38,7 +38,7 @@ test('hides the upload panel and shows rows when a csv is loaded', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', sampleRows())
         ->set('hasCsvLoaded', true)
-        ->assertDontSee('Upload a CSV file')
+        ->assertDontSee(__('csv_editor.upload_heading'))
         ->assertSet('hasCsvLoaded', true)
         ->assertCount('csvRows', 2);
 });
@@ -63,7 +63,7 @@ test('rejects an empty csv file with a validation error', function () {
     Livewire::test(CsvEditor::class)
         ->set('uploadedCsvFile', $uploadedFile)
         ->assertSet('hasCsvLoaded', false)
-        ->assertSet('validationError', 'The CSV file appears to be empty or malformed.');
+        ->assertSet('validationError', __('csv_editor.error_csv_empty_or_malformed'));
 });
 // ── Cell Editing ────────────────────────────────────────────────────────────
 test('updates a cell value in the left column', function () {
@@ -151,31 +151,31 @@ test('accent mode is active by default and the edit pencil button is visible for
     Livewire::test(CsvEditor::class)
         ->set('csvRows', sampleRows())
         ->set('hasCsvLoaded', true)
-        ->assertSee('Edit Russian text');
+        ->assertSee(__('csv_editor.edit_russian_text'));
 });
 test('accent mode pencil button is not rendered when the russian column is empty', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille.', '']])
         ->set('hasCsvLoaded', true)
-        ->assertDontSee('Edit Russian text');
+        ->assertDontSee(__('csv_editor.edit_russian_text'));
 });
 test('french pencil button is always rendered for editing the left column', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', sampleRows())
         ->set('hasCsvLoaded', true)
-        ->assertSee('Edit French text');
+        ->assertSee(__('csv_editor.edit_french_text'));
 });
 test('retranslate button is rendered when both french and russian text exist', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', sampleRows())
         ->set('hasCsvLoaded', true)
-        ->assertSee('Regenerate translation with ChatGPT');
+        ->assertSee(__('csv_editor.retranslate_with_chatgpt'));
 });
 test('retranslate button is not rendered when russian column is empty', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille.', '']])
         ->set('hasCsvLoaded', true)
-        ->assertDontSee('Regenerate translation with ChatGPT');
+        ->assertDontSee(__('csv_editor.retranslate_with_chatgpt'));
 });
 // ── Accent Placement ────────────────────────────────────────────────────────
 test('places accent on the correct russian vowel', function () {
@@ -232,7 +232,7 @@ test('resetting the editor clears state and returns to the upload panel', functi
         ->assertSet('hasCsvLoaded', false)
         ->assertSet('csvRows', [])
         ->assertSet('originalFileName', '')
-        ->assertSee('Upload a CSV file');
+        ->assertSee(__('csv_editor.upload_heading'));
 });
 test('resetting the editor deletes the temp file if it exists', function () {
     file_put_contents(tempFilePath(), json_encode([
@@ -400,7 +400,7 @@ test('sets a tts error when audio generation throws an exception', function () {
         ->set('csvRows', [['Je travaille.', 'Я работаю.']])
         ->set('hasCsvLoaded', true)
         ->call('generateTtsAudio', 0)
-        ->assertSet('ttsError', 'Audio generation failed: TTS provider error.')
+        ->assertSet('ttsError', __('csv_editor.error_audio_generation_failed', ['message' => 'TTS provider error.']))
         ->assertSet('ttsGeneratingRowIndex', -1);
 });
 

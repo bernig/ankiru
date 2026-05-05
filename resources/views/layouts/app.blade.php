@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ?? 'CSV Editor' }}</title>
+    <title>{{ $title ?? config('app.name') }}</title>
     <link href="/favicon.ico" rel="icon" sizes="any">
     <link type="image/svg+xml" href="/favicon.svg" rel="icon">
     @fonts

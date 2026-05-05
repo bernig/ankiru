@@ -127,7 +127,7 @@ class CsvEditor extends Component
         $fileContent = file_get_contents($this->uploadedCsvFile->getRealPath());
 
         if ($fileContent === false) {
-            $this->validationError = 'Could not read the uploaded file.';
+            $this->validationError = __('csv_editor.error_cannot_read_file');
 
             return;
         }
@@ -136,7 +136,7 @@ class CsvEditor extends Component
         $parsed = $this->parseCsvContent($fileContent);
 
         if ($parsed === false || count($parsed) === 0) {
-            $this->validationError = 'The CSV file appears to be empty or malformed.';
+            $this->validationError = __('csv_editor.error_csv_empty_or_malformed');
 
             return;
         }
@@ -331,7 +331,7 @@ class CsvEditor extends Component
 
             $this->dispatch('tts-audio-ready', audioUrl: $audioUrl);
         } catch (Exception|FailoverableException $exception) {
-            $this->ttsError = 'Audio generation failed: '.$exception->getMessage();
+            $this->ttsError = __('csv_editor.error_audio_generation_failed', ['message' => $exception->getMessage()]);
         } finally {
             $this->ttsGeneratingRowIndex = -1;
         }

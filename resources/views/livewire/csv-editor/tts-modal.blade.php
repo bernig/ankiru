@@ -33,13 +33,13 @@
 
                 {{-- File creation date in muted text --}}
                 <flux:text class="text-xs text-zinc-400">
-                    Generated {{ $ttsModalCreatedAt }}
+                    {{ __('csv_editor.generated_at', ['date' => $ttsModalCreatedAt]) }}
                 </flux:text>
             </div>
         @elseif ($ttsModalRowIndex >= 0)
             <flux:callout variant="warning" icon="speaker-x-mark">
                 <flux:callout.text>
-                    No audio file generated yet for this phrase.
+                    {{ __('csv_editor.no_audio_yet') }}
                 </flux:callout.text>
             </flux:callout>
         @endif
@@ -54,17 +54,17 @@
 
                 {{-- Refresh: deletes + regenerates; tts-audio-ready updates the audio player src --}}
                 <flux:button icon="sparkles" wire:click="refreshTtsAudio({{ $ttsModalRowIndex }})" wire:loading.attr="disabled" wire:loading.class="opacity-60" wire:target="refreshTtsAudio({{ $ttsModalRowIndex }})" variant="primary">
-                    Regenerate
+                    {{ __('csv_editor.regenerate') }}
                 </flux:button>
             @elseif ($ttsModalRowIndex >= 0)
                 {{-- Generate: creates audio for the first time --}}
                 <flux:button variant="primary" icon="speaker-wave" wire:click="generateTtsAudio({{ $ttsModalRowIndex }})" wire:loading.attr="disabled" wire:loading.class="opacity-60" wire:target="generateTtsAudio({{ $ttsModalRowIndex }})">
-                    Generate Audio
+                    {{ __('csv_editor.generate_audio') }}
                 </flux:button>
             @endif
 
             <flux:modal.close>
-                <flux:button variant="filled">Close</flux:button>
+                <flux:button variant="filled">{{ __('csv_editor.close') }}</flux:button>
             </flux:modal.close>
         </div>
     </div>
