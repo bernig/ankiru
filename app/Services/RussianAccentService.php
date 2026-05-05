@@ -8,7 +8,7 @@ namespace App\Services;
  */
 class RussianAccentService
 {
-    private const RUSSIAN_VOWELS = 'аеёиоуыэюяАЕЁИОУЫЭЮЯ';
+    private const string RUSSIAN_VOWELS = 'аеёиоуыэюяАЕЁИОУЫЭЮЯ';
 
     /**
      * Return true when the given Russian text contains at least one Cyrillic word
@@ -86,6 +86,69 @@ class RussianAccentService
 
         // Evaluate any trailing word after the loop ends.
         return $flushWord();
+    }
+
+    /**
+     * Ensure that every ё (or Ё) inside a Cyrillic word with ≥2 vowels is
+     * wrapped in <b>…</b>, stripping any competing bold tag on other vowels of
+     * that same word.  Words whose only vowel is ё (e.g. "всё", "ёж") are left
+     * without a tag because the ≥2-vowel threshold is not met.
+     *
+     * This is used as a deterministic post-processing step after AI correction
+     * because LLMs occasionally omit the tag on ё even when explicitly instructed.
+     */
+    public function normalizeYoAccent(string $rawText): string
+    {
+        $plainText = str_replace(['<b>', '</b>'], '', $rawText);
+        $plainLength = mb_strlen($plainText);
+
+        $currentRawText = $rawText;
+        $i = 0;
+
+        while ($i < $plainLength) {
+            $char = mb_substr($plainText, $i, 1);
+
+            if (! $this->isCyrillicChar($char)) {
+                $i++;
+
+                continue;
+            }
+
+            // Scan forward to find the full extent of this Cyrillic word.
+            $wordStart = $i;
+            $wordEnd = $i;
+            while ($wordEnd < $plainLength && $this->isCyrillicChar(mb_substr($plainText, $wordEnd, 1))) {
+                $wordEnd++;
+            }
+
+            // Collect vowel count and the position of the first ё/Ё in the word.
+            $vowelCount = 0;
+            $yoAbsolutePosition = -1;
+
+            for ($j = $wordStart; $j < $wordEnd; $j++) {
+                $wordChar = mb_substr($plainText, $j, 1);
+
+                if (mb_strpos(self::RUSSIAN_VOWELS, $wordChar) !== false) {
+                    $vowelCount++;
+                }
+
+                if (($wordChar === 'ё' || $wordChar === 'Ё') && $yoAbsolutePosition === -1) {
+                    $yoAbsolutePosition = $j;
+                }
+            }
+
+            // Only fix words that qualify for a stress mark and contain ё.
+            if ($vowelCount >= 2 && $yoAbsolutePosition !== -1) {
+                // moveAccentToPosition strips bold from the whole word then places
+                // it only on the target vowel — exactly what we need here.
+                $currentRawText = $this->moveAccentToPosition($currentRawText, $yoAbsolutePosition);
+            }
+
+            // Advance past the current word.
+            $i = $wordEnd;
+        }
+
+        return $currentRawText;
     }
 
     /**

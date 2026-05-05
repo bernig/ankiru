@@ -1,5 +1,6 @@
 <?php
 
+use App\Ai\Agents\RussianStressCorrectorAgent;
 use App\Jobs\MassOperationJob;
 use App\Livewire\CsvEditor;
 use App\Services\MassOperationService;
@@ -220,6 +221,57 @@ it('immediately applies stress batch completion when the sync queue driver runs 
     $csvRows = $lw->get('csvRows');
     expect($csvRows[0][1])->toBe('Я говор<b>ю</b>.')
         ->and($csvRows[1][1])->toBe('Хорош<b>а</b>я погод<b>а</b>.');
+});
+
+it('bulk-corrects bare ё without calling the AI (real services, sync queue)', function () {
+    Storage::fake('local');
+    config(['queue.default' => 'sync']); // run jobs inline so merge happens in-request
+
+    // The AI must NEVER be called — ё normalization is sufficient for these rows.
+    RussianStressCorrectorAgent::fake(function () {
+        throw new RuntimeException('AI should not have been called for a bare-ё-only fix.');
+    });
+
+    $rows = [
+        // "Пойдём" has bare ё — the only issue in this sentence.
+        ['Rentrons.', 'Пойдём дом<b>о</b>й.'],
+        // "идёт" has bare ё — similar case with the original user example.
+        ['Quel bus va au centre ?', 'Как<b>о</b>й авт<b>о</b>бус идёт в ц<b>е</b>нтр?'],
+    ];
+
+    $lw = Livewire::test(CsvEditor::class)
+        ->set('csvRows', $rows)
+        ->set('hasCsvLoaded', true)
+        ->call('dispatchStressBatch');
+
+    $csvRows = $lw->get('csvRows');
+
+    expect($csvRows[0][1])->toBe('Пойд<b>ё</b>м дом<b>о</b>й.')
+        ->and($csvRows[1][1])->toBe('Как<b>о</b>й авт<b>о</b>бус ид<b>ё</b>т в ц<b>е</b>нтр?');
+});
+
+it('pre-normalises ё immediately when batch is dispatched with an async queue driver', function () {
+    Storage::fake('local');
+    Queue::fake(); // jobs are pushed but NOT executed — simulates the async database driver
+
+    $rows = [
+        // "Пойдём" has bare ё — normalization must happen in-request, not in the job.
+        ['Rentrons.', 'Пойдём дом<b>о</b>й.'],
+        // Row with no ё issue remains unchanged.
+        ['Je parle.', 'Я говорю.'],
+    ];
+
+    $lw = Livewire::test(CsvEditor::class)
+        ->set('csvRows', $rows)
+        ->set('hasCsvLoaded', true)
+        ->call('dispatchStressBatch');
+
+    $csvRows = $lw->get('csvRows');
+
+    // ё row fixed immediately, before any job ran.
+    expect($csvRows[0][1])->toBe('Пойд<b>ё</b>м дом<b>о</b>й.');
+    // Row that still needs AI was pushed to the queue.
+    Queue::assertPushed(MassOperationJob::class);
 });
 
 // ---------------------------------------------------------------------------

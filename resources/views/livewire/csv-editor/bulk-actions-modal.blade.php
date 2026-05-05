@@ -11,11 +11,7 @@
       1. Previous-run summary  — shown only when status === 'done'
       2. Current estimates + precise run button, or an all-done checkmark
 --}}
-<flux:modal
-    name="bulk-actions"
-    class="md:w-xl"
-    :dismissible="$stressBatchStatus !== 'running' && $ttsBatchStatus !== 'running'"
->
+<flux:modal class="md:w-xl" name="bulk-actions" :dismissible="$stressBatchStatus !== 'running' && $ttsBatchStatus !== 'running'">
     <div class="flex flex-col gap-6">
 
         <flux:heading size="lg">{{ __('csv_editor.bulk_actions') }}</flux:heading>
@@ -49,16 +45,13 @@
                     <flux:label>
                         {{ __('csv_editor.bulk_running') }}
                         <x-slot name="trailing">
-                            <span class="tabular-nums text-sm">
+                            <span class="text-sm tabular-nums">
                                 {{ $stressBatchProgress }} / {{ $stressBatchTotal }}
                             </span>
                         </x-slot>
                     </flux:label>
 
-                    <flux:progress
-                        :value="$stressBatchTotal > 0 ? intval($stressBatchProgress / $stressBatchTotal * 100) : 0"
-                        color="blue"
-                    />
+                    <flux:progress :value="$stressBatchTotal > 0 ? intval($stressBatchProgress / $stressBatchTotal * 100) : 0" color="blue" />
 
                     @if ($stressBatchFailed > 0)
                         <flux:description class="text-red-500">
@@ -66,9 +59,7 @@
                         </flux:description>
                     @endif
                 </flux:field>
-
             @else
-
                 {{-- Previous-run summary (only visible after a batch has completed) --}}
                 @if ($stressBatchStatus === 'done')
                     <div class="rounded-md bg-zinc-50 px-3 py-2 text-xs text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-400">
@@ -86,7 +77,7 @@
 
                         @if ($stressBatchPromptTokens > 0 || $stressBatchCompletionTokens > 0)
                             · {{ __('csv_editor.bulk_report_tokens', [
-                                'input'  => number_format($stressBatchPromptTokens),
+                                'input' => number_format($stressBatchPromptTokens),
                                 'output' => number_format($stressBatchCompletionTokens),
                             ]) }}
                         @endif
@@ -106,21 +97,14 @@
 
                     <flux:text class="text-xs text-zinc-400 dark:text-zinc-500">
                         {{ __('csv_editor.bulk_estimate_tokens', [
-                            'input'  => number_format($estimatedStressInputTokens),
+                            'input' => number_format($estimatedStressInputTokens),
                             'output' => number_format($estimatedStressOutputTokens),
-                            'cost'   => number_format($estimatedStressCost, 4),
-                            'model'  => config('services.openai.stress_model_label'),
+                            'cost' => number_format($estimatedStressCost, 4),
+                            'model' => config('services.openai.stress_model_label'),
                         ]) }}
                     </flux:text>
 
-                    <flux:button
-                        wire:click="dispatchStressBatch"
-                        wire:loading.attr="disabled"
-                        wire:target="dispatchStressBatch"
-                        variant="primary"
-                        size="sm"
-                        icon="sparkles"
-                    >
+                    <flux:button wire:click="dispatchStressBatch" wire:loading.attr="disabled" wire:target="dispatchStressBatch" variant="primary" size="sm" icon="sparkles">
                         {{ trans_choice('csv_editor.bulk_run_stress', $missingStressRowCount, ['count' => number_format($missingStressRowCount)]) }}
                     </flux:button>
                 @endif
@@ -145,16 +129,13 @@
                     <flux:label>
                         {{ __('csv_editor.bulk_running') }}
                         <x-slot name="trailing">
-                            <span class="tabular-nums text-sm">
+                            <span class="text-sm tabular-nums">
                                 {{ $ttsBatchProgress }} / {{ $ttsBatchTotal }}
                             </span>
                         </x-slot>
                     </flux:label>
 
-                    <flux:progress
-                        :value="$ttsBatchTotal > 0 ? intval($ttsBatchProgress / $ttsBatchTotal * 100) : 0"
-                        color="blue"
-                    />
+                    <flux:progress :value="$ttsBatchTotal > 0 ? intval($ttsBatchProgress / $ttsBatchTotal * 100) : 0" color="blue" />
 
                     @if ($ttsBatchFailed > 0)
                         <flux:description class="text-red-500">
@@ -162,9 +143,7 @@
                         </flux:description>
                     @endif
                 </flux:field>
-
             @else
-
                 {{-- Previous-run summary (only visible after a batch has completed) --}}
                 @if ($ttsBatchStatus === 'done')
                     <div class="rounded-md bg-zinc-50 px-3 py-2 text-xs text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-400">
@@ -200,19 +179,12 @@
                     <flux:text class="text-xs text-zinc-400 dark:text-zinc-500">
                         {{ __('csv_editor.bulk_estimate_chars', [
                             'chars' => number_format($estimatedTtsChars),
-                            'cost'  => number_format($estimatedTtsCost, 4),
+                            'cost' => number_format($estimatedTtsCost, 4),
                             'model' => config('services.openai.tts_model_label'),
                         ]) }}
                     </flux:text>
 
-                    <flux:button
-                        wire:click="dispatchTtsBatch"
-                        wire:loading.attr="disabled"
-                        wire:target="dispatchTtsBatch"
-                        variant="primary"
-                        size="sm"
-                        icon="musical-note"
-                    >
+                    <flux:button wire:click="dispatchTtsBatch" wire:loading.attr="disabled" wire:target="dispatchTtsBatch" variant="primary" size="sm" icon="musical-note">
                         {{ trans_choice('csv_editor.bulk_run_tts', $missingAudioRowCount, ['count' => number_format($missingAudioRowCount)]) }}
                     </flux:button>
                 @endif
@@ -230,4 +202,3 @@
 
     </div>
 </flux:modal>
-

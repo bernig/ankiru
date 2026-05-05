@@ -116,6 +116,13 @@ trait ManagesMassOperations
         if (! $this->hasCsvLoaded || $this->stressBatchStatus === 'running') {
             return;
         }
+
+        // Step 1: Deterministically fix bare ё in every row right now, before
+        // any async job is dispatched.  This covers the common case where ё is
+        // the only missing accent and no AI call is needed at all — the fix is
+        // immediate regardless of the queue driver or WebSocket availability.
+        $this->applyYoNormalizationToAllRows();
+
         $sessionId = $this->getMassOpSessionId();
         $dispatched = $this->massOperationService->dispatchStressBatch(
             $this->csvRows,
@@ -365,6 +372,38 @@ trait ManagesMassOperations
         $this->mergeTtsReportFromCache();
         unset($this->audioExistenceByRowIndex);
         $this->refreshEstimates();
+    }
+
+    /**
+     * Apply ё-accent normalization to every Russian column entry, updating
+     * $csvRows in place and persisting when at least one row changed.
+     *
+     * Called synchronously at the start of dispatchStressBatch() so that rows
+     * whose only problem is a bare ё are corrected immediately — without having
+     * to wait for an async queue worker or a WebSocket broadcast.
+     */
+    private function applyYoNormalizationToAllRows(): void
+    {
+        $anyChanged = false;
+
+        foreach ($this->csvRows as $rowIndex => $row) {
+            $russianText = $row[1] ?? '';
+
+            if (empty(trim($russianText))) {
+                continue;
+            }
+
+            $normalizedText = $this->accentService->normalizeYoAccent($russianText);
+
+            if ($normalizedText !== $russianText) {
+                $this->csvRows[$rowIndex][1] = $normalizedText;
+                $anyChanged = true;
+            }
+        }
+
+        if ($anyChanged) {
+            $this->autoSaveToTempFile();
+        }
     }
 
     /**

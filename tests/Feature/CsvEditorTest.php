@@ -384,6 +384,22 @@ test('corrects stress marks and sends french context with the russian text', fun
             && str_contains($prompt->prompt, 'Я работаю из дома.');
     });
 });
+test('skips the AI call and fixes bare ё directly when normalisation alone suffices', function () {
+    // "Пойдём" has two vowels (о + ё) but only ё is bare — normalizeYoAccent
+    // can fix that without AI; the AI must never be called.
+    RussianStressCorrectorAgent::fake(function () {
+        throw new RuntimeException('AI should not have been called.');
+    });
+
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Rentrons.', 'Пойдём дом<b>о</b>й.']])
+        ->set('hasCsvLoaded', true)
+        ->call('correctStressMarks', 0)
+        ->assertSet('csvRows.0.1', 'Пойд<b>ё</b>м дом<b>о</b>й.')
+        ->assertSet('translationError', '');
+
+    RussianStressCorrectorAgent::assertNeverPrompted();
+});
 test('row needs stress correction returns false when the agent returns already correct text', function () {
     $alreadyCorrectText = 'Я раб<b>о</b>таю из д<b>о</b>ма.';
     RussianStressCorrectorAgent::fake([$alreadyCorrectText]);
