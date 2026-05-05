@@ -17,4 +17,3 @@ return [
     'next' => 'Suivant &raquo;',
 
 ];
-
