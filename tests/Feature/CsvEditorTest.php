@@ -1,7 +1,7 @@
 <?php
 
-use App\Ai\Agents\FrenchToRussianTranslatorAgent;
 use App\Ai\Agents\RussianStressCorrectorAgent;
+use App\Ai\Agents\SourceToRussianTranslatorAgent;
 use App\Livewire\CsvEditor;
 use App\Services\RussianTextToSpeechService;
 use Illuminate\Http\UploadedFile;
@@ -168,13 +168,13 @@ test('accent mode pencil button is not rendered when the russian column is empty
         ->set('hasCsvLoaded', true)
         ->assertDontSee(__('csv_editor.edit_russian_text'));
 });
-test('french pencil button is always rendered for editing the left column', function () {
+test('source text pencil button is always rendered for editing the left column', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', sampleRows())
         ->set('hasCsvLoaded', true)
-        ->assertSee(__('csv_editor.edit_french_text'));
+        ->assertSee(__('csv_editor.edit_source_text'));
 });
-test('retranslate button is rendered when both french and russian text exist', function () {
+test('retranslate button is rendered when both source and russian text exist', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', sampleRows())
         ->set('hasCsvLoaded', true)
@@ -321,7 +321,7 @@ test('starts fresh when no temp file exists', function () {
 });
 // ── ChatGPT Translation ─────────────────────────────────────────────────────
 test('translates french text to russian and stores the result', function () {
-    FrenchToRussianTranslatorAgent::fake(['Я раб<b>о</b>таю из д<b>о</b>ма.']);
+    SourceToRussianTranslatorAgent::fake(['Я раб<b>о</b>таю из д<b>о</b>ма.']);
 
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille depuis chez moi.', '']])
@@ -331,10 +331,10 @@ test('translates french text to russian and stores the result', function () {
         ->assertSet('translationError', '')
         ->assertSet('translatingRowIndex', -1);
 
-    FrenchToRussianTranslatorAgent::assertPrompted('Je travaille depuis chez moi.');
+    SourceToRussianTranslatorAgent::assertPrompted('Je travaille depuis chez moi.');
 });
 test('sets a translation error when the agent throws an exception', function () {
-    FrenchToRussianTranslatorAgent::fake(function () {
+    SourceToRussianTranslatorAgent::fake(function () {
         throw new RuntimeException('Service unavailable.');
     });
 
@@ -345,7 +345,7 @@ test('sets a translation error when the agent throws an exception', function () 
         ->assertSet('translationError', 'Service unavailable.');
 });
 test('does nothing when the french column is empty', function () {
-    FrenchToRussianTranslatorAgent::fake()->preventStrayPrompts();
+    SourceToRussianTranslatorAgent::fake()->preventStrayPrompts();
 
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['', '']])
@@ -353,7 +353,7 @@ test('does nothing when the french column is empty', function () {
         ->call('translateWithChatGpt', 0)
         ->assertSet('translationError', '');
 
-    FrenchToRussianTranslatorAgent::assertNeverPrompted();
+    SourceToRussianTranslatorAgent::assertNeverPrompted();
 });
 // ── Stress Correction ───────────────────────────────────────────────────────
 test('shows an error when the stress correction agent throws an exception', function () {
@@ -378,7 +378,7 @@ test('corrects stress marks and sends french context with the russian text', fun
         ->assertSet('correctingStressRowIndex', -1);
 
     RussianStressCorrectorAgent::assertPrompted(function ($prompt) {
-        return str_contains($prompt->prompt, 'French source')
+        return str_contains($prompt->prompt, 'Source text for meaning/context only:')
             && str_contains($prompt->prompt, 'Je travaille depuis chez moi.')
             && str_contains($prompt->prompt, 'Russian text to review and correct stress marks in:')
             && str_contains($prompt->prompt, 'Я работаю из дома.');
@@ -688,7 +688,7 @@ test('deleteRow resets ttsModalRowIndex to prevent stale references', function (
 // ── Rate Limiting ─────────────────────────────────────────────────────────────
 
 test('translation is blocked and an error is set after exceeding the rate limit', function () {
-    FrenchToRussianTranslatorAgent::fake()->preventStrayPrompts();
+    SourceToRussianTranslatorAgent::fake()->preventStrayPrompts();
 
     // Exhaust the 30-attempt limit without triggering real agent calls.
     $rateLimitKey = 'ai-translation:'.session()->getId();
@@ -703,7 +703,7 @@ test('translation is blocked and an error is set after exceeding the rate limit'
         ->call('translateWithChatGpt', 0)
         ->assertSet('translationError', __('csv_editor.error_rate_limit'));
 
-    FrenchToRussianTranslatorAgent::assertNeverPrompted();
+    SourceToRussianTranslatorAgent::assertNeverPrompted();
     RateLimiter::clear($rateLimitKey);
 });
 

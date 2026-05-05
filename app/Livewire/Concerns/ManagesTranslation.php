@@ -27,7 +27,7 @@ trait ManagesTranslation
     public string $translationError = '';
 
     /**
-     * Translate the French text in column 0 of the given row to Russian using
+     * Translate the source text in column 0 of the given row to Russian using
      * the ChatGPT API, and insert the result (with <b>…</b> accent markers on
      * stressed vowels) into column 1.
      */
@@ -35,9 +35,9 @@ trait ManagesTranslation
     {
         $this->translationError = '';
 
-        $frenchText = $this->csvRows[$rowIndex][0] ?? '';
+        $sourceText = $this->csvRows[$rowIndex][0] ?? '';
 
-        if (empty(trim($frenchText))) {
+        if (empty(trim($sourceText))) {
             return;
         }
 
@@ -54,7 +54,7 @@ trait ManagesTranslation
         $this->translatingRowIndex = $rowIndex;
 
         try {
-            $translatedText = $this->translationService->translateFrenchToRussian($frenchText);
+            $translatedText = $this->translationService->translateSourceToRussian($sourceText);
             $this->csvRows[$rowIndex][1] = $translatedText;
             $this->autoSaveToTempFile();
         } catch (Exception $exception) {
@@ -66,13 +66,13 @@ trait ManagesTranslation
 
     /**
      * Ask ChatGPT to review and fix stress marks in column 1 of the given row.
-     * The French source in column 0 is sent as semantic context.
+     * The source text in column 0 is sent as semantic context.
      */
     public function correctStressMarks(int $rowIndex): void
     {
         $this->translationError = '';
 
-        $frenchText = trim($this->csvRows[$rowIndex][0] ?? '');
+        $sourceText = trim($this->csvRows[$rowIndex][0] ?? '');
         $russianText = trim($this->csvRows[$rowIndex][1] ?? '');
 
         if ($russianText === '') {
@@ -92,7 +92,7 @@ trait ManagesTranslation
         $this->correctingStressRowIndex = $rowIndex;
 
         try {
-            $correctedText = $this->translationService->correctRussianStressMarks($russianText, $frenchText);
+            $correctedText = $this->translationService->correctRussianStressMarks($russianText, $sourceText);
 
             if ($correctedText !== $russianText) {
                 $this->csvRows[$rowIndex][1] = $correctedText;

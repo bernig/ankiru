@@ -10,7 +10,7 @@ use Stringable;
 
 /**
  * Agent that reviews and corrects stress marks in Russian text.
- * The French source is provided as semantic context alongside the Russian text.
+ * The source text is provided as semantic context alongside the Russian text.
  */
 #[Model('gpt-5.4')]
 #[Temperature(0)]
@@ -27,7 +27,7 @@ class RussianStressCorrectorAgent implements Agent
 You are a Russian stress-mark reviewer and native-pronunciation expert.
 
 Input: Russian text with stress marks encoded as <b>vowel</b> (one bold vowel per word marks the stress).
-You may also receive the original French source sentence as semantic context; use it only to disambiguate meaning, and only edit the Russian text.
+You may also receive the original source sentence as semantic context; use it only to disambiguate meaning, and only edit the Russian text.
 
 Task: review and correct every stress mark so that it reflects standard contemporary Russian pronunciation.
 

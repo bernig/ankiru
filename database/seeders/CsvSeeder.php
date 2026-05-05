@@ -7,13 +7,13 @@ use Illuminate\Database\Seeder;
 class CsvSeeder extends Seeder
 {
     /**
-     * Sample French to Russian translation pairs.
+     * Sample source-language to Russian translation pairs.
      * Russian text uses <b>vowel</b> tags to mark lexical stress.
      * Only words with two or more vowels carry a stress tag.
      *
      * @var array<int, array{0: string, 1: string}>
      */
-    private const SAMPLE_ROWS = [
+    private const array SAMPLE_ROWS = [
         ['Je travaille depuis chez moi.', 'Я раб<b>о</b>таю из д<b>о</b>ма.'],
         ['Je suis developpeur web.', 'Я веб-разраб<b>о</b>тчик.'],
         ['Bonjour, comment allez-vous ?', 'Здр<b>а</b>вствуйте, как вы пожив<b>а</b>ете?'],

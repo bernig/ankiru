@@ -1,7 +1,7 @@
 <flux:card class="flex flex-col space-y-6">
     <flux:table container:class="w-full ">
         <flux:table.columns class="" sticky>
-            <flux:table.column class="py-2! px-2 first:ps-2 last:pe-2" colspan="2">{{ __('csv_editor.french_column') }}</flux:table.column>
+            <flux:table.column class="py-2! px-2 first:ps-2 last:pe-2" colspan="2">{{ __('csv_editor.source_column') }}</flux:table.column>
             <flux:table.column class="py-2! px-2 first:ps-2 last:pe-2" colspan="2">{{ __('csv_editor.russian_column') }}</flux:table.column>
         </flux:table.columns>
 

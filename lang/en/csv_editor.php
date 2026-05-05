@@ -14,9 +14,11 @@ return [
     // Table
     'no_rows_yet' => 'No rows yet. Click "Add row" to add one.',
     'add_row' => 'Add row',
+    'source_column' => 'Source text',
+    'russian_column' => 'Russian text',
 
     // Table row actions (button tooltips)
-    'edit_french_text' => 'Edit French text',
+    'edit_source_text' => 'Edit source text',
     'edit_russian_text' => 'Edit Russian text',
     'open_audio_player' => 'Open audio player',
     'translate_with_chatgpt' => 'Translate with ChatGPT',

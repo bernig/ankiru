@@ -412,7 +412,7 @@ class CsvEditor extends Component
         $cards = [];
 
         foreach ($this->csvRows as $row) {
-            $frenchText = $row[0] ?? '';
+            $sourceText = $row[0] ?? '';
             $rawRussianText = $row[1] ?? '';
 
             // Strip <b> stress tags — Anki does not render them as bold in basic fields.
@@ -431,7 +431,7 @@ class CsvEditor extends Component
             }
 
             $cards[] = [
-                'front' => $frenchText,
+                'front' => $sourceText,
                 'back' => $backFieldValue,
                 'mp3StoragePath' => $mp3StoragePath,
                 'mp3FileName' => $mp3FileName,

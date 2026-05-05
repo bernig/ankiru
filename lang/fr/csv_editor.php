@@ -10,7 +10,7 @@ return [
     'export_anki_package' => 'Exporter le paquet Anki (.apkg)',
     'load_new_file' => 'Charger un nouveau fichier',
     'load_new_file_confirm' => 'Cela supprimera le fichier actuel. Êtes-vous sûr ?',
-    'french_column' => 'Texte français',
+    'source_column' => 'Texte source',
     'russian_column' => 'Texte russe',
 
     // Tableau
@@ -18,7 +18,7 @@ return [
     'add_row' => 'Ajouter une ligne',
 
     // Actions sur les lignes (infobulles des boutons)
-    'edit_french_text' => 'Modifier le texte français',
+    'edit_source_text' => 'Modifier le texte source',
     'edit_russian_text' => 'Modifier le texte russe',
     'open_audio_player' => 'Ouvrir le lecteur audio',
     'translate_with_chatgpt' => 'Traduire avec ChatGPT',

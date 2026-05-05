@@ -1,7 +1,7 @@
 {{--
     Variables available via @@include scope:
       $rowIndex    (int)   — absolute index in $csvRows
-      $row         (array) — ['french text', 'russian text']
+      $row         (array) — ['source text', 'russian text']
       $rowHasAudio (bool)  — whether a cached TTS file exists for this row
 --}}
 <flux:table.row class="group hover:bg-zinc-50" wire:key="row-{{ $rowIndex }}" x-data="{ rowIndex: {{ $rowIndex }}, rowHasAudio: {{ $rowHasAudio ? 'true' : 'false' }} }" x-on:tts-audio-generated.window="if ($event.detail.rowIndex === rowIndex) { rowHasAudio = true; }" x-on:tts-audio-deleted.window="if ($event.detail.rowIndex === rowIndex) { rowHasAudio = false; }" x-bind:class="{
@@ -10,7 +10,7 @@
     'bg-blue-50/30': ($store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1) && !window.csvAccentMode.cellNeedsAccent($wire.csvRows[rowIndex]?.[1] ?? '') && ($wire.csvRows[rowIndex]?.[1] ?? '').trim() !== '' && !rowHasAudio,
 }">
 
-    {{-- ── Column 0: French text ── --}}
+    {{-- ── Column 0: Source text ── --}}
     <flux:table.cell class="py-2! w-1/2 whitespace-normal px-2 first:ps-2 last:pe-2">
         {{-- Plain text display; clicking opens the edit input --}}
         <div class="cursor-default" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 0" x-html="$wire.csvRows[rowIndex][0] !== undefined && $wire.csvRows[rowIndex][0] !== ''
@@ -20,10 +20,10 @@
         <input class="w-full rounded border border-violet-500 bg-white p-1.5 outline-none transition-colors" x-show="$store.csvEditing.rowIndex === rowIndex && $store.csvEditing.columnIndex === 0" x-ref="input_0" :value="$wire.csvRows[rowIndex][0]" @blur="$wire.updateCell(rowIndex, 0, $event.target.value); $store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @keydown.enter="$el.blur()" @keydown.escape="$store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @click.stop placeholder="—" />
     </flux:table.cell>
 
-    {{-- ── Pencil column: edit French text ── --}}
+    {{-- ── Pencil column: edit source text ── --}}
     <flux:table.cell class="py-2! whitespace-nowrap px-2 first:ps-2 last:pe-2">
         <div class="flex items-center whitespace-nowrap rounded-full border border-zinc-200 bg-white opacity-0 transition-opacity group-hover:opacity-100" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 0">
-            <button class="cursor-pointer rounded text-zinc-400 hover:text-blue-500" title="{{ __('csv_editor.edit_french_text') }}" @click="$store.csvEditing.rowIndex = rowIndex; $store.csvEditing.columnIndex = 0; $nextTick(() => $refs.input_0?.focus())">
+            <button class="cursor-pointer rounded text-zinc-400 hover:text-blue-500" title="{{ __('csv_editor.edit_source_text') }}" @click="$store.csvEditing.rowIndex = rowIndex; $store.csvEditing.columnIndex = 0; $nextTick(() => $refs.input_0?.focus())">
                 <flux:icon.pencil class="m-2 size-4" />
             </button>
         </div>
@@ -61,7 +61,7 @@
                         </button>
                     @endif
 
-                    {{-- Translate button: visible when French has text and Russian is empty --}}
+                    {{-- Translate button: visible when source has text and Russian is empty --}}
                     @if (!empty(trim($row[0] ?? '')) && empty(trim($row[1] ?? '')))
                         <button class="cursor-pointer rounded px-0 text-zinc-400 opacity-0 transition-opacity hover:text-violet-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100" title="{{ __('csv_editor.translate_with_chatgpt') }}" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
                             <span wire:loading wire:target="translateWithChatGpt({{ $rowIndex }})">
@@ -73,7 +73,7 @@
                         </button>
                     @endif
 
-                    {{-- Re-translate button: visible when both French and Russian text exist --}}
+                    {{-- Re-translate button: visible when both source and Russian text exist --}}
                     @if (!empty(trim($row[0] ?? '')) && !empty(trim($row[1] ?? '')))
                         <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-violet-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100" title="{{ __('csv_editor.retranslate_with_chatgpt') }}" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
                             <span wire:loading wire:target="translateWithChatGpt({{ $rowIndex }})">
