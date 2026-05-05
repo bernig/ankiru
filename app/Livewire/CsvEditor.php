@@ -6,9 +6,11 @@ use App\Services\AnkiPackageExporterService;
 use App\Services\OpenAiTranslationService;
 use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
+use Exception;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Laravel\Ai\Exceptions\FailoverableException;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -29,10 +31,10 @@ class CsvEditor extends Component
     }
 
     /** Path to the temp file used for auto-saving between sessions */
-    private const TEMP_FILE_PATH = 'csv_editor_temp.json';
+    private const string TEMP_FILE_PATH = 'csv_editor_temp.json';
 
     /** Number of rows displayed per page. */
-    private const PER_PAGE = 50;
+    private const int PER_PAGE = 50;
 
     /** @var TemporaryUploadedFile|null */
     public $uploadedCsvFile = null;
@@ -80,7 +82,7 @@ class CsvEditor extends Component
     /**
      * Called by Livewire before every action (mount and subsequent requests).
      * Services are re-injected on each hydration cycle because they are not
-     * serialised as component state.
+     * serialized as component state.
      */
     public function boot(
         OpenAiTranslationService $translationService,
@@ -141,7 +143,7 @@ class CsvEditor extends Component
 
         $columnCount = count($parsed[0]);
 
-        // Normalise each row to match the first row's column count.
+        // Normalize each row to match the first row's column count.
         $this->csvRows = array_map(function (array $row) use ($columnCount): array {
             $normalised = array_pad($row, $columnCount, '');
 
@@ -264,7 +266,7 @@ class CsvEditor extends Component
             $translatedText = $this->translationService->translateFrenchToRussian($frenchText);
             $this->csvRows[$rowIndex][1] = $translatedText;
             $this->autoSaveToTempFile();
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $this->translationError = $exception->getMessage();
         } finally {
             $this->translatingRowIndex = -1;
@@ -295,7 +297,7 @@ class CsvEditor extends Component
                 $this->csvRows[$rowIndex][1] = $correctedText;
                 $this->autoSaveToTempFile();
             }
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $this->translationError = $exception->getMessage();
         } finally {
             $this->correctingStressRowIndex = -1;
@@ -328,7 +330,7 @@ class CsvEditor extends Component
             $audioUrl = route('tts.serve', $cacheKey).'?v='.time();
 
             $this->dispatch('tts-audio-ready', audioUrl: $audioUrl);
-        } catch (\Exception $exception) {
+        } catch (Exception|FailoverableException $exception) {
             $this->ttsError = 'Audio generation failed: '.$exception->getMessage();
         } finally {
             $this->ttsGeneratingRowIndex = -1;
