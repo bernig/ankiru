@@ -8,7 +8,7 @@
         <flux:table.rows>
             @forelse ($this->paginatedRows as $rowIndex => $row)
                 @php
-                    $rowHasAudio = !empty(trim($row[1] ?? '')) && $this->ttsAudioExistsForRow($rowIndex);
+                    $rowHasAudio = $this->audioExistenceByRowIndex[$rowIndex] ?? false;
                 @endphp
 
                 @include('livewire.csv-editor.table-row')

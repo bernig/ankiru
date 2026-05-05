@@ -2,16 +2,16 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\ManagesPersistence;
+use App\Livewire\Concerns\ManagesTranslation;
+use App\Livewire\Concerns\ManagesTtsAudio;
 use App\Services\AnkiPackageExporterService;
 use App\Services\OpenAiTranslationService;
 use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
-use Exception;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
-use Laravel\Ai\Exceptions\FailoverableException;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -21,6 +21,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CsvEditor extends Component
 {
+    use ManagesPersistence;
+    use ManagesTranslation;
+    use ManagesTtsAudio;
     use WithFileUploads;
 
     /**
@@ -50,39 +53,21 @@ class CsvEditor extends Component
 
     public bool $hasCsvLoaded = false;
 
-    /** Row index currently being translated via ChatGPT (-1 = none). */
-    public int $translatingRowIndex = -1;
-
-    /** Row index currently having stress corrected via ChatGPT (-1 = none). */
-    public int $correctingStressRowIndex = -1;
-
-    /** Error message from the last ChatGPT translation or stress-correction attempt. */
-    public string $translationError = '';
-
-    /** Row index currently generating TTS audio (-1 = none). */
-    public int $ttsGeneratingRowIndex = -1;
-
-    /** Error message from the last TTS generation attempt. */
-    public string $ttsError = '';
-
     /**
-     * Row index whose audio is displayed in the TTS player modal (-1 = none).
-     * Reset to -1 whenever a row is deleted to prevent stale references.
+     * Services are injected as protected so they are accessible from concern traits.
+     * They are re-injected on each hydration cycle because Livewire does not
+     * serialize non-public properties.
      */
-    public int $ttsModalRowIndex = -1;
+    protected OpenAiTranslationService $translationService;
 
-    private OpenAiTranslationService $translationService;
+    protected RussianAccentService $accentService;
 
-    private RussianAccentService $accentService;
+    protected RussianTextToSpeechService $ttsService;
 
-    private RussianTextToSpeechService $ttsService;
-
-    private AnkiPackageExporterService $ankiExporterService;
+    protected AnkiPackageExporterService $ankiExporterService;
 
     /**
      * Called by Livewire before every action (mount and subsequent requests).
-     * Services are re-injected on each hydration cycle because they are not
-     * serialized as component state.
      */
     public function boot(
         OpenAiTranslationService $translationService,
@@ -109,6 +94,10 @@ class CsvEditor extends Component
     {
         $this->uploadCsv();
     }
+
+    // -------------------------------------------------------------------------
+    // CSV Upload & Parsing
+    // -------------------------------------------------------------------------
 
     /**
      * Handle the CSV file upload, parse rows, and persist to temp file.
@@ -159,6 +148,10 @@ class CsvEditor extends Component
         $this->autoSaveToTempFile();
     }
 
+    // -------------------------------------------------------------------------
+    // Pagination
+    // -------------------------------------------------------------------------
+
     /**
      * Rows visible on the current page wrapped in a LengthAwarePaginator so
      * flux:pagination can consume it directly. Original array keys are
@@ -199,6 +192,10 @@ class CsvEditor extends Component
     {
         $this->paginationSetPage(max(1, min((int) $page, $this->totalPages)), $pageName);
     }
+
+    // -------------------------------------------------------------------------
+    // Cell & Row Editing
+    // -------------------------------------------------------------------------
 
     /**
      * Move the <b> accent marker to the Russian vowel at the given plain-text
@@ -248,193 +245,6 @@ class CsvEditor extends Component
     }
 
     /**
-     * Translate the French text in column 0 of the given row to Russian using
-     * the ChatGPT API, and insert the result (with <b>…</b> accent markers on
-     * stressed vowels) into column 1.
-     */
-    public function translateWithChatGpt(int $rowIndex): void
-    {
-        $this->translationError = '';
-
-        $frenchText = $this->csvRows[$rowIndex][0] ?? '';
-
-        if (empty(trim($frenchText))) {
-            return;
-        }
-
-        $rateLimitKey = 'ai-translation:'.session()->getId();
-
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
-            $this->translationError = __('csv_editor.error_rate_limit');
-
-            return;
-        }
-
-        RateLimiter::hit($rateLimitKey, 60);
-
-        $this->translatingRowIndex = $rowIndex;
-
-        try {
-            $translatedText = $this->translationService->translateFrenchToRussian($frenchText);
-            $this->csvRows[$rowIndex][1] = $translatedText;
-            $this->autoSaveToTempFile();
-        } catch (Exception $exception) {
-            $this->translationError = $exception->getMessage();
-        } finally {
-            $this->translatingRowIndex = -1;
-        }
-    }
-
-    /**
-     * Ask ChatGPT to review and fix stress marks in column 1 of the given row.
-     * The French source in column 0 is sent as semantic context.
-     */
-    public function correctStressMarks(int $rowIndex): void
-    {
-        $this->translationError = '';
-
-        $frenchText = trim($this->csvRows[$rowIndex][0] ?? '');
-        $russianText = trim($this->csvRows[$rowIndex][1] ?? '');
-
-        if ($russianText === '') {
-            return;
-        }
-
-        $rateLimitKey = 'ai-translation:'.session()->getId();
-
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
-            $this->translationError = __('csv_editor.error_rate_limit');
-
-            return;
-        }
-
-        RateLimiter::hit($rateLimitKey, 60);
-
-        $this->correctingStressRowIndex = $rowIndex;
-
-        try {
-            $correctedText = $this->translationService->correctRussianStressMarks($russianText, $frenchText);
-
-            if ($correctedText !== $russianText) {
-                $this->csvRows[$rowIndex][1] = $correctedText;
-                $this->autoSaveToTempFile();
-            }
-        } catch (Exception $exception) {
-            $this->translationError = $exception->getMessage();
-        } finally {
-            $this->correctingStressRowIndex = -1;
-        }
-    }
-
-    /**
-     * Generate (or retrieve from cache) high-quality TTS audio for the Russian
-     * phrase in column 1 of the given row, then dispatch a browser event so
-     * Alpine.js can play the returned audio URL immediately.
-     */
-    public function generateTtsAudio(int $rowIndex): void
-    {
-        $this->ttsError = '';
-
-        $rawRussianText = $this->csvRows[$rowIndex][1] ?? '';
-        $normalizedText = trim(str_replace(['<b>', '</b>'], '', $rawRussianText));
-
-        if (empty($normalizedText)) {
-            return;
-        }
-
-        $rateLimitKey = 'tts-generation:'.session()->getId();
-
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
-            $this->ttsError = __('csv_editor.error_rate_limit');
-
-            return;
-        }
-
-        RateLimiter::hit($rateLimitKey, 60);
-
-        $this->ttsGeneratingRowIndex = $rowIndex;
-
-        try {
-            $this->ttsService->generateAudio($rawRussianText);
-
-            $filenameHash = $this->ttsService->buildFilenameHash($rawRussianText);
-            // Append a cache-busting timestamp so browsers always fetch the latest audio.
-            $audioUrl = route('tts.serve', $filenameHash).'?v='.time();
-
-            $this->dispatch('tts-audio-ready', audioUrl: $audioUrl);
-            // Notify the row's Alpine component so it can update its rowHasAudio state.
-            $this->dispatch('tts-audio-generated', rowIndex: $rowIndex);
-        } catch (Exception|FailoverableException $exception) {
-            $this->ttsError = __('csv_editor.error_audio_generation_failed', ['message' => $exception->getMessage()]);
-        } finally {
-            $this->ttsGeneratingRowIndex = -1;
-        }
-    }
-
-    /**
-     * Delete the cached TTS audio file for the Russian phrase in column 1 of the
-     * given row. The UI icon then reverts to "generate".
-     */
-    public function deleteTtsAudio(int $rowIndex): void
-    {
-        $rawRussianText = $this->csvRows[$rowIndex][1] ?? '';
-
-        if (empty(trim($rawRussianText))) {
-            return;
-        }
-
-        $this->ttsService->deleteAudio($rawRussianText);
-        // Notify the row's Alpine component so it can revert its rowHasAudio state.
-        $this->dispatch('tts-audio-deleted', rowIndex: $rowIndex);
-    }
-
-    /**
-     * Return true when a cached audio file exists for the Russian phrase in
-     * column 1 of the given row.
-     */
-    public function ttsAudioExistsForRow(int $rowIndex): bool
-    {
-        $rawRussianText = $this->csvRows[$rowIndex][1] ?? '';
-
-        if (empty(trim($rawRussianText))) {
-            return false;
-        }
-
-        return $this->ttsService->audioFileExists($rawRussianText);
-    }
-
-    /**
-     * Open the TTS audio player modal for the given row.
-     * Dispatches open-tts-modal with the current audio URL (or null when no
-     * cached file exists yet).
-     */
-    public function openTtsModal(int $rowIndex): void
-    {
-        $this->ttsModalRowIndex = $rowIndex;
-
-        $rawRussianText = $this->csvRows[$rowIndex][1] ?? '';
-        $audioUrl = null;
-
-        if (! empty(trim($rawRussianText)) && $this->ttsService->audioFileExists($rawRussianText)) {
-            $filenameHash = $this->ttsService->buildFilenameHash($rawRussianText);
-            $lastModified = Storage::disk('local')->lastModified("tts/{$filenameHash}.mp3");
-            $audioUrl = route('tts.serve', $filenameHash).'?v='.$lastModified;
-        }
-
-        $this->dispatch('open-tts-modal', audioUrl: $audioUrl);
-    }
-
-    /**
-     * Delete the existing cached audio and immediately regenerate it,
-     * producing a fresh recording for the current Russian phrase.
-     */
-    public function refreshTtsAudio(int $rowIndex): void
-    {
-        $this->ttsService->deleteAudio($this->csvRows[$rowIndex][1] ?? '');
-        $this->generateTtsAudio($rowIndex);
-    }
-
-    /**
      * Delete a row by its index and re-index the rows array.
      */
     public function deleteRow(int $rowIndex): void
@@ -449,6 +259,10 @@ class CsvEditor extends Component
             $this->setPage($this->totalPages);
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Export
+    // -------------------------------------------------------------------------
 
     /**
      * Trigger a browser download of the current CSV data as a plain CSV file.
@@ -481,7 +295,12 @@ class CsvEditor extends Component
 
         return response()->streamDownload(function () use ($apkgPath): void {
             readfile($apkgPath);
-            @unlink($apkgPath);
+
+            if (! @unlink($apkgPath)) {
+                Log::warning('Failed to delete temporary .apkg file after streaming.', [
+                    'path' => $apkgPath,
+                ]);
+            }
         }, $downloadFileName, [
             'Content-Type' => 'application/octet-stream',
         ]);
@@ -506,21 +325,6 @@ class CsvEditor extends Component
     {
         return view('livewire.csv-editor')
             ->layout('layouts.app');
-    }
-
-    // -------------------------------------------------------------------------
-    // Stress-correction helpers
-    // -------------------------------------------------------------------------
-
-    /**
-     * Return true when the Russian text in column 1 of the given row needs a
-     * stress mark added (delegates to RussianAccentService).
-     */
-    public function rowNeedsStressCorrection(int $rowIndex): bool
-    {
-        return $this->accentService->textNeedsStressCorrection(
-            $this->csvRows[$rowIndex][1] ?? ''
-        );
     }
 
     // -------------------------------------------------------------------------
@@ -573,15 +377,17 @@ class CsvEditor extends Component
             return '';
         }
 
-        foreach ($this->csvRows as $row) {
-            fputcsv($buffer, $row);
+        try {
+            foreach ($this->csvRows as $row) {
+                fputcsv($buffer, $row);
+            }
+
+            rewind($buffer);
+
+            return stream_get_contents($buffer) ?: '';
+        } finally {
+            fclose($buffer);
         }
-
-        rewind($buffer);
-        $csvContent = stream_get_contents($buffer);
-        fclose($buffer);
-
-        return $csvContent ?: '';
     }
 
     /**
@@ -633,70 +439,5 @@ class CsvEditor extends Component
         }
 
         return $cards;
-    }
-
-    /**
-     * Persist the current editor state to a session-scoped JSON temp file in storage.
-     */
-    private function autoSaveToTempFile(): void
-    {
-        $data = [
-            'csvRows' => $this->csvRows,
-            'originalFileName' => $this->originalFileName,
-            'hasCsvLoaded' => $this->hasCsvLoaded,
-            'savedAt' => now()->toIso8601String(),
-        ];
-
-        Storage::disk('local')->put($this->tempFilePath(), json_encode($data));
-    }
-
-    /**
-     * Restore editor state from the session-scoped temp file if it exists.
-     */
-    private function restoreFromTempFile(): void
-    {
-        $filePath = $this->tempFilePath();
-
-        if (! Storage::disk('local')->exists($filePath)) {
-            return;
-        }
-
-        $rawJson = Storage::disk('local')->get($filePath);
-
-        if ($rawJson === null) {
-            return;
-        }
-
-        /** @var array{csvRows: array<int, array<int, string>>, originalFileName: string, hasCsvLoaded: bool}|null $data */
-        $data = json_decode($rawJson, true);
-
-        if (! is_array($data)) {
-            return;
-        }
-
-        $this->csvRows = $data['csvRows'] ?? [];
-        $this->originalFileName = $data['originalFileName'] ?? '';
-        $this->hasCsvLoaded = $data['hasCsvLoaded'] ?? false;
-    }
-
-    /**
-     * Remove the session-scoped temp file from storage.
-     */
-    private function clearTempFile(): void
-    {
-        $filePath = $this->tempFilePath();
-
-        if (Storage::disk('local')->exists($filePath)) {
-            Storage::disk('local')->delete($filePath);
-        }
-    }
-
-    /**
-     * Build the storage-relative path for the session-scoped temp file.
-     * Using the session ID ensures each browser session has its own isolated state.
-     */
-    private function tempFilePath(): string
-    {
-        return 'csv_editor_temp_'.session()->getId().'.json';
     }
 }

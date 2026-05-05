@@ -576,6 +576,58 @@ test('tts service delete audio returns false when no file exists', function () {
     expect($service->deleteAudio('Я работаю.'))->toBeFalse();
 });
 
+// ── RussianTextToSpeechService::audioFilesExistBatch ─────────────────────────
+
+test('tts service batch check returns empty map for empty input', function () {
+    Storage::fake('local');
+
+    $service = new RussianTextToSpeechService;
+
+    expect($service->audioFilesExistBatch([]))->toBe([]);
+});
+
+test('tts service batch check returns correct existence flags in a single scan', function () {
+    Storage::fake('local');
+
+    $service = new RussianTextToSpeechService;
+
+    $presentPhrase = 'Я раб<b>о</b>таю.';
+    $absentPhrase = 'Я работаю дома.';
+    $filenameHash = $service->buildFilenameHash($presentPhrase);
+    Storage::disk('local')->put("tts/{$filenameHash}.mp3", 'fake-mp3');
+
+    $result = $service->audioFilesExistBatch([$presentPhrase, $absentPhrase]);
+
+    expect($result[$presentPhrase])->toBeTrue();
+    expect($result[$absentPhrase])->toBeFalse();
+});
+
+// ── audioExistenceByRowIndex computed property ────────────────────────────────
+
+test('audio existence by row index returns a map matching per-row audio state', function () {
+    Storage::fake('local');
+
+    $presentPhrase = 'Я раб<b>о</b>таю.';
+    $absentPhrase = 'Я работаю дома.';
+    $service = new RussianTextToSpeechService;
+    $hash = $service->buildFilenameHash($presentPhrase);
+    Storage::disk('local')->put("tts/{$hash}.mp3", 'fake-mp3');
+
+    $component = Livewire::test(CsvEditor::class)
+        ->set('csvRows', [
+            ['Je travaille.', $presentPhrase],  // has audio
+            ['Bonjour.', $absentPhrase],         // no audio
+            ['Test.', ''],                       // empty Russian text
+        ])
+        ->set('hasCsvLoaded', true);
+
+    $map = $component->instance()->audioExistenceByRowIndex;
+
+    expect($map[0])->toBeTrue();
+    expect($map[1])->toBeFalse();
+    expect($map[2])->toBeFalse();
+});
+
 // ── TTS audio player modal ────────────────────────────────────────────────────
 
 test('openTtsModal sets ttsModalRowIndex and dispatches open-tts-modal event without url when no audio exists', function () {

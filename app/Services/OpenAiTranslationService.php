@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Ai\Agents\FrenchToRussianTranslatorAgent;
 use App\Ai\Agents\RussianStressCorrectorAgent;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
@@ -19,9 +21,16 @@ class OpenAiTranslationService
      */
     public function translateFrenchToRussian(string $frenchText): string
     {
-        $response = (new FrenchToRussianTranslatorAgent)->prompt($frenchText);
+        $frenchText = trim($frenchText);
 
-        return trim((string) $response);
+        Log::debug('Translating French → Russian.', ['input' => Str::limit($frenchText, 120)]);
+
+        $response = (new FrenchToRussianTranslatorAgent)->prompt($frenchText);
+        $result = trim((string) $response);
+
+        Log::debug('Translation complete.', ['output' => Str::limit($result, 120)]);
+
+        return $result;
     }
 
     /**
@@ -32,6 +41,14 @@ class OpenAiTranslationService
      */
     public function correctRussianStressMarks(string $russianText, string $frenchContextText): string
     {
+        $russianText = trim($russianText);
+        $frenchContextText = trim($frenchContextText);
+
+        Log::debug('Correcting Russian stress marks.', [
+            'russian' => Str::limit($russianText, 120),
+            'french_context' => Str::limit($frenchContextText, 120),
+        ]);
+
         $input = <<<TEXT
 French source for meaning/context only:
 ---
@@ -45,7 +62,10 @@ Russian text to review and correct stress marks in:
 TEXT;
 
         $response = (new RussianStressCorrectorAgent)->prompt($input);
+        $result = trim((string) $response);
 
-        return trim((string) $response);
+        Log::debug('Stress correction complete.', ['output' => Str::limit($result, 120)]);
+
+        return $result;
     }
 }
