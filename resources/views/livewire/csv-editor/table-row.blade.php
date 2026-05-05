@@ -11,13 +11,13 @@
 }">
 
     {{-- ── Column 0: French text ── --}}
-    <flux:table.cell class="p-1! w-1/2 whitespace-normal">
+    <flux:table.cell class="px-1! py-2! w-1/2 whitespace-normal">
         {{-- Plain text display; clicking opens the edit input --}}
         <div class="cursor-default px-2 text-zinc-800" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 0" x-html="$wire.csvRows[rowIndex][0] !== undefined && $wire.csvRows[rowIndex][0] !== ''
                      ? $wire.csvRows[rowIndex][0]
                      : '<span class=\'text-zinc-400\'>—</span>'"></div>
 
-        <input class="mx-1 my-1 w-full rounded border border-blue-500 bg-white px-2 py-1 text-zinc-800 outline-none transition-colors" x-show="$store.csvEditing.rowIndex === rowIndex && $store.csvEditing.columnIndex === 0" x-ref="input_0" :value="$wire.csvRows[rowIndex][0]" @blur="$wire.updateCell(rowIndex, 0, $event.target.value); $store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @keydown.enter="$el.blur()" @keydown.escape="$store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @click.stop placeholder="—" />
+        <input class="mx-1 w-full rounded border border-blue-500 bg-white px-2 py-[4.5px] text-zinc-800 outline-none transition-colors" x-show="$store.csvEditing.rowIndex === rowIndex && $store.csvEditing.columnIndex === 0" x-ref="input_0" :value="$wire.csvRows[rowIndex][0]" @blur="$wire.updateCell(rowIndex, 0, $event.target.value); $store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @keydown.enter="$el.blur()" @keydown.escape="$store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @click.stop placeholder="—" />
     </flux:table.cell>
 
     {{-- ── Pencil column: edit French text ── --}}
