@@ -42,4 +42,5 @@ return [
     'error_cannot_read_file' => 'Could not read the uploaded file.',
     'error_csv_empty_or_malformed' => 'The CSV file appears to be empty or malformed.',
     'error_audio_generation_failed' => 'Audio generation failed: :message',
+    'error_rate_limit' => 'Too many requests. Please wait a moment before trying again.',
 ];

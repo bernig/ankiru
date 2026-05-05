@@ -33,6 +33,7 @@ $translationKeys = [
     'error_cannot_read_file',
     'error_csv_empty_or_malformed',
     'error_audio_generation_failed',
+    'error_rate_limit',
 ];
 
 it('resolves every csv_editor key in English', function (string $key) {

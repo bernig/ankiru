@@ -41,7 +41,8 @@ return [
     'parsing' => 'Traitement…',
 
     // Messages de validation / erreur
-    'error_cannot_read_file' => 'Impossible de lire le fichier importé.',
-    'error_csv_empty_or_malformed' => 'Le fichier CSV semble vide ou mal formé.',
-    'error_audio_generation_failed' => 'Échec de la génération audio : :message',
+    'error_cannot_read_file' => 'Impossible de lire le fichier import.',
+    'error_csv_empty_or_malformed' => 'Le fichier CSV semble vide ou mal form.',
+    'error_audio_generation_failed' => 'chec de la gnration audio: :message',
+    'error_rate_limit' => 'Trop de requêtes. Veuillez patienter un moment avant de réessayer.',
 ];

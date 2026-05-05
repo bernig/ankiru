@@ -5,6 +5,7 @@ use App\Ai\Agents\RussianStressCorrectorAgent;
 use App\Livewire\CsvEditor;
 use App\Services\RussianTextToSpeechService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Ai\Audio;
 use Livewire\Livewire;
@@ -16,12 +17,20 @@ function sampleRows(): array
         ['Je suis développeur web.', 'Я веб-разраб<b>о</b>тчик.'],
     ];
 }
-function tempFilePath(): string
+
+/**
+ * Remove any leftover temp files regardless of session ID to avoid cross-test
+ * contamination when the session changes between the test body and Livewire requests.
+ * The local disk root is storage/app/private per filesystems config.
+ */
+function cleanUpTempFiles(): void
 {
-    return storage_path('app/csv_editor_temp.json');
+    foreach (glob(storage_path('app/private/csv_editor_temp_*.json')) ?: [] as $file) {
+        @unlink($file);
+    }
 }
-beforeEach(fn () => @unlink(tempFilePath()));
-afterEach(fn () => @unlink(tempFilePath()));
+beforeEach(fn () => cleanUpTempFiles());
+afterEach(fn () => cleanUpTempFiles());
 // ── Rendering ──────────────────────────────────────────────────────────────
 test('component renders successfully', function () {
     Livewire::test(CsvEditor::class)
@@ -230,6 +239,25 @@ test('single-syllable words mixed with multi-syllable words only flag the multi-
 
     expect($component->instance()->rowNeedsStressCorrection(0))->toBeTrue();
 });
+
+test('two-vowel word without a stress mark is flagged as needing correction', function () {
+    // "яма" has 2 vowels and no accent — the ≥2-vowel rule means it should be flagged.
+    $component = Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Phrase.', 'яма']])
+        ->set('hasCsvLoaded', true);
+
+    expect($component->instance()->rowNeedsStressCorrection(0))->toBeTrue();
+});
+
+test('two-vowel word with a stress mark is not flagged as needing correction', function () {
+    // "я<b>м</b>а" — stress mark present, should not be flagged.
+    // Actually testing "я<b>м</b>а" is a consonant. Let's use "я<b>м</b>а" targeting a vowel: "яm<b>а</b>".
+    $component = Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Phrase.', 'ям<b>а</b>']])
+        ->set('hasCsvLoaded', true);
+
+    expect($component->instance()->rowNeedsStressCorrection(0))->toBeFalse();
+});
 // ── CSV Download ───────────────────────────────────────────────────────────
 test('downloading the csv triggers a file download', function () {
     Livewire::test(CsvEditor::class)
@@ -252,24 +280,34 @@ test('resetting the editor clears state and returns to the upload panel', functi
         ->assertSee(__('csv_editor.upload_heading'));
 });
 test('resetting the editor deletes the temp file if it exists', function () {
-    file_put_contents(tempFilePath(), json_encode([
-        'csvRows' => sampleRows(),
-        'originalFileName' => 'sample.csv',
-        'hasCsvLoaded' => true,
-        'savedAt' => now()->toIso8601String(),
-    ]));
+    // Trigger a save through a component action so the file is written with the
+    // correct session-scoped path inside the request context.
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', sampleRows())
+        ->set('originalFileName', 'sample.csv')
+        ->set('hasCsvLoaded', true)
+        ->call('updateCell', 0, 0, 'Je travaille depuis chez moi.'); // Triggers autoSave.
+
+    // At least one temp file should now exist on the local disk.
+    expect(glob(storage_path('app/private/csv_editor_temp_*.json')))->not->toBeEmpty();
+
     Livewire::test(CsvEditor::class)
         ->call('resetEditor');
-    expect(file_exists(tempFilePath()))->toBeFalse();
+
+    // The reset should have deleted the file.
+    expect(glob(storage_path('app/private/csv_editor_temp_*.json')))->toBeEmpty();
 });
 // ── Temp File Persistence ───────────────────────────────────────────────────
 test('restores editor state from the temp file on mount', function () {
-    file_put_contents(tempFilePath(), json_encode([
-        'csvRows' => sampleRows(),
-        'originalFileName' => 'restored.csv',
-        'hasCsvLoaded' => true,
-        'savedAt' => now()->toIso8601String(),
-    ]));
+    // Step 1: Save state through a component action so the file is written with the
+    // correct session-scoped path inside the request context.
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', sampleRows())
+        ->set('originalFileName', 'restored.csv')
+        ->set('hasCsvLoaded', true)
+        ->call('updateCell', 0, 0, 'Je travaille depuis chez moi.'); // Triggers autoSave.
+
+    // Step 2: Fresh mount (same session via test cookie) should restore the saved state.
     Livewire::test(CsvEditor::class)
         ->assertSet('hasCsvLoaded', true)
         ->assertSet('originalFileName', 'restored.csv')
@@ -593,4 +631,46 @@ test('deleteRow resets ttsModalRowIndex to prevent stale references', function (
         ->set('ttsModalRowIndex', 0)
         ->call('deleteRow', 0)
         ->assertSet('ttsModalRowIndex', -1);
+});
+
+// ── Rate Limiting ─────────────────────────────────────────────────────────────
+
+test('translation is blocked and an error is set after exceeding the rate limit', function () {
+    FrenchToRussianTranslatorAgent::fake()->preventStrayPrompts();
+
+    // Exhaust the 30-attempt limit without triggering real agent calls.
+    $rateLimitKey = 'ai-translation:'.session()->getId();
+    RateLimiter::clear($rateLimitKey);
+    for ($i = 0; $i < 30; $i++) {
+        RateLimiter::hit($rateLimitKey, 60);
+    }
+
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je travaille depuis chez moi.', '']])
+        ->set('hasCsvLoaded', true)
+        ->call('translateWithChatGpt', 0)
+        ->assertSet('translationError', __('csv_editor.error_rate_limit'));
+
+    FrenchToRussianTranslatorAgent::assertNeverPrompted();
+    RateLimiter::clear($rateLimitKey);
+});
+
+test('tts generation is blocked and an error is set after exceeding the rate limit', function () {
+    Storage::fake('local');
+    Audio::fake()->preventStrayAudio();
+
+    $rateLimitKey = 'tts-generation:'.session()->getId();
+    RateLimiter::clear($rateLimitKey);
+    for ($i = 0; $i < 10; $i++) {
+        RateLimiter::hit($rateLimitKey, 60);
+    }
+
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je travaille.', 'Я работаю.']])
+        ->set('hasCsvLoaded', true)
+        ->call('generateTtsAudio', 0)
+        ->assertSet('ttsError', __('csv_editor.error_rate_limit'));
+
+    Audio::assertNothingGenerated();
+    RateLimiter::clear($rateLimitKey);
 });

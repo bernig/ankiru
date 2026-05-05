@@ -8,6 +8,7 @@ use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
 use Exception;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Laravel\Ai\Exceptions\FailoverableException;
@@ -29,9 +30,6 @@ class CsvEditor extends Component
     use WithPagination {
         setPage as paginationSetPage;
     }
-
-    /** Path to the temp file used for auto-saving between sessions */
-    private const string TEMP_FILE_PATH = 'csv_editor_temp.json';
 
     /** Number of rows displayed per page. */
     private const int PER_PAGE = 50;
@@ -79,6 +77,8 @@ class CsvEditor extends Component
 
     private RussianTextToSpeechService $ttsService;
 
+    private AnkiPackageExporterService $ankiExporterService;
+
     /**
      * Called by Livewire before every action (mount and subsequent requests).
      * Services are re-injected on each hydration cycle because they are not
@@ -88,10 +88,12 @@ class CsvEditor extends Component
         OpenAiTranslationService $translationService,
         RussianAccentService $accentService,
         RussianTextToSpeechService $ttsService,
+        AnkiPackageExporterService $ankiExporterService,
     ): void {
         $this->translationService = $translationService;
         $this->accentService = $accentService;
         $this->ttsService = $ttsService;
+        $this->ankiExporterService = $ankiExporterService;
     }
 
     public function mount(): void
@@ -260,6 +262,16 @@ class CsvEditor extends Component
             return;
         }
 
+        $rateLimitKey = 'ai-translation:'.session()->getId();
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
+            $this->translationError = __('csv_editor.error_rate_limit');
+
+            return;
+        }
+
+        RateLimiter::hit($rateLimitKey, 60);
+
         $this->translatingRowIndex = $rowIndex;
 
         try {
@@ -287,6 +299,16 @@ class CsvEditor extends Component
         if ($russianText === '') {
             return;
         }
+
+        $rateLimitKey = 'ai-translation:'.session()->getId();
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
+            $this->translationError = __('csv_editor.error_rate_limit');
+
+            return;
+        }
+
+        RateLimiter::hit($rateLimitKey, 60);
 
         $this->correctingStressRowIndex = $rowIndex;
 
@@ -319,6 +341,16 @@ class CsvEditor extends Component
         if (empty($normalizedText)) {
             return;
         }
+
+        $rateLimitKey = 'tts-generation:'.session()->getId();
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
+            $this->ttsError = __('csv_editor.error_rate_limit');
+
+            return;
+        }
+
+        RateLimiter::hit($rateLimitKey, 60);
 
         $this->ttsGeneratingRowIndex = $rowIndex;
 
@@ -441,12 +473,9 @@ class CsvEditor extends Component
      */
     public function downloadAnkiPackage(): StreamedResponse
     {
-        /** @var AnkiPackageExporterService $exporter */
-        $exporter = app(AnkiPackageExporterService::class);
-
         $cards = $this->buildAnkiCardsFromRows();
         $deckName = pathinfo($this->originalFileName, PATHINFO_FILENAME) ?: 'French-Russian';
-        $apkgPath = $exporter->export($cards, $deckName);
+        $apkgPath = $this->ankiExporterService->export($cards, $deckName);
 
         $downloadFileName = $this->buildBaseFileName().'_'.now()->format('Ymd_His').'.apkg';
 
@@ -499,30 +528,38 @@ class CsvEditor extends Component
     // -------------------------------------------------------------------------
 
     /**
-     * Parse raw CSV content into a 2D array.
+     * Parse raw CSV content into a 2D array using fgetcsv so that RFC 4180
+     * quoted fields containing newlines are handled correctly.
      *
      * @return array<int, array<int, string>>|false
      */
     private function parseCsvContent(string $content): array|false
     {
-        $normalisedContent = str_replace(["\r\n", "\r"], "\n", $content);
-        $lines = explode("\n", trim($normalisedContent));
+        $handle = fopen('php://temp', 'r+');
 
-        if (count($lines) === 0) {
+        if ($handle === false) {
             return false;
         }
 
-        $rows = [];
+        try {
+            fwrite($handle, $content);
+            rewind($handle);
 
-        foreach ($lines as $line) {
-            if (trim($line) === '') {
-                continue;
+            $rows = [];
+
+            while (($row = fgetcsv($handle)) !== false) {
+                // fgetcsv returns [null] for completely blank lines — skip them.
+                if ($row === [null]) {
+                    continue;
+                }
+
+                $rows[] = array_map('strval', $row);
             }
 
-            $rows[] = array_map('strval', str_getcsv($line));
+            return count($rows) > 0 ? $rows : false;
+        } finally {
+            fclose($handle);
         }
-
-        return count($rows) > 0 ? $rows : false;
     }
 
     /**
@@ -599,7 +636,7 @@ class CsvEditor extends Component
     }
 
     /**
-     * Persist the current editor state to a JSON temp file in storage.
+     * Persist the current editor state to a session-scoped JSON temp file in storage.
      */
     private function autoSaveToTempFile(): void
     {
@@ -610,23 +647,23 @@ class CsvEditor extends Component
             'savedAt' => now()->toIso8601String(),
         ];
 
-        file_put_contents(storage_path('app/'.self::TEMP_FILE_PATH), json_encode($data));
+        Storage::disk('local')->put($this->tempFilePath(), json_encode($data));
     }
 
     /**
-     * Restore editor state from the temp file if it exists.
+     * Restore editor state from the session-scoped temp file if it exists.
      */
     private function restoreFromTempFile(): void
     {
-        $tempFilePath = storage_path('app/'.self::TEMP_FILE_PATH);
+        $filePath = $this->tempFilePath();
 
-        if (! file_exists($tempFilePath)) {
+        if (! Storage::disk('local')->exists($filePath)) {
             return;
         }
 
-        $rawJson = file_get_contents($tempFilePath);
+        $rawJson = Storage::disk('local')->get($filePath);
 
-        if ($rawJson === false) {
+        if ($rawJson === null) {
             return;
         }
 
@@ -643,14 +680,23 @@ class CsvEditor extends Component
     }
 
     /**
-     * Remove the temp file from storage.
+     * Remove the session-scoped temp file from storage.
      */
     private function clearTempFile(): void
     {
-        $tempFilePath = storage_path('app/'.self::TEMP_FILE_PATH);
+        $filePath = $this->tempFilePath();
 
-        if (file_exists($tempFilePath)) {
-            unlink($tempFilePath);
+        if (Storage::disk('local')->exists($filePath)) {
+            Storage::disk('local')->delete($filePath);
         }
+    }
+
+    /**
+     * Build the storage-relative path for the session-scoped temp file.
+     * Using the session ID ensures each browser session has its own isolated state.
+     */
+    private function tempFilePath(): string
+    {
+        return 'csv_editor_temp_'.session()->getId().'.json';
     }
 }
