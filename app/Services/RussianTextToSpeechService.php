@@ -2,17 +2,14 @@
 
 namespace App\Services;
 
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Ai\Audio;
+use Laravel\Ai\Exceptions\FailoverableException;
 use RuntimeException;
 
 /**
- * Generates high-quality Russian text-to-speech audio using the OpenAI TTS API.
- *
- * Provider choice: defaults to `gpt-4o-mini-tts`, which natively handles Cyrillic
- * input and produces natural Russian speech without requiring a language hint.
- * Override via services.openai.tts_model.
+ * Generates high-quality Russian text-to-speech audio using the Laravel AI SDK,
+ * backed by the OpenAI TTS provider.
  *
  * Caching strategy: generated MP3 files are stored under storage/app/tts/ with a
  * filename derived from the SHA-256 hash of the raw Russian phrase (including any
@@ -75,7 +72,7 @@ class RussianTextToSpeechService
      * Generate (or retrieve from cache) an MP3 audio file for the given Russian
      * phrase. Returns the storage-relative path to the MP3 file.
      *
-     * @throws RuntimeException|ConnectionException
+     * @throws RuntimeException|FailoverableException
      */
     public function generateAudio(string $rawRussianPhrase): string
     {
@@ -88,43 +85,16 @@ class RussianTextToSpeechService
         }
 
         $normalizedText = $this->normalizeForSpeech($rawRussianPhrase);
-        $audioContents = $this->requestAudioFromOpenAi($normalizedText);
 
-        Storage::disk('local')->put($storagePath, $audioContents);
-
-        return $storagePath;
-    }
-
-    /**
-     * Call the OpenAI TTS API and return raw MP3 binary content.
-     *
-     * Defaults to `gpt-4o-mini-tts`, which handles Cyrillic natively.
-     * Voice and model are configurable via services.openai.tts_voice /
-     * services.openai.tts_model.
-     *
-     * @throws RuntimeException|ConnectionException when the API responds with a non-2xx status.
-     */
-    private function requestAudioFromOpenAi(string $normalizedText): string
-    {
-        $apiKey = config('services.openai.api_key');
-        $ttsModel = config('services.openai.tts_model', 'gpt-4o-mini-tts');
+        // Generate audio via the Laravel AI SDK and store the raw MP3 bytes.
         $ttsVoice = config('services.openai.tts_voice', 'echo');
 
-        $response = Http::withToken($apiKey)
-            ->timeout(60)
-            ->post('https://api.openai.com/v1/audio/speech', [
-                'model' => $ttsModel,
-                'input' => $normalizedText,
-                'voice' => $ttsVoice,
-                'response_format' => 'mp3',
-            ]);
+        $audio = Audio::of($normalizedText)
+            ->voice($ttsVoice)
+            ->generate();
 
-        if (! $response->successful()) {
-            throw new RuntimeException(
-                "OpenAI TTS API returned an error: {$response->status()}. Check your API key and quota."
-            );
-        }
+        Storage::disk('local')->put($storagePath, (string) $audio);
 
-        return $response->body();
+        return $storagePath;
     }
 }

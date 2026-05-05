@@ -1,11 +1,12 @@
 <?php
 
+use App\Ai\Agents\FrenchToRussianTranslatorAgent;
+use App\Ai\Agents\RussianStressCorrectorAgent;
 use App\Livewire\CsvEditor;
-use App\Services\OpenAiTranslationService;
 use App\Services\RussianTextToSpeechService;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Ai\Audio;
 use Livewire\Livewire;
 
 function sampleRows(): array
@@ -264,23 +265,9 @@ test('starts fresh when no temp file exists', function () {
         ->assertSet('csvRows', []);
 });
 // ── ChatGPT Translation ─────────────────────────────────────────────────────
-test('shows an error when the openai api key is not configured', function () {
-    config(['services.openai.api_key' => '']);
-    Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille depuis chez moi.', '']])
-        ->set('hasCsvLoaded', true)
-        ->call('translateWithChatGpt', 0)
-        ->assertSet('translationError', 'OpenAI API key is not configured. Please set OPENAI_API_KEY in your .env file.');
-});
 test('translates french text to russian and stores the result', function () {
-    config(['services.openai.api_key' => 'test-api-key']);
-    Http::fake([
-        'api.openai.com/*' => Http::response([
-            'output' => [
-                ['content' => [['text' => 'Я раб<b>о</b>таю из д<b>о</b>ма.']]],
-            ],
-        ], 200),
-    ]);
+    FrenchToRussianTranslatorAgent::fake(['Я раб<b>о</b>таю из д<b>о</b>ма.']);
+
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille depuis chez moi.', '']])
         ->set('hasCsvLoaded', true)
@@ -288,47 +275,45 @@ test('translates french text to russian and stores the result', function () {
         ->assertSet('csvRows.0.1', 'Я раб<b>о</b>таю из д<b>о</b>ма.')
         ->assertSet('translationError', '')
         ->assertSet('translatingRowIndex', -1);
+
+    FrenchToRussianTranslatorAgent::assertPrompted('Je travaille depuis chez moi.');
 });
-test('sets a translation error when the chatgpt api returns a failure status', function () {
-    config(['services.openai.api_key' => 'test-api-key']);
-    Http::fake([
-        'api.openai.com/*' => Http::response([], 429),
-    ]);
+test('sets a translation error when the agent throws an exception', function () {
+    FrenchToRussianTranslatorAgent::fake(function () {
+        throw new RuntimeException('Service unavailable.');
+    });
+
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille depuis chez moi.', '']])
         ->set('hasCsvLoaded', true)
         ->call('translateWithChatGpt', 0)
-        ->assertSet('translationError', 'ChatGPT API returned an error: 429. Check your API key and quota.');
+        ->assertSet('translationError', 'Service unavailable.');
 });
 test('does nothing when the french column is empty', function () {
-    config(['services.openai.api_key' => 'test-api-key']);
-    Http::fake();
+    FrenchToRussianTranslatorAgent::fake()->preventStrayPrompts();
+
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['', '']])
         ->set('hasCsvLoaded', true)
         ->call('translateWithChatGpt', 0)
         ->assertSet('translationError', '');
-    Http::assertNothingSent();
+
+    FrenchToRussianTranslatorAgent::assertNeverPrompted();
 });
 // ── Stress Correction ───────────────────────────────────────────────────────
-test('shows an error when the openai api key is not configured for stress correction', function () {
-    config(['services.openai.api_key' => '']);
+test('shows an error when the stress correction agent throws an exception', function () {
+    RussianStressCorrectorAgent::fake(function () {
+        throw new RuntimeException('Service unavailable.');
+    });
+
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille.', 'Я работаю.']])
         ->set('hasCsvLoaded', true)
         ->call('correctStressMarks', 0)
-        ->assertSet('translationError', 'OpenAI API key is not configured. Please set OPENAI_API_KEY in your .env file.');
+        ->assertSet('translationError', 'Service unavailable.');
 });
 test('corrects stress marks and sends french context with the russian text', function () {
-    config(['services.openai.api_key' => 'test-api-key']);
-
-    Http::fake([
-        'api.openai.com/*' => Http::response([
-            'output' => [
-                ['content' => [['text' => 'Я раб<b>о</b>таю из д<b>о</b>ма.']]],
-            ],
-        ], 200),
-    ]);
+    RussianStressCorrectorAgent::fake(['Я раб<b>о</b>таю из д<b>о</b>ма.']);
 
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille depuis chez moi.', 'Я работаю из дома.']])
@@ -337,28 +322,17 @@ test('corrects stress marks and sends french context with the russian text', fun
         ->assertSet('csvRows.0.1', 'Я раб<b>о</b>таю из д<b>о</b>ма.')
         ->assertSet('correctingStressRowIndex', -1);
 
-    Http::assertSent(function ($request) {
-        $requestData = $request->data();
-
-        expect($requestData['instructions'])->toBe(OpenAiTranslationService::STRESS_CORRECTION_PROMPT);
-        expect($requestData['input'])->toContain('French source');
-        expect($requestData['input'])->toContain('Je travaille depuis chez moi.');
-        expect($requestData['input'])->toContain('Russian text to review and correct stress marks in:');
-        expect($requestData['input'])->toContain('Я работаю из дома.');
-
-        return true;
+    RussianStressCorrectorAgent::assertPrompted(function ($prompt) {
+        return str_contains($prompt->prompt, 'French source')
+            && str_contains($prompt->prompt, 'Je travaille depuis chez moi.')
+            && str_contains($prompt->prompt, 'Russian text to review and correct stress marks in:')
+            && str_contains($prompt->prompt, 'Я работаю из дома.');
     });
 });
-test('row needs stress correction returns false when chatgpt returns already correct text', function () {
-    config(['services.openai.api_key' => 'test-api-key']);
+test('row needs stress correction returns false when the agent returns already correct text', function () {
     $alreadyCorrectText = 'Я раб<b>о</b>таю из д<b>о</b>ма.';
-    Http::fake([
-        'api.openai.com/*' => Http::response([
-            'output' => [
-                ['content' => [['text' => 'Я раб<b>о</b>таю из д<b>о</b>ма.']]],
-            ],
-        ], 200),
-    ]);
+    RussianStressCorrectorAgent::fake([$alreadyCorrectText]);
+
     $component = Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille depuis chez moi.', $alreadyCorrectText]])
         ->set('hasCsvLoaded', true)
@@ -368,24 +342,20 @@ test('row needs stress correction returns false when chatgpt returns already cor
 });
 // ── Russian TTS (Text-to-Speech) ────────────────────────────────────────────
 test('does not call the tts api when the russian column is empty', function () {
-    config(['services.openai.api_key' => 'test-api-key']);
     Storage::fake('local');
-    Http::fake();
+    Audio::fake()->preventStrayAudio();
 
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille.', '']])
         ->set('hasCsvLoaded', true)
         ->call('generateTtsAudio', 0);
 
-    Http::assertNothingSent();
+    Audio::assertNothingGenerated();
 });
 
 test('generates tts audio from the russian phrase and dispatches a playback event', function () {
-    config(['services.openai.api_key' => 'test-api-key']);
     Storage::fake('local');
-    Http::fake([
-        'api.openai.com/v1/audio/speech' => Http::response('fake-mp3-binary', 200),
-    ]);
+    Audio::fake([base64_encode('fake-mp3-binary')]);
 
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille.', 'Я раб<b>о</b>таю.']])
@@ -395,20 +365,17 @@ test('generates tts audio from the russian phrase and dispatches a playback even
         ->assertSet('ttsGeneratingRowIndex', -1)
         ->assertSet('ttsError', '');
 
-    // Verify the API received the normalized text (tags stripped).
-    Http::assertSent(function ($request) {
-        return str_contains($request->url(), '/v1/audio/speech')
-            && $request->data()['input'] === 'Я работаю.'
-            && $request->data()['model'] === 'gpt-4o-mini-tts';
-    });
+    Audio::assertGenerated(fn ($prompt) => $prompt->contains('Я работаю.'));
 });
 
 test('reuses the cached audio file without calling the tts api a second time', function () {
-    config(['services.openai.api_key' => 'test-api-key']);
     Storage::fake('local');
-    Http::fake([
-        'api.openai.com/v1/audio/speech' => Http::response('fake-mp3-binary', 200),
-    ]);
+    $generateCallCount = 0;
+    Audio::fake(function () use (&$generateCallCount) {
+        $generateCallCount++;
+
+        return base64_encode('fake-mp3-binary');
+    });
 
     $component = Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille.', 'Я раб<b>о</b>таю.']])
@@ -416,36 +383,25 @@ test('reuses the cached audio file without calling the tts api a second time', f
 
     // First call: audio is generated and written to (fake) storage.
     $component->call('generateTtsAudio', 0);
-    Http::assertSentCount(1);
+    expect($generateCallCount)->toBe(1);
 
-    // Second call: the cached file is found, so no additional HTTP request is made.
+    // Second call: the cached file is found, so no additional API call is made.
     $component->call('generateTtsAudio', 0);
-    Http::assertSentCount(1);
+    expect($generateCallCount)->toBe(1);
 });
 
-test('sets a tts error when the openai api returns a failure status', function () {
-    config(['services.openai.api_key' => 'test-api-key']);
+test('sets a tts error when audio generation throws an exception', function () {
     Storage::fake('local');
-    Http::fake([
-        'api.openai.com/v1/audio/speech' => Http::response([], 500),
-    ]);
+    Audio::fake(function () {
+        throw new RuntimeException('TTS provider error.');
+    });
 
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille.', 'Я работаю.']])
         ->set('hasCsvLoaded', true)
         ->call('generateTtsAudio', 0)
-        ->assertSet('ttsError', 'Audio generation failed: OpenAI TTS API returned an error: 500. Check your API key and quota.')
+        ->assertSet('ttsError', 'Audio generation failed: TTS provider error.')
         ->assertSet('ttsGeneratingRowIndex', -1);
-});
-
-test('shows a tts error when the openai api key is not configured', function () {
-    config(['services.openai.api_key' => '']);
-
-    Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille.', 'Я работаю.']])
-        ->set('hasCsvLoaded', true)
-        ->call('generateTtsAudio', 0)
-        ->assertSet('ttsError', 'OpenAI API key is not configured. Please set OPENAI_API_KEY in your .env file.');
 });
 
 test('tts audio route serves a cached mp3 file', function () {
@@ -490,7 +446,6 @@ test('tts service uses different cache keys for phrases with different stress po
 });
 
 test('deletes cached tts audio file from storage', function () {
-    config(['services.openai.api_key' => 'test-api-key']);
     Storage::fake('local');
 
     $rawRussianText = 'Я раб<b>о</b>таю.';
@@ -510,7 +465,6 @@ test('deletes cached tts audio file from storage', function () {
 });
 
 test('deleting tts audio for a row with no cached file does nothing gracefully', function () {
-    config(['services.openai.api_key' => 'test-api-key']);
     Storage::fake('local');
 
     // No file stored — deletion should not throw.
@@ -595,11 +549,8 @@ test('openTtsModal dispatches open-tts-modal event with audio url when cached fi
 });
 
 test('refreshTtsAudio deletes the existing file and regenerates fresh audio', function () {
-    config(['services.openai.api_key' => 'test-api-key']);
     Storage::fake('local');
-    Http::fake([
-        'api.openai.com/v1/audio/speech' => Http::response('fresh-mp3-binary', 200),
-    ]);
+    Audio::fake([base64_encode('fresh-mp3-binary')]);
 
     $rawText = 'Я раб<b>о</b>таю.';
     $cacheKey = hash('sha256', $rawText);
@@ -614,6 +565,7 @@ test('refreshTtsAudio deletes the existing file and regenerates fresh audio', fu
 
     // Verify audio was regenerated (new content written by the TTS API response).
     expect(Storage::disk('local')->get("tts/{$cacheKey}.mp3"))->toBe('fresh-mp3-binary');
+    Audio::assertGenerated(fn ($prompt) => $prompt->contains('Я работаю.'));
 });
 
 test('deleteRow resets ttsModalRowIndex to prevent stale references', function () {

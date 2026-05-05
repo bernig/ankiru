@@ -1,7 +1,5 @@
 @php
-    $ttsModalRussianText = $ttsModalRowIndex >= 0 && isset($csvRows[$ttsModalRowIndex])
-        ? $csvRows[$ttsModalRowIndex][1] ?? ''
-        : '';
+    $ttsModalRussianText = $ttsModalRowIndex >= 0 && isset($csvRows[$ttsModalRowIndex]) ? $csvRows[$ttsModalRowIndex][1] ?? '' : '';
 
     $ttsModalAudioExists = false;
     $ttsModalCreatedAt = null;
@@ -71,4 +69,3 @@
         </div>
     </div>
 </flux:modal>
-

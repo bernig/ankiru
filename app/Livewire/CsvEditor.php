@@ -318,12 +318,6 @@ class CsvEditor extends Component
             return;
         }
 
-        if (empty(config('services.openai.api_key'))) {
-            $this->ttsError = 'OpenAI API key is not configured. Please set OPENAI_API_KEY in your .env file.';
-
-            return;
-        }
-
         $this->ttsGeneratingRowIndex = $rowIndex;
 
         try {

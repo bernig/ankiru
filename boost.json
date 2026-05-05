@@ -13,6 +13,7 @@
     ],
     "sail": false,
     "skills": [
+        "ai-sdk-development",
         "laravel-best-practices",
         "mcp-development",
         "fluxui-development",
