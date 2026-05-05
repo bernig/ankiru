@@ -7,11 +7,11 @@ use Illuminate\Support\Facades\Storage;
 Route::livewire('/', CsvEditor::class)->name('csv-editor');
 
 /**
- * Serve a cached TTS audio file by its SHA-256 cache key.
+ * Serve a TTS audio file by its SHA-256 filename hash.
  * The where constraint enforces the exact hex format, preventing path traversal.
  */
-Route::get('tts-audio/{cacheKey}', function (string $cacheKey) {
-    $storagePath = "tts/{$cacheKey}.mp3";
+Route::get('tts-audio/{filenameHash}', function (string $filenameHash) {
+    $storagePath = "tts/{$filenameHash}.mp3";
 
     if (! Storage::disk('local')->exists($storagePath)) {
         abort(404);
@@ -21,4 +21,4 @@ Route::get('tts-audio/{cacheKey}', function (string $cacheKey) {
         'Content-Type' => 'audio/mpeg',
         'Cache-Control' => 'public, max-age=31536000, immutable',
     ]);
-})->name('tts.serve')->where('cacheKey', '[a-f0-9]{64}');
+})->name('tts.serve')->where('filenameHash', '[a-f0-9]{64}');

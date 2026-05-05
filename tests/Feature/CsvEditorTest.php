@@ -213,6 +213,23 @@ test('preserves accent marks on other words when accenting a vowel in one word',
         ->call('placeAccentOnVowel', 0, 1, 3)
         ->assertSet('csvRows.0.1', 'раб<b>о</b>таю из д<b>о</b>ма');
 });
+test('single-syllable words are never flagged as needing a stress mark', function () {
+    // "я из" — "я" (1 vowel) and "из" (1 vowel) are both single-syllable; neither needs an accent.
+    $component = Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Phrase.', 'я из']])
+        ->set('hasCsvLoaded', true);
+
+    expect($component->instance()->rowNeedsStressCorrection(0))->toBeFalse();
+});
+test('single-syllable words mixed with multi-syllable words only flag the multi-syllable word', function () {
+    // "он работает" — "он" (1 vowel, single-syllable) should not affect the flag;
+    // "работает" (4 vowels, no accent) should trigger the flag.
+    $component = Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Phrase.', 'он работает']])
+        ->set('hasCsvLoaded', true);
+
+    expect($component->instance()->rowNeedsStressCorrection(0))->toBeTrue();
+});
 // ── CSV Download ───────────────────────────────────────────────────────────
 test('downloading the csv triggers a file download', function () {
     Livewire::test(CsvEditor::class)
@@ -406,10 +423,10 @@ test('sets a tts error when audio generation throws an exception', function () {
 
 test('tts audio route serves a cached mp3 file', function () {
     Storage::fake('local');
-    $cacheKey = hash('sha256', 'Я работаю.');
-    Storage::disk('local')->put("tts/{$cacheKey}.mp3", 'fake-mp3-binary');
+    $filenameHash = hash('sha256', 'Я работаю.');
+    Storage::disk('local')->put("tts/{$filenameHash}.mp3", 'fake-mp3-binary');
 
-    $this->get(route('tts.serve', $cacheKey))
+    $this->get(route('tts.serve', $filenameHash))
         ->assertSuccessful()
         ->assertHeader('Content-Type', 'audio/mpeg');
 });
@@ -422,11 +439,12 @@ test('tts audio route returns 404 when the cached file does not exist', function
         ->assertNotFound();
 });
 // ── RussianTextToSpeechService Unit-level behaviour ─────────────────────────
-test('tts service builds a deterministic sha256 cache key from raw russian text', function () {
+test('tts service builds a deterministic sha256 filename hash from normalized russian text', function () {
     $service = new RussianTextToSpeechService;
     $rawText = 'Я раб<b>о</b>таю.';
+    $expectedHash = hash('sha256', $service->normalizeForSpeech($rawText));
 
-    expect($service->hashRawString($rawText))->toBe(hash('sha256', $rawText));
+    expect($service->buildFilenameHash($rawText))->toBe($expectedHash);
 });
 
 test('tts service strips bold tags and trims whitespace when normalizing for speech', function () {
@@ -435,25 +453,25 @@ test('tts service strips bold tags and trims whitespace when normalizing for spe
     expect($service->normalizeForSpeech('  Я раб<b>о</b>таю.  '))->toBe('Я работаю.');
 });
 
-test('tts service uses different cache keys for phrases with different stress positions', function () {
+test('tts service uses the same filename hash for phrases with different stress positions', function () {
     $service = new RussianTextToSpeechService;
 
     $phraseWithStressOnO = 'раб<b>о</b>таю';
     $phraseWithStressOnA = 'работ<b>а</b>ю';
 
-    expect($service->hashRawString($phraseWithStressOnO))
-        ->not->toBe($service->hashRawString($phraseWithStressOnA));
+    expect($service->buildFilenameHash($phraseWithStressOnO))
+        ->toBe($service->buildFilenameHash($phraseWithStressOnA));
 });
 
 test('deletes cached tts audio file from storage', function () {
     Storage::fake('local');
 
     $rawRussianText = 'Я раб<b>о</b>таю.';
-    $cacheKey = hash('sha256', $rawRussianText);
-    Storage::disk('local')->put("tts/{$cacheKey}.mp3", 'fake-mp3-binary');
+    $filenameHash = hash('sha256', 'Я работаю.');
+    Storage::disk('local')->put("tts/{$filenameHash}.mp3", 'fake-mp3-binary');
 
     // Verify the file exists before deletion.
-    expect(Storage::disk('local')->exists("tts/{$cacheKey}.mp3"))->toBeTrue();
+    expect(Storage::disk('local')->exists("tts/{$filenameHash}.mp3"))->toBeTrue();
 
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille.', $rawRussianText]])
@@ -461,7 +479,7 @@ test('deletes cached tts audio file from storage', function () {
         ->call('deleteTtsAudio', 0);
 
     // Verify the file was deleted.
-    expect(Storage::disk('local')->exists("tts/{$cacheKey}.mp3"))->toBeFalse();
+    expect(Storage::disk('local')->exists("tts/{$filenameHash}.mp3"))->toBeFalse();
 });
 
 test('deleting tts audio for a row with no cached file does nothing gracefully', function () {
@@ -480,8 +498,8 @@ test('tts audio exists for row returns true when cached file is present', functi
     Storage::fake('local');
 
     $rawRussianText = 'Я раб<b>о</b>таю.';
-    $cacheKey = hash('sha256', $rawRussianText);
-    Storage::disk('local')->put("tts/{$cacheKey}.mp3", 'fake-mp3-binary');
+    $filenameHash = hash('sha256', 'Я работаю.');
+    Storage::disk('local')->put("tts/{$filenameHash}.mp3", 'fake-mp3-binary');
 
     $component = Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille.', $rawRussianText]])
@@ -505,7 +523,7 @@ test('tts service delete audio removes the cached file and returns true', functi
 
     $service = new RussianTextToSpeechService;
     $rawText = 'Я раб<b>о</b>таю.';
-    $hash = $service->hashRawString($rawText);
+    $hash = $service->buildFilenameHash($rawText);
     Storage::disk('local')->put("tts/{$hash}.mp3", 'fake-mp3-binary');
 
     expect($service->deleteAudio($rawText))->toBeTrue();
@@ -537,15 +555,15 @@ test('openTtsModal dispatches open-tts-modal event with audio url when cached fi
     Storage::fake('local');
 
     $rawText = 'Я раб<b>о</b>таю.';
-    $cacheKey = hash('sha256', $rawText);
-    Storage::disk('local')->put("tts/{$cacheKey}.mp3", 'fake-mp3-binary');
+    $filenameHash = hash('sha256', 'Я работаю.');
+    Storage::disk('local')->put("tts/{$filenameHash}.mp3", 'fake-mp3-binary');
 
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille.', $rawText]])
         ->set('hasCsvLoaded', true)
         ->call('openTtsModal', 0)
         ->assertSet('ttsModalRowIndex', 0)
-        ->assertDispatched('open-tts-modal', fn ($name, $params) => str_contains($params['audioUrl'], route('tts.serve', $cacheKey)));
+        ->assertDispatched('open-tts-modal', fn ($name, $params) => str_contains($params['audioUrl'], route('tts.serve', $filenameHash)));
 });
 
 test('refreshTtsAudio deletes the existing file and regenerates fresh audio', function () {
@@ -553,8 +571,8 @@ test('refreshTtsAudio deletes the existing file and regenerates fresh audio', fu
     Audio::fake([base64_encode('fresh-mp3-binary')]);
 
     $rawText = 'Я раб<b>о</b>таю.';
-    $cacheKey = hash('sha256', $rawText);
-    Storage::disk('local')->put("tts/{$cacheKey}.mp3", 'old-mp3-binary');
+    $filenameHash = hash('sha256', 'Я работаю.'); // normalized: tags stripped
+    Storage::disk('local')->put("tts/{$filenameHash}.mp3", 'old-mp3-binary');
 
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille.', $rawText]])
@@ -564,7 +582,7 @@ test('refreshTtsAudio deletes the existing file and regenerates fresh audio', fu
         ->assertSet('ttsError', '');
 
     // Verify audio was regenerated (new content written by the TTS API response).
-    expect(Storage::disk('local')->get("tts/{$cacheKey}.mp3"))->toBe('fresh-mp3-binary');
+    expect(Storage::disk('local')->get("tts/{$filenameHash}.mp3"))->toBe('fresh-mp3-binary');
     Audio::assertGenerated(fn ($prompt) => $prompt->contains('Я работаю.'));
 });
 

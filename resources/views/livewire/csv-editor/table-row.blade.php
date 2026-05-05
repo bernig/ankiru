@@ -4,7 +4,7 @@
       $row         (array) — ['french text', 'russian text']
       $rowHasAudio (bool)  — whether a cached TTS file exists for this row
 --}}
-<flux:table.row class="group hover:bg-zinc-50" wire:key="row-{{ $rowIndex }}" x-data="{ rowIndex: {{ $rowIndex }}, rowHasAudio: {{ $rowHasAudio ? 'true' : 'false' }} }" x-bind:class="{
+<flux:table.row class="group hover:bg-zinc-50" wire:key="row-{{ $rowIndex }}" x-data="{ rowIndex: {{ $rowIndex }}, rowHasAudio: {{ $rowHasAudio ? 'true' : 'false' }} }" x-on:tts-audio-generated.window="if ($event.detail.rowIndex === rowIndex) { rowHasAudio = true; }" x-on:tts-audio-deleted.window="if ($event.detail.rowIndex === rowIndex) { rowHasAudio = false; }" x-bind:class="{
     'bg-amber-50': ($store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1) && window.csvAccentMode.cellNeedsAccent($wire.csvRows[rowIndex]?.[1] ?? ''),
     '': ($store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1) && !window.csvAccentMode.cellNeedsAccent($wire.csvRows[rowIndex]?.[1] ?? '') && ($wire.csvRows[rowIndex]?.[1] ?? '').trim() !== '' && rowHasAudio,
     'bg-blue-50/30': ($store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1) && !window.csvAccentMode.cellNeedsAccent($wire.csvRows[rowIndex]?.[1] ?? '') && ($wire.csvRows[rowIndex]?.[1] ?? '').trim() !== '' && !rowHasAudio,

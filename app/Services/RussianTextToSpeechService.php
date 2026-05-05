@@ -12,24 +12,12 @@ use RuntimeException;
  * backed by the OpenAI TTS provider.
  *
  * Caching strategy: generated MP3 files are stored under storage/app/tts/ with a
- * filename derived from the SHA-256 hash of the raw Russian phrase (including any
- * <b> stress-mark tags). This means the same phrase always maps to the same file,
- * and the TTS API is only called once per unique phrase.
+ * filename derived from the SHA-256 hash of the normalized Russian phrase (stress
+ * tags stripped). The same spoken phrase always maps to the same file, so the TTS
+ * API is only called once per unique phrase regardless of stress-mark placement.
  */
 class RussianTextToSpeechService
 {
-    /**
-     * Derive a deterministic storage key from the raw Russian phrase.
-     *
-     * The hash is computed from the original text including <b> stress tags so
-     * that two phrases that differ only in stress placement are stored separately
-     * and can be regenerated independently if needed.
-     */
-    public function hashRawString(string $rawRussianPhrase): string
-    {
-        return hash('sha256', $rawRussianPhrase);
-    }
-
     /**
      * Normalize the Russian phrase for speech generation by stripping <b> stress
      * tags and trimming surrounding whitespace. Cyrillic text content is
@@ -45,9 +33,7 @@ class RussianTextToSpeechService
      */
     public function audioFileExists(string $rawRussianPhrase): bool
     {
-        $hash = $this->hashRawString($rawRussianPhrase);
-
-        return Storage::disk('local')->exists("tts/{$hash}.mp3");
+        return Storage::disk('local')->exists($this->buildStoragePath($rawRussianPhrase));
     }
 
     /**
@@ -58,8 +44,7 @@ class RussianTextToSpeechService
      */
     public function deleteAudio(string $rawRussianPhrase): bool
     {
-        $hash = $this->hashRawString($rawRussianPhrase);
-        $storagePath = "tts/{$hash}.mp3";
+        $storagePath = $this->buildStoragePath($rawRussianPhrase);
 
         if (! Storage::disk('local')->exists($storagePath)) {
             return false;
@@ -76,15 +61,13 @@ class RussianTextToSpeechService
      */
     public function generateAudio(string $rawRussianPhrase): string
     {
-        $hash = $this->hashRawString($rawRussianPhrase);
-        $storagePath = "tts/{$hash}.mp3";
+        $normalizedText = $this->normalizeForSpeech($rawRussianPhrase);
+        $storagePath = $this->buildStoragePath($normalizedText);
 
         // Return the cached file immediately if it already exists.
         if (Storage::disk('local')->exists($storagePath)) {
             return $storagePath;
         }
-
-        $normalizedText = $this->normalizeForSpeech($rawRussianPhrase);
 
         // Generate audio via the Laravel AI SDK and store the raw MP3 bytes.
         $ttsVoice = config('services.openai.tts_voice', 'echo');
@@ -96,5 +79,25 @@ class RussianTextToSpeechService
         Storage::disk('local')->put($storagePath, (string) $audio);
 
         return $storagePath;
+    }
+
+    /**
+     * Return the SHA-256 cache key for the given phrase.
+     *
+     * The key is derived from the normalized text so that phrases differing only
+     * in stress-mark placement map to the same audio file. Use this when you
+     * need the hash externally, e.g. to build a route URL.
+     */
+    public function buildFilenameHash(string $rawRussianPhrase): string
+    {
+        return hash('sha256', $this->normalizeForSpeech($rawRussianPhrase));
+    }
+
+    /**
+     * Derive the storage-relative path for the given phrase.
+     */
+    private function buildStoragePath(string $russianPhrase): string
+    {
+        return 'tts/'.$this->buildFilenameHash($russianPhrase).'.mp3';
     }
 }

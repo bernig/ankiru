@@ -325,11 +325,13 @@ class CsvEditor extends Component
         try {
             $this->ttsService->generateAudio($rawRussianText);
 
-            $cacheKey = $this->ttsService->hashRawString($rawRussianText);
+            $filenameHash = $this->ttsService->buildFilenameHash($rawRussianText);
             // Append a cache-busting timestamp so browsers always fetch the latest audio.
-            $audioUrl = route('tts.serve', $cacheKey).'?v='.time();
+            $audioUrl = route('tts.serve', $filenameHash).'?v='.time();
 
             $this->dispatch('tts-audio-ready', audioUrl: $audioUrl);
+            // Notify the row's Alpine component so it can update its rowHasAudio state.
+            $this->dispatch('tts-audio-generated', rowIndex: $rowIndex);
         } catch (Exception|FailoverableException $exception) {
             $this->ttsError = __('csv_editor.error_audio_generation_failed', ['message' => $exception->getMessage()]);
         } finally {
@@ -350,6 +352,8 @@ class CsvEditor extends Component
         }
 
         $this->ttsService->deleteAudio($rawRussianText);
+        // Notify the row's Alpine component so it can revert its rowHasAudio state.
+        $this->dispatch('tts-audio-deleted', rowIndex: $rowIndex);
     }
 
     /**
@@ -380,9 +384,9 @@ class CsvEditor extends Component
         $audioUrl = null;
 
         if (! empty(trim($rawRussianText)) && $this->ttsService->audioFileExists($rawRussianText)) {
-            $cacheKey = $this->ttsService->hashRawString($rawRussianText);
-            $lastModified = Storage::disk('local')->lastModified("tts/{$cacheKey}.mp3");
-            $audioUrl = route('tts.serve', $cacheKey).'?v='.$lastModified;
+            $filenameHash = $this->ttsService->buildFilenameHash($rawRussianText);
+            $lastModified = Storage::disk('local')->lastModified("tts/{$filenameHash}.mp3");
+            $audioUrl = route('tts.serve', $filenameHash).'?v='.$lastModified;
         }
 
         $this->dispatch('open-tts-modal', audioUrl: $audioUrl);
@@ -577,8 +581,8 @@ class CsvEditor extends Component
 
             // Append the Anki sound reference when a cached MP3 exists for this phrase.
             if (! empty(trim($rawRussianText)) && $this->ttsService->audioFileExists($rawRussianText)) {
-                $cacheKey = $this->ttsService->hashRawString($rawRussianText);
-                $mp3FileName = "{$cacheKey}.mp3";
+                $filenameHash = $this->ttsService->buildFilenameHash($rawRussianText);
+                $mp3FileName = "{$filenameHash}.mp3";
                 $mp3StoragePath = "tts/{$mp3FileName}";
                 $backFieldValue .= " [sound:{$mp3FileName}]";
             }

@@ -88,6 +88,32 @@ window.csvAccentMode = (function () {
     }
 
     /**
+     * Build a Set of plain-text character indices belonging to single-syllable
+     * Russian words (words that contain exactly one vowel).
+     *
+     * Vowels in single-syllable words must not be rendered as interactive: there
+     * is no ambiguity about which syllable carries the stress, so the user should
+     * not be able to click them.
+     *
+     * @param  {string} plain  Plain text with <b> tags already stripped.
+     * @returns {Set<number>}
+     */
+    function buildSingleSyllableWordPositions(plain) {
+        const positions = new Set();
+        CYRILLIC_WORD_RE.lastIndex = 0;
+        let m;
+        while ((m = CYRILLIC_WORD_RE.exec(plain)) !== null) {
+            const vowelCount = [...m[0]].filter(ch => RUSSIAN_VOWELS.has(ch)).length;
+            if (vowelCount <= 1) {
+                for (let p = m.index; p < m.index + m[0].length; p++) {
+                    positions.add(p);
+                }
+            }
+        }
+        return positions;
+    }
+
+    /**
      * Build the display HTML for a cell in Russian accent mode.
      *
      * Each Russian vowel is wrapped in a <span class="rv-vowel"> (unstressed) or
@@ -118,6 +144,9 @@ window.csvAccentMode = (function () {
         const segments = parseSegments(rawText);
         const plain = segments.map(s => s.text).join('');
         const inWord = buildRussianWordPositions(plain);
+        // Positions belonging to single-syllable words: stress is unambiguous,
+        // so these vowels must not be rendered as interactive click targets.
+        const singleSyllable = buildSingleSyllableWordPositions(plain);
         let result = '';
         let plainPos = 0;
 
@@ -127,9 +156,15 @@ window.csvAccentMode = (function () {
                 const pos = plainPos + j;
 
                 if (RUSSIAN_VOWELS.has(ch) && inWord.has(pos)) {
-                    // Render as a clickable, colour-coded vowel span.
-                    const cssClass = seg.bold ? 'rv-vowel-accented' : 'rv-vowel';
-                    result += `<span class="${cssClass}" data-vowel-pos="${pos}">${ch}</span>`;
+                    if (singleSyllable.has(pos)) {
+                        // Single-syllable word: show accent state but no click interaction.
+                        const cssClass = seg.bold ? 'rv-vowel-accented' : '';
+                        result += cssClass ? `<span class="${cssClass}">${ch}</span>` : ch;
+                    } else {
+                        // Multi-syllable word: render as a clickable, colour-coded vowel span.
+                        const cssClass = seg.bold ? 'rv-vowel-accented' : 'rv-vowel';
+                        result += `<span class="${cssClass}" data-vowel-pos="${pos}">${ch}</span>`;
+                    }
                 } else if (seg.bold) {
                     // Non-vowel inside <b> (edge case) — preserve bold rendering.
                     result += `<b>${ch}</b>`;

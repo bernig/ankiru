@@ -10,8 +10,8 @@
         $ttsModalAudioExists = $ttsServiceForModal->audioFileExists($ttsModalRussianText);
 
         if ($ttsModalAudioExists) {
-            $ttsModalCacheKey = $ttsServiceForModal->hashRawString($ttsModalRussianText);
-            $ttsModalLastModified = Storage::disk('local')->lastModified("tts/{$ttsModalCacheKey}.mp3");
+            $ttsModalFilenameHash = $ttsServiceForModal->buildFilenameHash($ttsModalRussianText);
+            $ttsModalLastModified = Storage::disk('local')->lastModified("tts/{$ttsModalFilenameHash}.mp3");
             $ttsModalCreatedAt = now()->setTimestamp($ttsModalLastModified)->format('j M Y, H:i');
         }
     }
