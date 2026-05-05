@@ -164,11 +164,7 @@ window.csvAccentMode = (function () {
         const vowelPos = parseInt(target.dataset.vowelPos, 10);
         if (isNaN(vowelPos)) return;
 
-        if (type === 'header') {
-            wire.placeAccentOnHeaderVowel(primary, vowelPos);
-        } else {
-            wire.placeAccentOnVowel(primary, secondary, vowelPos);
-        }
+        wire.placeAccentOnVowel(primary, secondary, vowelPos);
     }
 
     /**
