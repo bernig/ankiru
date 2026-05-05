@@ -57,7 +57,7 @@
 
                     {{-- TTS button: always visible when Russian text exists; opens the audio player modal --}}
                     @if (!empty(trim($row[1] ?? '')))
-                        <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-sky-700 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100" title="{{ __('csv_editor.open_audio_player') }}" wire:click="openTtsModal({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})">
+                        <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100" title="{{ $this->isTtsBatchRunning ? __('csv_editor.bulk_tts_in_progress') : __('csv_editor.open_audio_player') }}" wire:click="openTtsModal({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})" @disabled($this->isTtsBatchRunning)>
                             <span wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})">
                                 <flux:icon.speaker-wave class="mx-1 my-2 size-4" />
                             </span>
@@ -90,7 +90,7 @@
 
                     {{-- Correct-stress button: visible when right column has text --}}
                     @if (!empty(trim($row[1] ?? '')))
-                        <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-orange-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100" title="{{ __('csv_editor.fix_stress_marks') }}" wire:click="correctStressMarks({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="correctStressMarks({{ $rowIndex }})">
+                        <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-orange-500 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100" title="{{ $this->isStressBatchRunning ? __('csv_editor.bulk_stress_in_progress') : __('csv_editor.fix_stress_marks') }}" wire:click="correctStressMarks({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="correctStressMarks({{ $rowIndex }})" @disabled($this->isStressBatchRunning)>
                             <span wire:loading wire:target="correctStressMarks({{ $rowIndex }})">
                                 <flux:icon.arrow-path class="mx-1 my-2 size-4 animate-spin" />
                             </span>

@@ -10,6 +10,13 @@
     @if ($hasCsvLoaded)
         <div class="flex items-center gap-2">
 
+            {{-- Bulk Actions: opens modal with stress-correction and TTS batch operations --}}
+            <flux:modal.trigger name="bulk-actions">
+                <flux:button icon="sparkles" variant="ghost" wire:click="openBulkActionsModal">
+                    {{ __('csv_editor.bulk_actions') }}
+                </flux:button>
+            </flux:modal.trigger>
+
             {{-- Export dropdown: plain CSV or full Anki package with TTS audio --}}
             <flux:dropdown position="bottom" align="end">
                 <flux:button icon="arrow-down-tray" icon:trailing="chevron-down" variant="primary">

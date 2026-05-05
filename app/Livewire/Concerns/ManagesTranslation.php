@@ -41,6 +41,11 @@ trait ManagesTranslation
             return;
         }
 
+        // Refuse per-row actions while a stress batch is in progress.
+        if (isset($this->stressBatchStatus) && $this->stressBatchStatus === 'running') {
+            return;
+        }
+
         $rateLimitKey = 'ai-translation:'.session()->getId();
 
         if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
@@ -76,6 +81,11 @@ trait ManagesTranslation
         $russianText = trim($this->csvRows[$rowIndex][1] ?? '');
 
         if ($russianText === '') {
+            return;
+        }
+
+        // Refuse per-row actions while a stress batch is in progress.
+        if (isset($this->stressBatchStatus) && $this->stressBatchStatus === 'running') {
             return;
         }
 

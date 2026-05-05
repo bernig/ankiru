@@ -41,6 +41,19 @@ class OpenAiTranslationService
      */
     public function correctRussianStressMarks(string $russianText, string $sourceContextText): string
     {
+        return $this->correctRussianStressMarksWithUsage($russianText, $sourceContextText)['text'];
+    }
+
+    /**
+     * Review and correct stress marks, returning the corrected text and exact
+     * token usage reported by the API.
+     *
+     * @return array{text: string, promptTokens: int, completionTokens: int}
+     *
+     * @throws RuntimeException when the AI request fails.
+     */
+    public function correctRussianStressMarksWithUsage(string $russianText, string $sourceContextText): array
+    {
         $russianText = trim($russianText);
         $sourceContextText = trim($sourceContextText);
 
@@ -62,10 +75,14 @@ Russian text to review and correct stress marks in:
 TEXT;
 
         $response = (new RussianStressCorrectorAgent)->prompt($input);
-        $result = trim((string) $response);
+        $result = trim($response->text);
 
         Log::debug('Stress correction complete.', ['output' => Str::limit($result, 120)]);
 
-        return $result;
+        return [
+            'text' => $result,
+            'promptTokens' => $response->usage->promptTokens,
+            'completionTokens' => $response->usage->completionTokens,
+        ];
     }
 }

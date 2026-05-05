@@ -1,0 +1,406 @@
+================================================================================
+PLAN: "Bulk Actions" Feature  (sparkles icon, modal with two operations)
+================================================================================
+STATUS TRACKER
+--------------
+[x] Phase 1 — Config: pricing constants in config/services.php
+[x] Phase 2 — Broadcasting: MassOperationProgressEvent + channel/Reverb setup
+[x] Phase 3 — MassOperationJob (Laravel Queue job)
+[x] Phase 4 — MassOperationService (token/char estimation + row dispatching)
+[x] Phase 5 — ManagesMassOperations trait (Livewire concern)
+[x] Phase 6 — Blade: bulk-actions-modal partial
+[x] Phase 7 — Header button wiring
+[x] Phase 8 — Disable per-row actions while a matching operation is running
+[x] Phase 9 — Tests
+[x] Phase 10 — Cleanup / polish / i18n strings
+================================================================================
+FEATURE OVERVIEW
+================================================================================
+A "Bulk Actions" button (sparkles icon) appears above the main table whenever
+a CSV is loaded.
+Clicking it opens a flux modal with two independent sections:
+  SECTION A — "Fix all missing stress marks"
+    Runs RussianStressCorrectorAgent (gpt-5.4) on every row where
+    textNeedsStressCorrection() returns true.
+  SECTION B — "Generate all missing audio files"
+    Runs RussianTextToSpeechService::generateAudio() on every row whose
+    column-1 phrase does NOT yet have a cached MP3.
+Both operations:
+  • Run in the background via Laravel queued jobs (one job per row).
+  • Stream real-time progress to the UI via Laravel Broadcasting + Laravel Echo
+    + Livewire Echo listener. No polling.
+  • Block the matching per-row action (stress button / TTS button) for the
+    duration of the operation.
+  • Allow rows to fail silently (tries=1, timeout=60s). The user can re-run
+    afterwards; it will only target rows that still need work.
+================================================================================
+TOKEN / CHARACTER ESTIMATION DISPLAY
+================================================================================
+Before launching each operation the modal shows a cost estimate.
+--- STRESS CORRECTION (Section A) ---
+Model: gpt-5.4  (from RussianStressCorrectorAgent #[Model] attribute)
+Label stored in config for display: services.openai.stress_model_label
+System prompt: ~420 tokens  (measured from RussianStressCorrectorAgent::instructions())
+Per-row estimate:
+  input_tokens_per_row  = 420 + ceil( (mb_strlen(source) + mb_strlen(russian)) / 3.5 )
+  output_tokens_per_row = ceil( mb_strlen(russian) / 3.5 )
+  (3.5 chars/token is a practical approximation for mixed Latin/Cyrillic text)
+Totals:
+  total_input_tokens  = sum of input_tokens_per_row  across qualifying rows
+  total_output_tokens = sum of output_tokens_per_row across qualifying rows
+Cost = (total_input_tokens  / 1_000_000) * services.openai.gpt_5_4_input_price_per_million
+     + (total_output_tokens / 1_000_000) * services.openai.gpt_5_4_output_price_per_million
+Display: "~X,XXX input + Y,YYY output tokens  (≈ $Z.ZZ) · gpt-5.4"
+--- AUDIO GENERATION (Section B) ---
+Model: OpenAI TTS  (Audio::of()->voice()->generate() via Laravel AI SDK).
+  The Laravel AI SDK Audio facade does not expose the underlying model name.
+  Pricing is per character regardless of model variant (tts-1 vs tts-1-hd).
+  A configurable display label is stored in config purely for UI purposes.
+Per-row estimate:
+  chars_per_row = mb_strlen( ttsService->normalizeForSpeech(russian_text) )
+Totals:
+  total_chars = sum of chars_per_row across rows missing audio
+Cost = (total_chars / 1_000_000) * services.openai.tts_price_per_million_chars
+Display: "~X,XXX characters  (≈ $Z.ZZ) · tts-1-hd"
+================================================================================
+PHASE 1 — CONFIG
+================================================================================
+File: config/services.php  (add to existing 'openai' array)
+  'openai' => [
+      // ...existing keys (tts_voice, etc.)...
+      // Stress-correction model pricing (gpt-5.4)
+      'stress_model_label'               => env('OPENAI_STRESS_MODEL_LABEL',          'gpt-5.4'),
+      'gpt_5_4_input_price_per_million'  => env('OPENAI_GPT54_INPUT_PRICE_PER_MILLION',   3.00),
+      'gpt_5_4_output_price_per_million' => env('OPENAI_GPT54_OUTPUT_PRICE_PER_MILLION', 15.00),
+      // TTS audio generation pricing (billed per character)
+      'tts_model_label'                  => env('OPENAI_TTS_MODEL_LABEL',             'tts-1-hd'),
+      'tts_price_per_million_chars'      => env('OPENAI_TTS_PRICE_PER_MILLION_CHARS',    30.00),
+  ],
+Update .env.example with the four new variables and their default values.
+================================================================================
+PHASE 2 — BROADCASTING
+================================================================================
+2a. Infrastructure requirement
+--------------------------------
+Requires a real broadcast driver. Laravel Reverb is the recommended choice.
+If not already installed:
+  composer require laravel/reverb
+  php artisan reverb:install
+  BROADCAST_CONNECTION=reverb in .env
+  QUEUE_CONNECTION=database in .env  (or redis)
+  php artisan queue:work  (background worker)
+  php artisan reverb:start  (background WebSocket server)
+The modal will detect misconfigured drivers and show an inline warning:
+  config('queue.default') === 'sync'          → queue warning
+  config('broadcasting.default') === 'log'    → broadcast warning
+2b. Channel design
+-------------------
+No auth exists in this application. Use a public channel keyed by session ID
+so each user's browser subscribes only to their own events:
+  Channel name: "mass-op.{$sessionId}"
+Public channel → no authorization callback needed.
+2c. Event class
+----------------
+  php artisan make:event MassOperationProgressEvent --no-interaction
+File: app/Events/MassOperationProgressEvent.php
+  implements ShouldBroadcast
+  public properties:
+    string $operationType   // 'stress' | 'tts'
+    string $sessionId
+    string $status          // 'running' | 'done'
+    int    $processedCount  // success + failed so far
+    int    $totalCount
+    int    $failedCount
+  broadcastOn():
+    return new Channel('mass-op.'.$this->sessionId);
+  broadcastAs():
+    return 'operation.progress';
+2d. Livewire listener
+----------------------
+In ManagesMassOperations, use a dynamic channel via getListeners()
+(cannot use the #[On] attribute with runtime-evaluated channel names):
+  public function getListeners(): array
+  {
+      return [
+          "echo:mass-op.{$this->getSessionId()},.operation.progress"
+              => 'handleBatchProgressUpdate',
+      ];
+  }
+  // getSessionId() is a private method returning session()->getId()
+================================================================================
+PHASE 3 — MassOperationJob
+================================================================================
+  php artisan make:job MassOperationJob --no-interaction
+File: app/Jobs/MassOperationJob.php
+Key settings:
+  public int $tries   = 1;    // No retries — failed rows are skipped silently
+  public int $timeout = 60;   // 60 s per row (ample for one AI / TTS call)
+Constructor — row content snapshotted at dispatch time to avoid file races:
+  public function __construct(
+      public readonly string $operationType,  // 'stress' | 'tts'
+      public readonly string $sessionId,
+      public readonly int    $rowIndex,
+      public readonly int    $totalRows,
+      public readonly string $sourceText,     // column 0 snapshot
+      public readonly string $russianText,    // column 1 snapshot
+  ) {}
+handle() — stress operation:
+  1. Resolve RussianAccentService and OpenAiTranslationService from the container.
+  2. If textNeedsStressCorrection($russianText) is false, skip (row was already
+     fixed by hand between dispatch and execution).
+  3. Call $translationService->correctRussianStressMarks($russianText, $sourceText).
+  4. Store result:
+       Cache::put("mass_op:{$sessionId}:stress:row:{$rowIndex}", $correctedText, 3600);
+  5. Atomically increment processed counter:
+       Cache::increment("mass_op:{$sessionId}:stress:processed");
+  6. Broadcast progress (see broadcastProgress() helper below).
+handle() — tts operation:
+  1. Resolve RussianTextToSpeechService from the container.
+  2. Call $ttsService->generateAudio($russianText).
+  3. Atomically increment counter.
+  4. Broadcast progress.
+  (No per-row cache key needed — audio lands directly on disk.)
+failed(Throwable $e) — called by Laravel when the job exceeds tries:
+  1. Log the error.
+  2. Increment Cache("mass_op:{$sessionId}:{$type}:failed").
+  3. Increment processed counter (so the total is still reached).
+  4. Broadcast progress.
+broadcastProgress() private helper (shared by handle() and failed()):
+  $processed = Cache::get("mass_op:{$sessionId}:{$type}:processed", 0);
+  $failed    = Cache::get("mass_op:{$sessionId}:{$type}:failed",    0);
+  $isDone    = ($processed >= $this->totalRows);
+  if ($isDone) {
+      Cache::put("mass_op:{$sessionId}:{$type}:status", 'done', 3600);
+  }
+  MassOperationProgressEvent::dispatch(
+      operationType: $this->operationType,
+      sessionId:     $this->sessionId,
+      status:        $isDone ? 'done' : 'running',
+      processedCount: $processed,
+      totalCount:    $this->totalRows,
+      failedCount:   $failed,
+  );
+IMPORTANT: MassOperationJob never touches the CSV temp file.
+The Livewire component merges stress results from cache when it receives
+the 'done' broadcast event (see Phase 5).
+================================================================================
+PHASE 4 — MassOperationService
+================================================================================
+  php artisan make:class Services/MassOperationService --no-interaction
+File: app/Services/MassOperationService.php
+Constructor injection:
+  public function __construct(
+      public readonly RussianAccentService         $accentService,
+      public readonly RussianTextToSpeechService   $ttsService,
+  ) {}
+Methods:
+  /** Count rows where textNeedsStressCorrection() is true. */
+  countRowsMissingStress(array $csvRows): int
+  /**
+   * Estimate token counts and cost for the stress batch.
+   * @param  array<int, array<int, string>> $csvRows
+   * @return array{inputTokens: int, outputTokens: int, estimatedCost: float, rowCount: int}
+   */
+  estimateStressBatchCost(array $csvRows): array
+  /** Count rows whose Russian phrase has no cached audio file. */
+  countRowsMissingAudio(array $csvRows): int
+  /**
+   * Estimate character count and cost for the TTS batch.
+   * @param  array<int, array<int, string>> $csvRows
+   * @return array{totalChars: int, estimatedCost: float, rowCount: int}
+   */
+  estimateTtsBatchCost(array $csvRows): array
+  /**
+   * Initialise cache keys and dispatch one MassOperationJob per qualifying row.
+   * Returns the number of jobs dispatched (0 if nothing to do).
+   */
+  dispatchStressBatch(array $csvRows, string $sessionId): int
+  /** Same for TTS. */
+  dispatchTtsBatch(array $csvRows, string $sessionId): int
+  /**
+   * Read current progress from cache.
+   * @return array{status: string, total: int, processed: int, failed: int}
+   */
+  getOperationProgress(string $sessionId, string $operationType): array
+dispatchStressBatch() / dispatchTtsBatch() implementation pattern:
+  1. Collect qualifying rows. Return 0 if none.
+  2. Initialise cache keys (TTL 3600s):
+       mass_op:{sessionId}:{type}:status    = 'running'
+       mass_op:{sessionId}:{type}:total     = N
+       mass_op:{sessionId}:{type}:processed = 0
+       mass_op:{sessionId}:{type}:failed    = 0
+  3. Dispatch MassOperationJob for each qualifying row.
+  4. Return N.
+================================================================================
+PHASE 5 — ManagesMassOperations trait
+================================================================================
+File: app/Livewire/Concerns/ManagesMassOperations.php
+Public Livewire state:
+  public string $stressBatchStatus   = 'idle';  // idle | running | done
+  public int    $stressBatchTotal    = 0;
+  public int    $stressBatchProgress = 0;        // processed (success + failed)
+  public int    $stressBatchFailed   = 0;
+  public string $ttsBatchStatus      = 'idle';
+  public int    $ttsBatchTotal       = 0;
+  public int    $ttsBatchProgress    = 0;
+  public int    $ttsBatchFailed      = 0;
+  // Populated when the modal opens
+  public int   $estimatedStressInputTokens  = 0;
+  public int   $estimatedStressOutputTokens = 0;
+  public float $estimatedStressCost         = 0.0;
+  public int   $missingStressRowCount       = 0;
+  public int   $estimatedTtsChars           = 0;
+  public float $estimatedTtsCost            = 0.0;
+  public int   $missingAudioRowCount        = 0;
+Methods:
+  openBulkActionsModal(): void
+    — Recomputes all estimates via MassOperationService.
+    — Syncs status/progress from cache (so the modal is accurate if the user
+      navigated away and back while a batch was running).
+  dispatchStressBatch(): void
+    — Guard: return early if $stressBatchStatus === 'running' || !$hasCsvLoaded.
+    — Call MassOperationService::dispatchStressBatch($csvRows, session()->getId()).
+    — Set $stressBatchStatus = 'running' and $stressBatchTotal = dispatched count.
+  dispatchTtsBatch(): void
+    — Same pattern.
+  handleBatchProgressUpdate(array $event): void  ← Echo broadcast listener
+    — Update $stressBatch* or $ttsBatch* from $event fields.
+    — When status === 'done' && operationType === 'stress':
+        For each rowIndex that was processed, read the per-row cache key
+        "mass_op:{sessionId}:stress:row:{n}" and merge the corrected text
+        into $this->csvRows[$n][1].
+        Call autoSaveToTempFile() once after all merges.
+        Delete the per-row cache keys (Cache::forget).
+    — Dispatch JS event to refresh the audioExistenceByRowIndex computed
+      property when TTS batch completes (because new MP3s are now on disk).
+  getListeners(): array
+    — Returns the echo listener keyed on the session-scoped channel.
+  #[Computed] isStressBatchRunning(): bool   { return $stressBatchStatus === 'running'; }
+  #[Computed] isTtsBatchRunning():    bool   { return $ttsBatchStatus    === 'running'; }
+  private getSessionId(): string             { return session()->getId(); }
+Add to CsvEditor.php:  use ManagesMassOperations;
+Also inject MassOperationService in boot() alongside other services.
+Guards in existing traits:
+  ManagesTranslation::correctStressMarks()  → if ($this->isStressBatchRunning) return;
+  ManagesTtsAudio::generateTtsAudio()       → if ($this->isTtsBatchRunning)    return;
+================================================================================
+PHASE 6 — Blade: bulk-actions-modal partial
+================================================================================
+File: resources/views/livewire/csv-editor/bulk-actions-modal.blade.php
+Structure (pseudocode — actual Blade in implementation):
+  <flux:modal name="bulk-actions" class="w-full max-w-lg space-y-4">
+    <flux:heading>Bulk Actions</flux:heading>
+    [Section A box]
+      sparkles icon + "Fix Missing Stress Marks" subheading
+      "$missingStressRowCount phrases need stress marks fixed."
+      "~X,XXX input / Y,YYY output tokens  (≈ $Z.ZZ)  · gpt-5.4"
+      IF running  → progress bar + "X / Y" counter + failed count
+      IF done     → success badge + optional "Retry N remaining" ghost button
+      IF idle     → primary Start button (disabled if missingStressRowCount === 0)
+    [Section B box]
+      musical-note icon + "Generate Missing Audio" subheading
+      "$missingAudioRowCount phrases missing audio."
+      "~X,XXX characters  (≈ $Z.ZZ)  · tts-1-hd"
+      IF running  → progress bar + "X / Y" counter
+      IF done     → success badge + optional "Retry N remaining" ghost button
+      IF idle     → primary Start button (disabled if missingAudioRowCount === 0)
+    [Infrastructure warnings — shown when queue/broadcast drivers are wrong]
+  </flux:modal>
+NOTE: No wire:poll anywhere in this modal. All updates arrive via the Echo
+broadcast listener in ManagesMassOperations::handleBatchProgressUpdate().
+================================================================================
+PHASE 7 — Header button wiring
+================================================================================
+File: resources/views/livewire/csv-editor/header.blade.php
+Inside @if ($hasCsvLoaded), add before the export dropdown:
+  <flux:button icon="sparkles" variant="ghost" wire:click="openBulkActionsModal">
+      {{ __('csv_editor.bulk_actions') }}
+  </flux:button>
+Add at bottom of resources/views/livewire/csv-editor.blade.php:
+  @include('livewire.csv-editor.bulk-actions-modal')
+================================================================================
+PHASE 8 — Disable per-row actions while batch is running
+================================================================================
+File: resources/views/livewire/csv-editor/table-row.blade.php
+Stress correction button:
+  :disabled="$isStressBatchRunning || ..."
+  Add flux:tooltip "Bulk stress correction in progress" when disabled by batch.
+TTS generate/refresh buttons:
+  :disabled="$isTtsBatchRunning || ..."
+  Add flux:tooltip "Bulk audio generation in progress" when disabled by batch.
+================================================================================
+PHASE 9 — Tests
+================================================================================
+  php artisan make:test --pest MassOperationJobStressTest
+  php artisan make:test --pest MassOperationJobTtsTest
+  php artisan make:test --pest ManagesMassOperationsTest
+  php artisan make:test --pest --unit MassOperationServiceTest
+MassOperationServiceTest (unit):
+  • estimateStressBatchCost returns zeros for a fully-accented CSV
+  • estimateStressBatchCost returns correct token sums for known inputs
+  • estimateTtsBatchCost returns zero chars for rows that already have audio
+  • dispatchStressBatch dispatches the correct number of jobs (Queue::fake())
+  • dispatchStressBatch initialises all cache keys correctly
+  • dispatchStressBatch returns 0 when no rows qualify
+MassOperationJobStressTest (feature):
+  • Job writes corrected text to the per-row cache key on success
+  • Job increments the 'processed' cache counter
+  • Job sets status='done' when it is the last row
+  • Job broadcasts MassOperationProgressEvent (Event::fake())
+  • Failed job increments 'failed' counter, still increments processed,
+    still broadcasts progress, and sets status='done' when last row
+MassOperationJobTtsTest (feature):
+  • Job calls generateAudio() with the correct russian text
+  • Job increments processed counter and broadcasts event
+ManagesMassOperationsTest (feature):
+  • dispatchStressBatch is a no-op when stressBatchStatus === 'running'
+  • correctStressMarks is blocked when isStressBatchRunning is true
+  • generateTtsAudio is blocked when isTtsBatchRunning is true
+  • handleBatchProgressUpdate merges per-row cache results into csvRows
+    and calls autoSaveToTempFile when status=done for stress
+  • handleBatchProgressUpdate updates ttsBatch* props when status=done for tts
+================================================================================
+PHASE 10 — Cleanup / polish / i18n
+================================================================================
+New lang keys to add to lang/fr.json (and English fallback):
+  csv_editor.bulk_actions
+  csv_editor.bulk_stress_title
+  csv_editor.bulk_tts_title
+  csv_editor.bulk_start
+  csv_editor.bulk_done
+  csv_editor.bulk_processing
+  csv_editor.bulk_rows_affected     (plural: "1 phrase | :count phrases")
+  csv_editor.bulk_rows_failed
+  csv_editor.bulk_retry_remaining   (:count remaining)
+  csv_editor.bulk_characters
+  csv_editor.bulk_tokens_estimate
+  csv_editor.bulk_cost_estimate
+================================================================================
+IMPLEMENTATION SEQUENCE (session by session)
+================================================================================
+Session 1 ▸ Phase 1 (config) + Phase 2 (event + Reverb check)
+Session 2 ▸ Phase 3 (MassOperationJob)
+Session 3 ▸ Phase 4 (MassOperationService)
+Session 4 ▸ Phase 5 (ManagesMassOperations trait)
+Session 5 ▸ Phases 6 + 7 (Blade modal + header button)
+Session 6 ▸ Phase 8 (row disabling)
+Session 7 ▸ Phase 9 (tests)
+Session 8 ▸ Phase 10 (i18n, polish)
+================================================================================
+OPEN QUESTIONS TO CONFIRM BEFORE STARTING
+================================================================================
+Q1. Is Laravel Reverb already installed in this project?
+    Check: composer show laravel/reverb
+    If not → Session 1 starts with: composer require laravel/reverb &&
+             php artisan reverb:install
+Q2. Is QUEUE_CONNECTION already set to 'database' or 'redis'?
+    If still 'sync', change it before the feature is useful.
+Q3. The plan uses a public Echo channel ("mass-op.{sessionId}").
+    If authentication is added later, migrate to a private channel with an
+    authorization callback.
+Q4. Per-row stress result cache keys use a 1-hour TTL. If a batch takes
+    longer (very large CSV), the merge step silently loses late results.
+    Acceptable for now; increase TTL or use a DB table if needed later.
+================================================================================
+END OF PLAN
+================================================================================

@@ -20,6 +20,8 @@
         "lightningcss-linux-x64-gnu": "^1.29.1"
     },
     "devDependencies": {
-        "blade-formatter": "^1.44.4"
+        "blade-formatter": "^1.44.4",
+        "laravel-echo": "^2.3.4",
+        "pusher-js": "^8.5.0"
     }
 }

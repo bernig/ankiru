@@ -2,10 +2,12 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\ManagesMassOperations;
 use App\Livewire\Concerns\ManagesPersistence;
 use App\Livewire\Concerns\ManagesTranslation;
 use App\Livewire\Concerns\ManagesTtsAudio;
 use App\Services\AnkiPackageExporterService;
+use App\Services\MassOperationService;
 use App\Services\OpenAiTranslationService;
 use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
@@ -21,6 +23,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CsvEditor extends Component
 {
+    use ManagesMassOperations;
     use ManagesPersistence;
     use ManagesTranslation;
     use ManagesTtsAudio;
@@ -66,6 +69,8 @@ class CsvEditor extends Component
 
     protected AnkiPackageExporterService $ankiExporterService;
 
+    protected MassOperationService $massOperationService;
+
     /**
      * Called by Livewire before every action (mount and subsequent requests).
      */
@@ -74,11 +79,13 @@ class CsvEditor extends Component
         RussianAccentService $accentService,
         RussianTextToSpeechService $ttsService,
         AnkiPackageExporterService $ankiExporterService,
+        MassOperationService $massOperationService,
     ): void {
         $this->translationService = $translationService;
         $this->accentService = $accentService;
         $this->ttsService = $ttsService;
         $this->ankiExporterService = $ankiExporterService;
+        $this->massOperationService = $massOperationService;
     }
 
     public function mount(): void

@@ -35,4 +35,40 @@ return [
         ],
     ],
 
+    'openai' => [
+        /*
+         * Voice used for Russian TTS generation via the Laravel AI SDK.
+         * Valid OpenAI voices: alloy, echo, fable, onyx, nova, shimmer.
+         */
+        'tts_voice' => env('OPENAI_TTS_VOICE', 'echo'),
+
+        /*
+         * Display label for the TTS model shown in the Bulk Actions cost estimate.
+         * The Laravel AI SDK does not expose the underlying TTS model name, so this
+         * is purely informational. Update if you switch between tts-1 and tts-1-hd.
+         */
+        'tts_model_label' => env('OPENAI_TTS_MODEL_LABEL', 'tts-1-hd'),
+
+        /*
+         * OpenAI TTS pricing per 1,000,000 characters.
+         * tts-1:    $15.00 / 1M chars
+         * tts-1-hd: $30.00 / 1M chars
+         * Update this value when OpenAI changes its pricing.
+         */
+        'tts_price_per_million_chars' => (float) env('OPENAI_TTS_PRICE_PER_MILLION_CHARS', 30.00),
+
+        /*
+         * Display label for the stress-correction model shown in the Bulk Actions
+         * cost estimate. Must match the #[Model] attribute on RussianStressCorrectorAgent.
+         */
+        'stress_model_label' => env('OPENAI_STRESS_MODEL_LABEL', 'gpt-5.4'),
+
+        /*
+         * gpt-5.4 input / output token pricing per 1,000,000 tokens.
+         * Update these values when OpenAI changes its pricing.
+         */
+        'gpt_5_4_input_price_per_million' => (float) env('OPENAI_GPT54_INPUT_PRICE_PER_MILLION', 3.00),
+        'gpt_5_4_output_price_per_million' => (float) env('OPENAI_GPT54_OUTPUT_PRICE_PER_MILLION', 15.00),
+    ],
+
 ];

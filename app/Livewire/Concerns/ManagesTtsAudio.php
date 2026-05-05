@@ -78,6 +78,11 @@ trait ManagesTtsAudio
             return;
         }
 
+        // Refuse per-row action while a TTS batch is in progress.
+        if (isset($this->ttsBatchStatus) && $this->ttsBatchStatus === 'running') {
+            return;
+        }
+
         $rateLimitKey = 'tts-generation:'.session()->getId();
 
         if (RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
