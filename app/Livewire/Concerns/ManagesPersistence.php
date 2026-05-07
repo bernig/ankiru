@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Concerns;
 
-use Illuminate\Support\Facades\Storage;
+use App\Models\CsvDraft;
 
 /**
- * Provides session-scoped temp-file persistence for the CsvEditor component.
+ * Provides per-user database persistence for the CsvEditor component.
  * Saving and restoring editor state allows drafts to survive page refreshes.
  *
  * @property array<int, array<int, string>> $csvRows
@@ -15,67 +15,57 @@ use Illuminate\Support\Facades\Storage;
 trait ManagesPersistence
 {
     /**
-     * Persist the current editor state to a session-scoped JSON temp file in storage.
+     * Persist the current editor state to a per-user database draft row.
      */
-    private function autoSaveToTempFile(): void
+    private function autoSaveDraft(): void
     {
-        $data = [
-            'csvRows' => $this->csvRows,
-            'originalFileName' => $this->originalFileName,
-            'hasCsvLoaded' => $this->hasCsvLoaded,
-            'savedAt' => now()->toIso8601String(),
-        ];
-
-        Storage::disk('local')->put($this->tempFilePath(), json_encode($data));
-    }
-
-    /**
-     * Restore editor state from the session-scoped temp file if it exists.
-     */
-    private function restoreFromTempFile(): void
-    {
-        $filePath = $this->tempFilePath();
-
-        if (! Storage::disk('local')->exists($filePath)) {
+        if (! auth()->check()) {
             return;
         }
 
-        $rawJson = Storage::disk('local')->get($filePath);
-
-        if ($rawJson === null) {
-            return;
-        }
-
-        /** @var array{csvRows: array<int, array<int, string>>, originalFileName: string, hasCsvLoaded: bool}|null $data */
-        $data = json_decode($rawJson, true);
-
-        if (! is_array($data)) {
-            return;
-        }
-
-        $this->csvRows = $data['csvRows'] ?? [];
-        $this->originalFileName = $data['originalFileName'] ?? '';
-        $this->hasCsvLoaded = $data['hasCsvLoaded'] ?? false;
+        CsvDraft::query()->updateOrCreate(
+            ['user_id' => auth()->id()],
+            [
+                'original_file_name' => $this->originalFileName,
+                'csv_rows' => $this->csvRows,
+                'has_csv_loaded' => $this->hasCsvLoaded,
+            ],
+        );
     }
 
     /**
-     * Remove the session-scoped temp file from storage.
+     * Restore editor state from the authenticated user's saved draft if it exists.
      */
-    private function clearTempFile(): void
+    private function restoreFromDraft(): void
     {
-        $filePath = $this->tempFilePath();
-
-        if (Storage::disk('local')->exists($filePath)) {
-            Storage::disk('local')->delete($filePath);
+        if (! auth()->check()) {
+            return;
         }
+
+        /** @var CsvDraft|null $draft */
+        $draft = CsvDraft::query()->where('user_id', auth()->id())->first();
+
+        if ($draft === null) {
+            return;
+        }
+
+        /** @var array<int, array<int, string>> $rows */
+        $rows = $draft->csv_rows ?? [];
+
+        $this->csvRows = $rows;
+        $this->originalFileName = $draft->original_file_name;
+        $this->hasCsvLoaded = $draft->has_csv_loaded;
     }
 
     /**
-     * Build the storage-relative path for the session-scoped temp file.
-     * Using the session ID ensures each browser session has its own isolated state.
+     * Remove the authenticated user's saved draft.
      */
-    private function tempFilePath(): string
+    private function clearDraft(): void
     {
-        return 'csv_editor_temp_'.session()->getId().'.json';
+        if (! auth()->check()) {
+            return;
+        }
+
+        CsvDraft::query()->where('user_id', auth()->id())->delete();
     }
 }

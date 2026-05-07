@@ -3,7 +3,10 @@
 use App\Ai\Agents\RussianStressCorrectorAgent;
 use App\Ai\Agents\SourceToRussianTranslatorAgent;
 use App\Livewire\CsvEditor;
+use App\Models\CsvDraft;
+use App\Models\User;
 use App\Services\RussianTextToSpeechService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
@@ -18,19 +21,14 @@ function sampleRows(): array
     ];
 }
 
-/**
- * Remove any leftover temp files regardless of session ID to avoid cross-test
- * contamination when the session changes between the test body and Livewire requests.
- * The local disk root is storage/app/private per filesystems config.
- */
-function cleanUpTempFiles(): void
-{
-    foreach (glob(storage_path('app/private/csv_editor_temp_*.json')) ?: [] as $file) {
-        @unlink($file);
-    }
-}
-beforeEach(fn () => cleanUpTempFiles());
-afterEach(fn () => cleanUpTempFiles());
+uses(RefreshDatabase::class);
+
+beforeEach(function (): void {
+    /** @var User $authenticatedUser */
+    $authenticatedUser = User::factory()->create();
+
+    $this->actingAs($authenticatedUser);
+});
 // ── Rendering ──────────────────────────────────────────────────────────────
 test('component renders successfully', function () {
     Livewire::test(CsvEditor::class)
@@ -279,42 +277,35 @@ test('resetting the editor clears state and returns to the upload panel', functi
         ->assertSet('originalFileName', '')
         ->assertSee(__('csv_editor.upload_heading'));
 });
-test('resetting the editor deletes the temp file if it exists', function () {
-    // Trigger a save through a component action so the file is written with the
-    // correct session-scoped path inside the request context.
+test('resetting the editor deletes the saved draft if it exists', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', sampleRows())
         ->set('originalFileName', 'sample.csv')
         ->set('hasCsvLoaded', true)
-        ->call('updateCell', 0, 0, 'Je travaille depuis chez moi.'); // Triggers autoSave.
+        ->call('updateCell', 0, 0, 'Je travaille depuis chez moi.');
 
-    // At least one temp file should now exist on the local disk.
-    expect(glob(storage_path('app/private/csv_editor_temp_*.json')))->not->toBeEmpty();
+    expect(CsvDraft::query()->count())->toBe(1);
 
     Livewire::test(CsvEditor::class)
         ->call('resetEditor');
 
-    // The reset should have deleted the file.
-    expect(glob(storage_path('app/private/csv_editor_temp_*.json')))->toBeEmpty();
+    expect(CsvDraft::query()->count())->toBe(0);
 });
-// ── Temp File Persistence ───────────────────────────────────────────────────
-test('restores editor state from the temp file on mount', function () {
-    // Step 1: Save state through a component action so the file is written with the
-    // correct session-scoped path inside the request context.
+// ── Draft Persistence ───────────────────────────────────────────────────────
+test('restores editor state from the saved draft on mount', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', sampleRows())
         ->set('originalFileName', 'restored.csv')
         ->set('hasCsvLoaded', true)
-        ->call('updateCell', 0, 0, 'Je travaille depuis chez moi.'); // Triggers autoSave.
+        ->call('updateCell', 0, 0, 'Je travaille depuis chez moi.');
 
-    // Step 2: Fresh mount (same session via test cookie) should restore the saved state.
     Livewire::test(CsvEditor::class)
         ->assertSet('hasCsvLoaded', true)
         ->assertSet('originalFileName', 'restored.csv')
         ->assertCount('csvRows', 2)
         ->assertSet('csvRows.0.0', 'Je travaille depuis chez moi.');
 });
-test('starts fresh when no temp file exists', function () {
+test('starts fresh when no saved draft exists', function () {
     Livewire::test(CsvEditor::class)
         ->assertSet('hasCsvLoaded', false)
         ->assertSet('csvRows', []);

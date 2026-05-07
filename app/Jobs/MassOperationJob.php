@@ -20,7 +20,7 @@ use Throwable;
  *   - a failed row does not block the rest of the batch.
  *
  * Row content is snapshotted in the constructor at dispatch time to avoid
- * any race condition with the session-scoped CSV temp file.
+ * any race condition with in-flight editor updates during a running batch.
  */
 class MassOperationJob implements ShouldQueue
 {

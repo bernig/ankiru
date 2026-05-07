@@ -90,7 +90,7 @@ class CsvEditor extends Component
 
     public function mount(): void
     {
-        $this->restoreFromTempFile();
+        $this->restoreFromDraft();
     }
 
     /**
@@ -107,7 +107,7 @@ class CsvEditor extends Component
     // -------------------------------------------------------------------------
 
     /**
-     * Handle the CSV file upload, parse rows, and persist to temp file.
+     * Handle the CSV file upload, parse rows, and persist to the user's draft.
      */
     public function uploadCsv(): void
     {
@@ -152,7 +152,7 @@ class CsvEditor extends Component
         $this->uploadedCsvFile = null;
         $this->resetPage();
 
-        $this->autoSaveToTempFile();
+        $this->autoSaveDraft();
     }
 
     // -------------------------------------------------------------------------
@@ -221,7 +221,7 @@ class CsvEditor extends Component
             $charPosition
         );
 
-        $this->autoSaveToTempFile();
+        $this->autoSaveDraft();
     }
 
     /**
@@ -235,7 +235,7 @@ class CsvEditor extends Component
 
         $this->csvRows[$rowIndex][$columnIndex] = $value;
 
-        $this->autoSaveToTempFile();
+        $this->autoSaveDraft();
     }
 
     /**
@@ -246,7 +246,7 @@ class CsvEditor extends Component
     {
         $columnCount = count(reset($this->csvRows) ?: []) ?: 2;
         $this->csvRows[] = array_fill(0, $columnCount, '');
-        $this->autoSaveToTempFile();
+        $this->autoSaveDraft();
         // Land on the last page so the new row is immediately visible.
         $this->setPage($this->totalPages);
     }
@@ -260,7 +260,7 @@ class CsvEditor extends Component
         $this->csvRows = array_values($this->csvRows);
         // Close the audio modal — indices have shifted, references would be stale.
         $this->ttsModalRowIndex = -1;
-        $this->autoSaveToTempFile();
+        $this->autoSaveDraft();
         // Clamp the current page in case the last page was emptied by this deletion.
         if ($this->getPage() > $this->totalPages) {
             $this->setPage($this->totalPages);
@@ -314,7 +314,7 @@ class CsvEditor extends Component
     }
 
     /**
-     * Clear the loaded CSV and the temp file, returning to the upload screen.
+     * Clear the loaded CSV and the saved draft, returning to the upload screen.
      */
     public function resetEditor(): void
     {
@@ -325,7 +325,7 @@ class CsvEditor extends Component
         $this->uploadedCsvFile = null;
         $this->resetPage();
 
-        $this->clearTempFile();
+        $this->clearDraft();
     }
 
     public function render(): View

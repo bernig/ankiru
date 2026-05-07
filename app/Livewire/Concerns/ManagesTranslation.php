@@ -61,7 +61,7 @@ trait ManagesTranslation
         try {
             $translatedText = $this->translationService->translateSourceToRussian($sourceText);
             $this->csvRows[$rowIndex][1] = $translatedText;
-            $this->autoSaveToTempFile();
+            $this->autoSaveDraft();
         } catch (Exception $exception) {
             $this->translationError = $exception->getMessage();
         } finally {
@@ -106,7 +106,7 @@ trait ManagesTranslation
 
             if ($correctedText !== $russianText) {
                 $this->csvRows[$rowIndex][1] = $correctedText;
-                $this->autoSaveToTempFile();
+                $this->autoSaveDraft();
             }
         } catch (Exception $exception) {
             $this->translationError = $exception->getMessage();

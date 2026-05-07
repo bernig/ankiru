@@ -311,7 +311,7 @@ trait ManagesMassOperations
             }
         }
         if ($anyMerged) {
-            $this->autoSaveToTempFile();
+            $this->autoSaveDraft();
         }
 
         // Read the exact token usage and corrected-row count accumulated by the jobs.
@@ -402,7 +402,7 @@ trait ManagesMassOperations
         }
 
         if ($anyChanged) {
-            $this->autoSaveToTempFile();
+            $this->autoSaveDraft();
         }
     }
 
