@@ -1,10 +1,28 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\LocaleController;
 use App\Livewire\CsvEditor;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
-Route::livewire('/', CsvEditor::class)->name('csv-editor');
+Route::middleware('guest')->group(function (): void {
+    Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
+    Route::post('register', [RegisteredUserController::class, 'store']);
+
+    Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
+    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+});
+
+Route::middleware('auth')->group(function (): void {
+    Route::livewire('/', CsvEditor::class)->name('csv-editor');
+    Route::get('locale/{locale}', [LocaleController::class, 'update'])
+        ->name('locale.update')
+        ->whereIn('locale', ['en', 'fr']);
+
+    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+});
 
 /**
  * Serve a TTS audio file by its SHA-256 filename hash.
@@ -21,4 +39,4 @@ Route::get('tts-audio/{filenameHash}', function (string $filenameHash) {
         'Content-Type' => 'audio/mpeg',
         'Cache-Control' => 'public, max-age=31536000, immutable',
     ]);
-})->name('tts.serve')->where('filenameHash', '[a-f0-9]{64}');
+})->middleware('auth')->name('tts.serve')->where('filenameHash', '[a-f0-9]{64}');

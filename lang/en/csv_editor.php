@@ -10,6 +10,9 @@ return [
     'export_anki_package' => 'Export Anki Package (.apkg)',
     'load_new_file' => 'Load new file',
     'load_new_file_confirm' => 'This will discard the current file. Are you sure?',
+    'language_french' => 'French',
+    'language_english' => 'English',
+    'logout' => 'Logout',
 
     // Table
     'no_rows_yet' => 'No rows yet. Click "Add row" to add one.',

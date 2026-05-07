@@ -10,6 +10,9 @@ return [
     'export_anki_package' => 'Exporter le paquet Anki (.apkg)',
     'load_new_file' => 'Charger un nouveau fichier',
     'load_new_file_confirm' => 'Cela supprimera le fichier actuel. Êtes-vous sûr ?',
+    'language_french' => 'Français',
+    'language_english' => 'Anglais',
+    'logout' => 'Se déconnecter',
     'source_column' => 'Texte source',
     'russian_column' => 'Texte russe',
 
