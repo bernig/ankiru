@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Middleware\SetApplicationLocale;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 
 class LocaleController extends Controller
 {
     public function update(Request $request, string $locale): RedirectResponse
     {
-        if (! in_array($locale, SetApplicationLocale::SUPPORTED_LOCALES, true)) {
+        if (! in_array($locale, Config::array('app.supported_locales'), true)) {
             abort(404);
         }
 

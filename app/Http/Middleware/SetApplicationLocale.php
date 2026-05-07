@@ -5,12 +5,11 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Config;
 use Symfony\Component\HttpFoundation\Response;
 
 class SetApplicationLocale
 {
-    public const array SUPPORTED_LOCALES = ['en', 'fr'];
-
     /**
      * Handle an incoming request.
      *
@@ -20,7 +19,7 @@ class SetApplicationLocale
     {
         $selectedLocale = $request->session()->get('locale');
 
-        if (is_string($selectedLocale) && in_array($selectedLocale, self::SUPPORTED_LOCALES, true)) {
+        if (is_string($selectedLocale) && in_array($selectedLocale, Config::array('app.supported_locales'), true)) {
             App::setLocale($selectedLocale);
         }
 
