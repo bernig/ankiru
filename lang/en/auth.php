@@ -16,5 +16,18 @@ return [
     'failed' => 'These credentials do not match our records.',
     'password' => 'The provided password is incorrect.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
+    'login' => 'Login',
+    'login_subtitle' => 'Access your CSV workspace.',
+    'register' => 'Register',
+    'register_subtitle' => 'Create an account to persist your CSV drafts.',
+    'name' => 'Name',
+    'email' => 'Email',
+    'password_label' => 'Password',
+    'password_confirmation' => 'Confirm password',
+    'remember_me' => 'Remember me',
+    'sign_in' => 'Sign in',
+    'create_account' => 'Create account',
+    'no_account_yet' => 'No account yet?',
+    'already_registered' => 'Already registered?',
 
 ];

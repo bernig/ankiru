@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name') }} - Register</title>
+    <title>{{ config('app.name') }} - {{ __('auth.register') }}</title>
     <link href="/favicon.ico" rel="icon" sizes="any">
     <link type="image/svg+xml" href="/favicon.svg" rel="icon">
     @fonts
@@ -13,32 +13,32 @@
 
 <body class="mx-auto flex min-h-screen w-full max-w-md items-center">
     <div class="w-full rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h1 class="mb-2 text-2xl font-semibold text-zinc-900">Register</h1>
-        <p class="mb-6 text-sm text-zinc-600">Create an account to persist your CSV drafts.</p>
+        <h1 class="mb-2 text-2xl font-semibold text-zinc-900">{{ __('auth.register') }}</h1>
+        <p class="mb-6 text-sm text-zinc-600">{{ __('auth.register_subtitle') }}</p>
         @if ($errors->any())
             <div class="mb-4 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{{ $errors->first() }}</div>
         @endif
         <form class="space-y-4" action="{{ route('register') }}" method="POST">
             @csrf
             <div>
-                <label class="mb-1 block text-sm font-medium text-zinc-700" for="name">Name</label>
+                <label class="mb-1 block text-sm font-medium text-zinc-700" for="name">{{ __('auth.name') }}</label>
                 <input class="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm" id="name" name="name" type="text" value="{{ old('name') }}" required>
             </div>
             <div>
-                <label class="mb-1 block text-sm font-medium text-zinc-700" for="email">Email</label>
+                <label class="mb-1 block text-sm font-medium text-zinc-700" for="email">{{ __('auth.email') }}</label>
                 <input class="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm" id="email" name="email" type="email" value="{{ old('email') }}" required>
             </div>
             <div>
-                <label class="mb-1 block text-sm font-medium text-zinc-700" for="password">Password</label>
+                <label class="mb-1 block text-sm font-medium text-zinc-700" for="password">{{ __('auth.password_label') }}</label>
                 <input class="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm" id="password" name="password" type="password" required>
             </div>
             <div>
-                <label class="mb-1 block text-sm font-medium text-zinc-700" for="password_confirmation">Confirm password</label>
+                <label class="mb-1 block text-sm font-medium text-zinc-700" for="password_confirmation">{{ __('auth.password_confirmation') }}</label>
                 <input class="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm" id="password_confirmation" name="password_confirmation" type="password" required>
             </div>
-            <button class="w-full rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800" type="submit">Create account</button>
+            <button class="w-full rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800" type="submit">{{ __('auth.create_account') }}</button>
         </form>
-        <p class="mt-4 text-sm text-zinc-600">Already registered? <a class="font-medium text-zinc-900 underline" href="{{ route('login') }}">Sign in</a></p>
+        <p class="mt-4 text-sm text-zinc-600">{{ __('auth.already_registered') }} <a class="font-medium text-zinc-900 underline" href="{{ route('login') }}">{{ __('auth.sign_in') }}</a></p>
     </div>
 </body>
 
