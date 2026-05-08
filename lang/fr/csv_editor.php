@@ -8,6 +8,7 @@ return [
     'export' => 'Exporter',
     'export_csv' => 'Exporter en CSV',
     'export_anki_package' => 'Exporter le paquet Anki (.apkg)',
+    'export_collection_package' => 'Exporter la collection (.colpkg) — tous les fichiers',
     'load_new_file' => 'Charger un nouveau fichier',
     'load_new_file_confirm' => 'Cela supprimera le fichier actuel. Êtes-vous sûr ?',
     'add_file' => 'Importer un CSV',

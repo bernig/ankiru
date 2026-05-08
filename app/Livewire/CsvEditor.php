@@ -316,7 +316,7 @@ class CsvEditor extends Component
      */
     public function downloadAnkiPackage(): StreamedResponse
     {
-        $cards = $this->buildAnkiCardsFromRows();
+        $cards = $this->buildAnkiCardsFromCsvRows($this->csvRows);
         $deckName = pathinfo($this->originalFileName, PATHINFO_FILENAME) ?: 'French-Russian';
         $apkgPath = $this->ankiExporterService->export($cards, $deckName);
 
@@ -328,6 +328,42 @@ class CsvEditor extends Component
             if (! @unlink($apkgPath)) {
                 Log::warning('Failed to delete temporary .apkg file after streaming.', [
                     'path' => $apkgPath,
+                ]);
+            }
+        }, $downloadFileName, [
+            'Content-Type' => 'application/octet-stream',
+        ]);
+    }
+
+    /**
+     * Build and download a .colpkg package containing all of the user's files as separate decks.
+     * Only available when the user has at least two files.
+     */
+    public function downloadColpkg(): StreamedResponse
+    {
+        $allDrafts = CsvDraft::query()
+            ->where('user_id', auth()->id())
+            ->orderBy('id')
+            ->get();
+
+        $decks = [];
+
+        foreach ($allDrafts as $draft) {
+            $decks[] = [
+                'deckName' => pathinfo($draft->original_file_name, PATHINFO_FILENAME) ?: 'Deck',
+                'cards' => $this->buildAnkiCardsFromCsvRows($draft->csv_rows ?? []),
+            ];
+        }
+
+        $colpkgPath = $this->ankiExporterService->exportCollection($decks);
+        $downloadFileName = 'collection_'.now()->format('Ymd_His').'.colpkg';
+
+        return response()->streamDownload(function () use ($colpkgPath): void {
+            readfile($colpkgPath);
+
+            if (! @unlink($colpkgPath)) {
+                Log::warning('Failed to delete temporary .colpkg file after streaming.', [
+                    'path' => $colpkgPath,
                 ]);
             }
         }, $downloadFileName, [
@@ -530,15 +566,16 @@ class CsvEditor extends Component
 
     /**
      * Build the card data array expected by AnkiPackageExporterService
-     * from the current CSV rows, attaching cached MP3 references where available.
+     * from the given CSV rows, attaching cached MP3 references where available.
      *
+     * @param  array<int, array<int, string>>  $csvRows
      * @return array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}>
      */
-    private function buildAnkiCardsFromRows(): array
+    private function buildAnkiCardsFromCsvRows(array $csvRows): array
     {
         $cards = [];
 
-        foreach ($this->csvRows as $row) {
+        foreach ($csvRows as $row) {
             $sourceText = $row[0] ?? '';
             $rawRussianText = $row[1] ?? '';
 
