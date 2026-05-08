@@ -10,6 +10,12 @@ return [
     'export_anki_package' => 'Export Anki Package (.apkg)',
     'load_new_file' => 'Load new file',
     'load_new_file_confirm' => 'This will discard the current file. Are you sure?',
+    'add_file' => 'Import CSV',
+    'create_new_file' => 'Create a new file',
+    'new_file_default_name' => 'untitled',
+    'rename_file' => 'Rename',
+    'delete_file' => 'Delete file',
+    'delete_file_confirm' => 'Delete this file from the list? This cannot be undone.',
     'language_french' => 'French',
     'language_english' => 'English',
     'logout' => 'Logout',
@@ -42,6 +48,7 @@ return [
     'dropzone_heading' => 'Drop your CSV here',
     'dropzone_text' => 'or click to browse',
     'parsing' => 'Parsing…',
+    'or' => 'or',
 
     // Bulk Actions modal
     'bulk_actions' => 'Bulk Actions',

@@ -6,6 +6,7 @@ use App\Livewire\Concerns\ManagesMassOperations;
 use App\Livewire\Concerns\ManagesPersistence;
 use App\Livewire\Concerns\ManagesTranslation;
 use App\Livewire\Concerns\ManagesTtsAudio;
+use App\Models\CsvDraft;
 use App\Services\AnkiPackageExporterService;
 use App\Services\MassOperationService;
 use App\Services\OpenAiTranslationService;
@@ -55,6 +56,22 @@ class CsvEditor extends Component
     public string $validationError = '';
 
     public bool $hasCsvLoaded = false;
+
+    /** Database ID of the currently displayed draft. 0 means no draft persisted yet. */
+    public int $activeDraftId = 0;
+
+    /**
+     * Lightweight list of all drafts for the file selector.
+     *
+     * @var array<int, array{id: int, original_file_name: string}>
+     */
+    public array $allDraftsMeta = [];
+
+    /** Whether the rename input for the active file is visible. */
+    public bool $isRenamingFile = false;
+
+    /** The value bound to the rename input field. */
+    public string $renameInput = '';
 
     /**
      * Services are injected as protected so they are accessible from concern traits.
@@ -150,6 +167,9 @@ class CsvEditor extends Component
 
         $this->hasCsvLoaded = true;
         $this->uploadedCsvFile = null;
+        // Force creation of a new draft for this upload instead of overwriting the active one.
+        $this->activeDraftId = 0;
+        $this->isRenamingFile = false;
         $this->resetPage();
 
         $this->autoSaveDraft();
@@ -314,18 +334,117 @@ class CsvEditor extends Component
     }
 
     /**
-     * Clear the loaded CSV and the saved draft, returning to the upload screen.
+     * Delete the active file. If other drafts remain, switch to the most recent one;
+     * otherwise return to the upload screen.
      */
     public function resetEditor(): void
     {
+        $this->clearDraft();
+
+        /** @var CsvDraft|null $next */
+        $next = CsvDraft::query()
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->first();
+
+        if ($next !== null) {
+            $this->activeDraftId = $next->id;
+            $this->csvRows = $next->csv_rows ?? [];
+            $this->originalFileName = $next->original_file_name;
+            $this->hasCsvLoaded = $next->has_csv_loaded;
+        } else {
+            $this->csvRows = [];
+            $this->originalFileName = '';
+            $this->validationError = '';
+            $this->hasCsvLoaded = false;
+            $this->uploadedCsvFile = null;
+            $this->activeDraftId = 0;
+        }
+
+        $this->isRenamingFile = false;
+        $this->renameInput = '';
+        $this->ttsModalRowIndex = -1;
+        $this->resetPage();
+    }
+
+    /**
+     * Switch the editor to a different draft owned by the authenticated user.
+     */
+    public function switchToDraft(int $draftId): void
+    {
+        /** @var CsvDraft|null $draft */
+        $draft = CsvDraft::query()
+            ->where('id', $draftId)
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if ($draft === null) {
+            return;
+        }
+
+        $this->activeDraftId = $draft->id;
+        $this->csvRows = $draft->csv_rows ?? [];
+        $this->originalFileName = $draft->original_file_name;
+        $this->hasCsvLoaded = $draft->has_csv_loaded;
+        $this->isRenamingFile = false;
+        $this->renameInput = '';
+        $this->ttsModalRowIndex = -1;
+        $this->resetPage();
+    }
+
+    /**
+     * Create a new empty file, persist it, and open the rename prompt immediately.
+     */
+    public function createNewFile(): void
+    {
         $this->csvRows = [];
-        $this->originalFileName = '';
-        $this->validationError = '';
-        $this->hasCsvLoaded = false;
-        $this->uploadedCsvFile = null;
+        $this->originalFileName = __('csv_editor.new_file_default_name').'.csv';
+        $this->hasCsvLoaded = true;
+        $this->activeDraftId = 0;
+        $this->ttsModalRowIndex = -1;
         $this->resetPage();
 
-        $this->clearDraft();
+        $this->autoSaveDraft();
+        $this->startRenameDraft();
+    }
+
+    /**
+     * Show the rename input pre-filled with the current file base name.
+     */
+    public function startRenameDraft(): void
+    {
+        $this->renameInput = pathinfo($this->originalFileName, PATHINFO_FILENAME);
+        $this->isRenamingFile = true;
+    }
+
+    /**
+     * Apply the new file name and persist it.
+     */
+    public function confirmRenameDraft(): void
+    {
+        $newBaseName = trim($this->renameInput);
+
+        if ($newBaseName === '') {
+            $this->isRenamingFile = false;
+
+            return;
+        }
+
+        $extension = pathinfo($this->originalFileName, PATHINFO_EXTENSION);
+        $this->originalFileName = $newBaseName.($extension !== '' ? ".{$extension}" : '');
+        $this->isRenamingFile = false;
+        $this->renameInput = '';
+
+        $this->autoSaveDraft();
+    }
+
+    /**
+     * Dismiss the rename input without saving.
+     */
+    public function cancelRenameDraft(): void
+    {
+        $this->isRenamingFile = false;
+        $this->renameInput = '';
     }
 
     public function render(): View

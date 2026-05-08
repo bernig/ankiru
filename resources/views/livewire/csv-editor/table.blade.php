@@ -14,7 +14,7 @@
                 @include('livewire.csv-editor.table-row')
             @empty
                 <flux:table.row>
-                    <flux:table.cell class="py-2! px-2 text-center first:ps-2 last:pe-2">
+                    <flux:table.cell class="pt-12 text-center first:ps-2 last:pe-2" colspan="4">
                         {{ __('csv_editor.no_rows_yet') }}
                     </flux:table.cell>
                 </flux:table.row>

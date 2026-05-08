@@ -19,5 +19,15 @@
         <div class="mt-3 text-center text-sm text-zinc-500" wire:loading wire:target="uploadedCsvFile">
             {{ __('csv_editor.parsing') }}
         </div>
+
+        <div class="mt-6 flex items-center gap-3">
+            <flux:separator class="flex-1" />
+            <flux:text class="text-zinc-400">{{ __('csv_editor.or') }}</flux:text>
+            <flux:separator class="flex-1" />
+        </div>
+
+        <flux:button class="mt-4 w-full" wire:click="createNewFile" icon="document-plus">
+            {{ __('csv_editor.create_new_file') }}
+        </flux:button>
     </flux:card>
 </div>
