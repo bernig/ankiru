@@ -88,3 +88,47 @@ test('la mise à jour du mot de passe exige la confirmation', function () {
         ->call('updatePassword')
         ->assertHasErrors(['password']);
 });
+
+test('la clé API OpenAI peut être enregistrée', function () {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test(Profile::class)
+        ->set('openai_api_key', 'sk-test-cle-api-valide-de-plus-de-20-caracteres')
+        ->call('saveApiKey')
+        ->assertSet('apiKeySaved', true)
+        ->assertHasNoErrors();
+
+    expect($user->fresh()->openai_api_key)->toBe('sk-test-cle-api-valide-de-plus-de-20-caracteres');
+});
+
+test('la clé API OpenAI est validée', function () {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test(Profile::class)
+        ->set('openai_api_key', 'trop-court')
+        ->call('saveApiKey')
+        ->assertHasErrors(['openai_api_key']);
+});
+
+test('la clé API OpenAI peut être supprimée', function () {
+    $user = User::factory()->create(['openai_api_key' => 'sk-test-cle-api-valide-de-plus-de-20-caracteres']);
+
+    Livewire::actingAs($user)
+        ->test(Profile::class)
+        ->call('clearApiKey');
+
+    expect($user->fresh()->openai_api_key)->toBeNull();
+});
+
+test('le middleware injecte la clé API de l\'utilisateur dans la config', function () {
+    $userKey = 'sk-user-test-cle-api-valide-de-plus-de-20-caracteres';
+    $user = User::factory()->create(['openai_api_key' => $userKey]);
+
+    $this->actingAs($user)
+        ->get(route('profile'))
+        ->assertOk();
+
+    expect(config('ai.providers.openai.key'))->toBe($userKey);
+});

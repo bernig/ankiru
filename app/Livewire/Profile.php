@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 class Profile extends Component
@@ -20,15 +21,25 @@ class Profile extends Component
 
     public string $password_confirmation = '';
 
+    public string $openai_api_key = '';
+
     public bool $profileSaved = false;
 
     public bool $passwordSaved = false;
+
+    public bool $apiKeySaved = false;
 
     public function mount(): void
     {
         $user = Auth::user();
         $this->name = $user->name;
         $this->email = $user->email;
+    }
+
+    #[Computed]
+    public function hasOpenAiKey(): bool
+    {
+        return (bool) Auth::user()->fresh()->openai_api_key;
     }
 
     public function updateProfile(): void
@@ -63,6 +74,30 @@ class Profile extends Component
         $this->password_confirmation = '';
 
         $this->passwordSaved = true;
+    }
+
+    public function saveApiKey(): void
+    {
+        $this->apiKeySaved = false;
+
+        $this->validate([
+            'openai_api_key' => ['required', 'string', 'min:20'],
+        ]);
+
+        Auth::user()->update(['openai_api_key' => $this->openai_api_key]);
+
+        $this->openai_api_key = '';
+        $this->apiKeySaved = true;
+
+        unset($this->hasOpenAiKey);
+    }
+
+    public function clearApiKey(): void
+    {
+        Auth::user()->update(['openai_api_key' => null]);
+        $this->apiKeySaved = false;
+
+        unset($this->hasOpenAiKey);
     }
 
     public function render(): View

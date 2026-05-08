@@ -13,4 +13,9 @@ return [
     'confirm_password' => 'Confirmer le mot de passe',
     'save' => 'Enregistrer',
     'saved' => 'Enregistré.',
+    'openai_api_key' => 'Clé API OpenAI',
+    'openai_api_key_description' => 'Renseignez votre propre clé API OpenAI. Elle sera utilisée à la place de la clé de l\'application pour toutes vos requêtes.',
+    'api_key_set' => 'Clé API enregistrée',
+    'api_key_clear' => 'Supprimer la clé',
+    'api_key_clear_confirm' => 'Supprimer votre clé API OpenAI ? La clé de l\'application sera utilisée à la place.',
 ];

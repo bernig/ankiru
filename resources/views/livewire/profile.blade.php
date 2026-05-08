@@ -28,6 +28,37 @@
         </form>
     </flux:card>
 
+    {{-- Clé API OpenAI --}}
+    <flux:card class="space-y-6">
+        <flux:heading size="lg">{{ __('profile.openai_api_key') }}</flux:heading>
+        <flux:text>{{ __('profile.openai_api_key_description') }}</flux:text>
+
+        @if ($this->hasOpenAiKey)
+            <div class="flex items-center gap-4">
+                <flux:badge color="green" icon="check-circle">{{ __('profile.api_key_set') }}</flux:badge>
+                <flux:button wire:click="clearApiKey" wire:confirm="{{ __('profile.api_key_clear_confirm') }}" variant="ghost" size="sm">
+                    {{ __('profile.api_key_clear') }}
+                </flux:button>
+            </div>
+        @else
+            <form wire:submit="saveApiKey" class="space-y-4">
+                <flux:field>
+                    <flux:label>{{ __('profile.openai_api_key') }}</flux:label>
+                    <flux:input wire:model="openai_api_key" type="password" placeholder="sk-..." viewable />
+                    <flux:error name="openai_api_key" />
+                </flux:field>
+
+                <div class="flex items-center gap-4">
+                    <flux:button type="submit" variant="primary">{{ __('profile.save') }}</flux:button>
+
+                    @if ($apiKeySaved)
+                        <flux:text class="text-green-600">{{ __('profile.saved') }}</flux:text>
+                    @endif
+                </div>
+            </form>
+        @endif
+    </flux:card>
+
     {{-- Mot de passe --}}
     <flux:card class="space-y-6">
         <flux:heading size="lg">{{ __('profile.update_password') }}</flux:heading>
