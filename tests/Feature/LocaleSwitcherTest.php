@@ -10,7 +10,7 @@ test('authenticated user sees language options in top menu', function () {
 
     $response->assertOk();
     $response->assertSee(__('csv_editor.language_french'));
-    $response->assertSee(__('csv_editor.language_english'));
+    $response->assertSee(__('csv_editor.language_english', [], 'en'));
 });
 
 test('authenticated user can switch locale and preference is stored in session', function () {

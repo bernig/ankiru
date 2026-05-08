@@ -17,15 +17,15 @@
 
         <div class="flex items-center gap-2">
             <flux:dropdown position="bottom" align="end">
-                <flux:button icon="language" variant="ghost" icon:trailing="chevron-down">
+                <flux:button variant="ghost" icon:trailing="chevron-down">
                     {{ strtoupper(app()->getLocale()) }}
                 </flux:button>
                 <flux:menu>
-                    <flux:menu.item href="{{ route('locale.update', 'fr') }}" icon="language">
+                    <flux:menu.item href="{{ route('locale.update', 'fr') }}">
                         {{ __('csv_editor.language_french') }}
                     </flux:menu.item>
-                    <flux:menu.item href="{{ route('locale.update', 'en') }}" icon="language">
-                        {{ __('csv_editor.language_english') }}
+                    <flux:menu.item href="{{ route('locale.update', 'en') }}">
+                        {{ __('csv_editor.language_english', [], 'en') }}
                     </flux:menu.item>
                 </flux:menu>
             </flux:dropdown>
