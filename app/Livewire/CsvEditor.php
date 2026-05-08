@@ -422,10 +422,8 @@ class CsvEditor extends Component
             $sourceText = $row[0] ?? '';
             $rawRussianText = $row[1] ?? '';
 
-            // Strip <b> stress tags — Anki does not render them as bold in basic fields.
-            $plainRussianText = trim(str_replace(['<b>', '</b>'], '', $rawRussianText));
-
-            $backFieldValue = $plainRussianText;
+            // Keep stress tags in the field value so Anki can render them as bold.
+            $backFieldValue = trim($rawRussianText);
             $mp3StoragePath = null;
             $mp3FileName = null;
 

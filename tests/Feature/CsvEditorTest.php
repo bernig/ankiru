@@ -5,6 +5,7 @@ use App\Ai\Agents\SourceToRussianTranslatorAgent;
 use App\Livewire\CsvEditor;
 use App\Models\CsvDraft;
 use App\Models\User;
+use App\Services\AnkiPackageExporterService;
 use App\Services\RussianTextToSpeechService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -264,6 +265,35 @@ test('downloading the csv triggers a file download', function () {
         ->set('originalFileName', 'sample.csv')
         ->call('downloadCsv')
         ->assertFileDownloaded();
+});
+
+test('anki package export keeps russian stress tags in back fields', function (): void {
+    $capturedCards = [];
+
+    $this->mock(AnkiPackageExporterService::class)
+        ->shouldReceive('export')
+        ->once()
+        ->withArgs(function (array $cards, string $deckName) use (&$capturedCards): bool {
+            $capturedCards = $cards;
+
+            return $deckName === 'sample';
+        })
+        ->andReturnUsing(function (): string {
+            $temporaryPackagePath = sys_get_temp_dir().'/'.uniqid('anki_test_', true).'.apkg';
+            file_put_contents($temporaryPackagePath, 'fake-apkg-content');
+
+            return $temporaryPackagePath;
+        });
+
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je travaille.', 'Я раб<b>о</b>таю.']])
+        ->set('hasCsvLoaded', true)
+        ->set('originalFileName', 'sample.csv')
+        ->call('downloadAnkiPackage')
+        ->assertFileDownloaded();
+
+    expect($capturedCards)->toHaveCount(1)
+        ->and($capturedCards[0]['back'])->toBe('Я раб<b>о</b>таю.');
 });
 // ── Reset Editor ───────────────────────────────────────────────────────────
 test('resetting the editor clears state and returns to the upload panel', function () {
