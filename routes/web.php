@@ -23,6 +23,10 @@ Route::middleware('auth')->group(function (): void {
         return view('csv-editor');
     })->name('csv-editor');
 
+    Route::get('profile', function () {
+        return view('profile');
+    })->name('profile');
+
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });
 

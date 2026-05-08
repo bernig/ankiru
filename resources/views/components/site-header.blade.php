@@ -27,6 +27,9 @@
             <flux:dropdown position="bottom" align="end">
                 <flux:profile :avatar="$avatarUrl" :name="$displayName" />
                 <flux:navmenu>
+                    <flux:navmenu.item href="{{ route('profile') }}" icon="user-circle">
+                        {{ __('profile.title') }}
+                    </flux:navmenu.item>
                     <flux:navmenu.item href="#" icon="arrow-right-start-on-rectangle" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                         {{ __('csv_editor.logout') }}
                     </flux:navmenu.item>
