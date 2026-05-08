@@ -1,8 +1,16 @@
 <div class="mx-auto mb-6 flex max-w-full flex-col gap-4">
-    <x-site-header :filename="$hasCsvLoaded ? $originalFileName : null" />
+    <x-site-header />
 
     <div class="flex flex-wrap items-center justify-end gap-2">
         @if ($hasCsvLoaded)
+            @if ($originalFileName)
+                <flux:badge class="text-xs" variant="outline">{{ $originalFileName }}</flux:badge>
+            @endif
+
+            {{-- @todo: add a csv selector, for those already uploaded/created --}}
+
+            <flux:spacer />
+
             <flux:modal.trigger name="bulk-actions">
                 <flux:button icon="sparkles" variant="ghost" wire:click="openBulkActionsModal">
                     {{ __('csv_editor.bulk_actions') }}
@@ -28,5 +36,4 @@
             </flux:button>
         @endif
     </div>
-
 </div>

@@ -1,12 +1,9 @@
-@props(['filename' => null])
-
 <div class="flex flex-wrap items-center justify-between gap-3">
     <div class="flex items-center gap-3">
-        <flux:icon.table-cells class="size-7 text-zinc-500" />
-        <flux:heading size="xl">{{ config('app.name') }}</flux:heading>
-        @if ($filename)
-            <flux:badge class="text-xs" variant="outline">{{ $filename }}</flux:badge>
-        @endif
+        <a class="group flex items-center gap-3" href="{{ route('csv-editor') }}">
+            <flux:icon.table-cells class="size-7 text-zinc-700 group-hover:text-zinc-900" />
+            <flux:heading class="text-zinc-700 group-hover:text-zinc-900" size="xl">{{ config('app.name') }}</flux:heading>
+        </a>
     </div>
 
     <div class="flex items-center gap-2">
@@ -41,4 +38,6 @@
             </form>
         @endauth
     </div>
+
+    <flux:separator />
 </div>
