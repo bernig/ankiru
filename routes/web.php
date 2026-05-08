@@ -3,7 +3,6 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\LocaleController;
-use App\Livewire\CsvEditor;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -20,7 +19,9 @@ Route::get('locale/{locale}', [LocaleController::class, 'update'])
     ->whereIn('locale', ['en', 'fr']);
 
 Route::middleware('auth')->group(function (): void {
-    Route::livewire('/', CsvEditor::class)->name('csv-editor');
+    Route::get('/', function () {
+        return view('csv-editor');
+    })->name('csv-editor');
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });
