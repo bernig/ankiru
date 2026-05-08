@@ -1,9 +1,11 @@
 <flux:card class="flex flex-col space-y-6">
     <flux:table container:class="w-full ">
-        <flux:table.columns class="" sticky>
-            <flux:table.column class="py-2! px-2 first:ps-2 last:pe-2" colspan="2">{{ __('csv_editor.source_column') }}</flux:table.column>
-            <flux:table.column class="py-2! px-2 first:ps-2 last:pe-2" colspan="2">{{ __('csv_editor.russian_column') }}</flux:table.column>
-        </flux:table.columns>
+        @if ($this->paginatedRows->isNotEmpty())
+            <flux:table.columns class="" sticky>
+                <flux:table.column class="py-2! px-2 first:ps-2 last:pe-2" colspan="2">{{ __('csv_editor.source_column') }}</flux:table.column>
+                <flux:table.column class="py-2! px-2 first:ps-2 last:pe-2" colspan="2">{{ __('csv_editor.russian_column') }}</flux:table.column>
+            </flux:table.columns>
+        @endif
 
         <flux:table.rows>
             @forelse ($this->paginatedRows as $rowIndex => $row)
@@ -14,7 +16,7 @@
                 @include('livewire.csv-editor.table-row')
             @empty
                 <flux:table.row>
-                    <flux:table.cell class="pt-12 text-center first:ps-2 last:pe-2" colspan="4">
+                    <flux:table.cell class="text-center" colspan="4">
                         {{ __('csv_editor.no_rows_yet') }}
                     </flux:table.cell>
                 </flux:table.row>
