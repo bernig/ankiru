@@ -1,11 +1,5 @@
 @props(['filename' => null])
 
-@php
-    $authenticatedUser = auth()->user();
-    $displayName = $authenticatedUser?->name ?: ($authenticatedUser?->email ?: 'User');
-    $avatarUrl = 'https://api.dicebear.com/9.x/initials/svg?seed=' . rawurlencode($authenticatedUser?->email ?: $displayName);
-@endphp
-
 <div class="flex flex-wrap items-center justify-between gap-3">
     <div class="flex items-center gap-3">
         <flux:icon.table-cells class="size-7 text-zinc-500" />

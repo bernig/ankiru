@@ -37,6 +37,15 @@ class User extends Authenticatable
         return $this->hasOne(CsvDraft::class);
     }
 
+    public function avatarUrl(): string
+    {
+        return cache()->remember(
+            'avatar_url_'.$this->id,
+            now()->addDay(),
+            fn () => 'https://api.dicebear.com/9.x/initials/svg?seed='.rawurlencode($this->email ?: $this->name)
+        );
+    }
+
     /**
      * @return array<string, string>
      */
