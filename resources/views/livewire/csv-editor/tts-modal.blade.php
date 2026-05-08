@@ -12,7 +12,9 @@
         if ($ttsModalAudioExists) {
             $ttsModalFilenameHash = $ttsServiceForModal->buildFilenameHash($ttsModalRussianText);
             $ttsModalLastModified = Storage::disk('local')->lastModified("tts/{$ttsModalFilenameHash}.mp3");
-            $ttsModalCreatedAt = now()->setTimestamp($ttsModalLastModified)->format('j M Y, H:i');
+            $ttsModalCreatedAt = \Illuminate\Support\Carbon::createFromTimestamp($ttsModalLastModified)
+                ->locale(app()->getLocale())
+                ->isoFormat('LLL');
         }
     }
 @endphp
@@ -24,7 +26,7 @@
         if (player) { player.pause(); player.removeAttribute('src'); }
     ">
     <div class="flex flex-col gap-5">
-        <flux:heading size="lg">{!! $ttsModalRussianText !!}</flux:heading>
+        <flux:heading class="pr-8" size="lg">{!! $ttsModalRussianText !!}</flux:heading>
 
         @if ($ttsModalAudioExists)
             <div class="flex flex-col gap-2">

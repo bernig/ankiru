@@ -12,7 +12,7 @@ return [
     'load_new_file_confirm' => 'This will discard the current file. Are you sure?',
     'add_file' => 'Import CSV',
     'create_new_file' => 'Create a new file',
-    'new_file_default_name' => 'untitled',
+    'new_file_default_name' => 'Untitled file',
     'rename_file' => 'Rename',
     'delete_file' => 'Delete file',
     'delete_file_confirm' => 'Delete this file from the list? This cannot be undone.',

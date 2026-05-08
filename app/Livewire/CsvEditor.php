@@ -266,9 +266,11 @@ class CsvEditor extends Component
     {
         $columnCount = count(reset($this->csvRows) ?: []) ?: 2;
         $this->csvRows[] = array_fill(0, $columnCount, '');
+        $newRowIndex = array_key_last($this->csvRows);
         $this->autoSaveDraft();
         // Land on the last page so the new row is immediately visible.
         $this->setPage($this->totalPages);
+        $this->dispatch('csv-row-added', rowIndex: $newRowIndex);
     }
 
     /**

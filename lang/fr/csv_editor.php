@@ -12,7 +12,7 @@ return [
     'load_new_file_confirm' => 'Cela supprimera le fichier actuel. Êtes-vous sûr ?',
     'add_file' => 'Importer un CSV',
     'create_new_file' => 'Créer un nouveau fichier',
-    'new_file_default_name' => 'sans-titre',
+    'new_file_default_name' => 'Fichier sans titre',
     'rename_file' => 'Renommer',
     'delete_file' => 'Supprimer ce fichier',
     'delete_file_confirm' => 'Supprimer ce fichier de la liste ? Cette action est irréversible.',

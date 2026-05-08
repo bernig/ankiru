@@ -4,10 +4,9 @@
       $row         (array) — ['source text', 'russian text']
       $rowHasAudio (bool)  — whether a cached TTS file exists for this row
 --}}
-<flux:table.row class="group hover:bg-zinc-50" wire:key="row-{{ $rowIndex }}" x-data="{ rowIndex: {{ $rowIndex }}, rowHasAudio: {{ $rowHasAudio ? 'true' : 'false' }} }" x-on:tts-audio-generated.window="if ($event.detail.rowIndex === rowIndex) { rowHasAudio = true; }" x-on:tts-audio-deleted.window="if ($event.detail.rowIndex === rowIndex) { rowHasAudio = false; }" x-bind:class="(function() {
+<flux:table.row class="hover:bg-accent/2 group" wire:key="row-{{ $rowIndex }}" x-data="{ rowIndex: {{ $rowIndex }}, rowHasAudio: {{ $rowHasAudio ? 'true' : 'false' }} }" x-on:tts-audio-generated.window="if ($event.detail.rowIndex === rowIndex) { rowHasAudio = true; }" x-on:tts-audio-deleted.window="if ($event.detail.rowIndex === rowIndex) { rowHasAudio = false; }" x-on:csv-row-added.window="if ($event.detail.rowIndex === rowIndex) { $store.csvEditing.rowIndex = rowIndex; $store.csvEditing.columnIndex = 0; $nextTick(() => $refs.input_0?.focus()) }" x-bind:class="(function() {
     var notEditing = $store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1;
     var text = $wire.csvRows[rowIndex]?.[1] ?? '';
-    /* Amber (missing stress marks) always takes precedence over blue (no audio). */
     if (notEditing && window.csvAccentMode.cellNeedsAccent(text)) return 'bg-amber-50';
     if (notEditing && text.trim() !== '' && !rowHasAudio) return 'bg-blue-50/30';
     return '';
@@ -20,7 +19,7 @@
                      ? $wire.csvRows[rowIndex][0]
                      : '—'"></div>
 
-        <input class="w-full rounded border border-violet-500 bg-white p-1.5 outline-none transition-colors" x-show="$store.csvEditing.rowIndex === rowIndex && $store.csvEditing.columnIndex === 0" x-ref="input_0" :value="$wire.csvRows[rowIndex][0]" @blur="$wire.updateCell(rowIndex, 0, $event.target.value); $store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @keydown.enter="$el.blur()" @keydown.escape="$store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @click.stop placeholder="—" />
+        <input class="border-accent w-full rounded border bg-white p-1.5 outline-none transition-colors" x-show="$store.csvEditing.rowIndex === rowIndex && $store.csvEditing.columnIndex === 0" x-ref="input_0" :value="$wire.csvRows[rowIndex][0]" @blur="$wire.updateCell(rowIndex, 0, $event.target.value); $store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @keydown.enter="$el.blur()" @keydown.escape="$store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @click.stop placeholder="—" />
     </flux:table.cell>
 
     {{-- ── Pencil column: edit source text ── --}}
@@ -37,7 +36,7 @@
         {{-- Accent HTML display — vowels are clickable spans --}}
         <div class="cursor-default" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1" x-html="window.csvAccentMode.buildHtml($wire.csvRows[rowIndex]?.[1] ?? '')" @click="window.csvAccentMode.invalidateCache($wire.csvRows[rowIndex]?.[1] ?? ''); window.csvAccentMode.handleClick($event, $wire, 'cell', rowIndex, 1)"></div>
 
-        <input class="w-full rounded border border-violet-500 bg-white p-1.5 outline-none transition-colors" x-show="$store.csvEditing.rowIndex === rowIndex && $store.csvEditing.columnIndex === 1" x-ref="input_1" :value="$wire.csvRows[rowIndex][1]" @blur="window.csvAccentMode.invalidateCache($wire.csvRows[rowIndex]?.[1] ?? ''); $wire.updateCell(rowIndex, 1, $event.target.value); $store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @keydown.enter="$el.blur()" @keydown.escape="$store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @click.stop placeholder="—" />
+        <input class="border-accent w-full rounded border bg-white p-1.5 outline-none transition-colors" x-show="$store.csvEditing.rowIndex === rowIndex && $store.csvEditing.columnIndex === 1" x-ref="input_1" :value="$wire.csvRows[rowIndex][1]" @blur="window.csvAccentMode.invalidateCache($wire.csvRows[rowIndex]?.[1] ?? ''); $wire.updateCell(rowIndex, 1, $event.target.value); $store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @keydown.enter="$el.blur()" @keydown.escape="$store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @click.stop placeholder="—" />
     </flux:table.cell>
 
     {{-- ── Row actions ── --}}
@@ -45,15 +44,9 @@
         <div class="flex justify-end gap-2">
             @if (!empty(trim($row[0] ?? '')) || !empty(trim($row[1] ?? '')))
                 <div class="flex items-center whitespace-nowrap rounded-full border border-zinc-200 bg-white px-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    {{--
-                        Russian pencil: enters edit mode for column 1.
-                        Hidden while the edit input for that column is active.
-                    --}}
-                    @if (!empty(trim($row[1] ?? '')))
-                        <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-blue-500 group-hover:opacity-100" title="{{ __('csv_editor.edit_russian_text') }}" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1" @click="$store.csvEditing.rowIndex = rowIndex; $store.csvEditing.columnIndex = 1; $nextTick(() => $refs.input_1?.focus())">
-                            <flux:icon.pencil class="mx-1 my-2 size-4" />
-                        </button>
-                    @endif
+                    <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-blue-500 group-hover:opacity-100" title="{{ __('csv_editor.edit_russian_text') }}" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1" @click="$store.csvEditing.rowIndex = rowIndex; $store.csvEditing.columnIndex = 1; $nextTick(() => $refs.input_1?.focus())">
+                        <flux:icon.pencil class="mx-1 my-2 size-4" />
+                    </button>
 
                     {{-- TTS button: always visible when Russian text exists; opens the audio player modal --}}
                     @if (!empty(trim($row[1] ?? '')))

@@ -42,7 +42,7 @@ class User extends Authenticatable
         return cache()->remember(
             'avatar_url_'.$this->id,
             now()->addDay(),
-            fn () => 'https://api.dicebear.com/9.x/initials/svg?seed='.rawurlencode($this->email ?: $this->name)
+            fn () => 'https://api.dicebear.com/9.x/identicon/svg?seed='.rawurlencode($this->email ?: $this->name)
         );
     }
 

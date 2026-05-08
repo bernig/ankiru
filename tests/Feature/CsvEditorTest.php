@@ -161,11 +161,11 @@ test('accent mode is active by default and the edit pencil button is visible for
         ->set('hasCsvLoaded', true)
         ->assertSee(__('csv_editor.edit_russian_text'));
 });
-test('accent mode pencil button is not rendered when the russian column is empty', function () {
+test('accent mode pencil button is rendered when the russian column is empty', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille.', '']])
         ->set('hasCsvLoaded', true)
-        ->assertDontSee(__('csv_editor.edit_russian_text'));
+        ->assertSee(__('csv_editor.edit_russian_text'));
 });
 test('source text pencil button is always rendered for editing the left column', function () {
     Livewire::test(CsvEditor::class)
