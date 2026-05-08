@@ -330,8 +330,7 @@ class CsvEditor extends Component
 
     public function render(): View
     {
-        return view('livewire.csv-editor')
-            ->layout('layouts.app');
+        return view('livewire.csv-editor');
     }
 
     // -------------------------------------------------------------------------

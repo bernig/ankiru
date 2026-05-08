@@ -1,55 +1,43 @@
-<!DOCTYPE html>
-<html class="bg-zinc-50 p-6" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<x-layout title="{{ config('app.name') }} - {{ __('auth.login') }}">
+    <x-site-header />
+    <main class="flex justify-center py-16">
+        <div class="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+            <h1 class="mb-2 text-2xl font-semibold text-zinc-900">{{ __('auth.login') }}</h1>
+            <p class="mb-6 text-sm text-zinc-600">{{ __('auth.login_subtitle') }}</p>
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name') }} - {{ __('auth.login') }}</title>
-    <link href="/favicon.ico" rel="icon" sizes="any">
-    <link type="image/svg+xml" href="/favicon.svg" rel="icon">
-    @fonts
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
+            @if ($errors->any())
+                <div class="mb-4 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {{ $errors->first() }}
+                </div>
+            @endif
 
-<body class="mx-auto flex min-h-screen w-full max-w-md items-center">
-    <div class="w-full rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h1 class="mb-2 text-2xl font-semibold text-zinc-900">{{ __('auth.login') }}</h1>
-        <p class="mb-6 text-sm text-zinc-600">{{ __('auth.login_subtitle') }}</p>
+            <form class="space-y-4" action="{{ route('login') }}" method="POST">
+                @csrf
 
-        @if ($errors->any())
-            <div class="mb-4 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {{ $errors->first() }}
-            </div>
-        @endif
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-zinc-700" for="email">{{ __('auth.email') }}</label>
+                    <input class="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm" id="email" name="email" type="email" value="{{ old('email') }}" required>
+                </div>
 
-        <form class="space-y-4" action="{{ route('login') }}" method="POST">
-            @csrf
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-zinc-700" for="password">{{ __('auth.password_label') }}</label>
+                    <input class="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm" id="password" name="password" type="password" required>
+                </div>
 
-            <div>
-                <label class="mb-1 block text-sm font-medium text-zinc-700" for="email">{{ __('auth.email') }}</label>
-                <input class="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm" id="email" name="email" type="email" value="{{ old('email') }}" required>
-            </div>
+                <label class="flex items-center gap-2 text-sm text-zinc-700">
+                    <input name="remember" type="checkbox" value="1">
+                    {{ __('auth.remember_me') }}
+                </label>
 
-            <div>
-                <label class="mb-1 block text-sm font-medium text-zinc-700" for="password">{{ __('auth.password_label') }}</label>
-                <input class="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm" id="password" name="password" type="password" required>
-            </div>
+                <button class="w-full rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800" type="submit">
+                    {{ __('auth.sign_in') }}
+                </button>
+            </form>
 
-            <label class="flex items-center gap-2 text-sm text-zinc-700">
-                <input name="remember" type="checkbox" value="1">
-                {{ __('auth.remember_me') }}
-            </label>
-
-            <button class="w-full rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800" type="submit">
-                {{ __('auth.sign_in') }}
-            </button>
-        </form>
-
-        <p class="mt-4 text-sm text-zinc-600">
-            {{ __('auth.no_account_yet') }}
-            <a class="font-medium text-zinc-900 underline" href="{{ route('register') }}">{{ __('auth.register') }}</a>
-        </p>
-    </div>
-</body>
-
-</html>
+            <p class="mt-4 text-sm text-zinc-600">
+                {{ __('auth.no_account_yet') }}
+                <a class="font-medium text-zinc-900 underline" href="{{ route('register') }}">{{ __('auth.register') }}</a>
+            </p>
+        </div>
+    </main>
+</x-layout>

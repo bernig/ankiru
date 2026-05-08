@@ -1,4 +1,5 @@
-<div class="min-h-screen" x-data="{ ttsAudioUrl: null, ttsModalAudioSrc: null, ttsModalOpen: false }" x-on:tts-audio-ready.window="
+<x-layout>
+    <div class="min-h-screen" x-data="{ ttsAudioUrl: null, ttsModalAudioSrc: null, ttsModalOpen: false }" x-on:tts-audio-ready.window="
         ttsAudioUrl = $event.detail.audioUrl;
         ttsModalAudioSrc = $event.detail.audioUrl;
         $nextTick(() => {
@@ -23,19 +24,20 @@
         }
     ">
 
-    {{-- Hidden audio element driven by Alpine.js when TTS audio is ready --}}
-    <audio class="hidden" x-ref="ttsPlayer" :src="ttsAudioUrl"></audio>
+        {{-- Hidden audio element driven by Alpine.js when TTS audio is ready --}}
+        <audio class="hidden" x-ref="ttsPlayer" :src="ttsAudioUrl"></audio>
 
-    @include('livewire.csv-editor.header')
+        @include('livewire.csv-editor.header')
 
-    @if ($hasCsvLoaded)
-        @include('livewire.csv-editor.table')
-        @include('livewire.csv-editor.tts-modal')
-        @include('livewire.csv-editor.bulk-actions-modal')
-    @else
-        @include('livewire.csv-editor.upload-panel')
-    @endif
+        @if ($hasCsvLoaded)
+            @include('livewire.csv-editor.table')
+            @include('livewire.csv-editor.tts-modal')
+            @include('livewire.csv-editor.bulk-actions-modal')
+        @else
+            @include('livewire.csv-editor.upload-panel')
+        @endif
 
-    @include('livewire.csv-editor.batch-progress-widget')
+        @include('livewire.csv-editor.batch-progress-widget')
 
-</div>
+    </div>
+</x-layout>

@@ -26,3 +26,17 @@ test('login and register pages render french translations from session locale', 
     $registerResponse->assertSee(__('auth.register_subtitle', [], 'fr'));
     $registerResponse->assertSee(__('auth.create_account', [], 'fr'));
 });
+
+test('site header with app name and language switcher is visible to guests on auth pages', function () {
+    $loginResponse = $this->get(route('login'));
+    $loginResponse->assertOk();
+    $loginResponse->assertSee(config('app.name'));
+    $loginResponse->assertSee(route('locale.update', 'fr'));
+    $loginResponse->assertSee(route('locale.update', 'en'));
+
+    $registerResponse = $this->get(route('register'));
+    $registerResponse->assertOk();
+    $registerResponse->assertSee(config('app.name'));
+    $registerResponse->assertSee(route('locale.update', 'fr'));
+    $registerResponse->assertSee(route('locale.update', 'en'));
+});

@@ -15,11 +15,12 @@ Route::middleware('guest')->group(function (): void {
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 });
 
+Route::get('locale/{locale}', [LocaleController::class, 'update'])
+    ->name('locale.update')
+    ->whereIn('locale', ['en', 'fr']);
+
 Route::middleware('auth')->group(function (): void {
     Route::livewire('/', CsvEditor::class)->name('csv-editor');
-    Route::get('locale/{locale}', [LocaleController::class, 'update'])
-        ->name('locale.update')
-        ->whereIn('locale', ['en', 'fr']);
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });
