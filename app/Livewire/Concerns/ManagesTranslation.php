@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Concerns;
 
+use App\Models\ApiUsageLog;
 use App\Services\OpenAiTranslationService;
 use App\Services\RussianAccentService;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 
 /**
@@ -59,9 +61,16 @@ trait ManagesTranslation
         $this->translatingRowIndex = $rowIndex;
 
         try {
-            $translatedText = $this->translationService->translateSourceToRussian($sourceText);
-            $this->csvRows[$rowIndex][1] = $translatedText;
+            $result = $this->translationService->translateSourceToRussianWithUsage($sourceText);
+            $this->csvRows[$rowIndex][1] = $result['text'];
             $this->autoSaveDraft();
+
+            ApiUsageLog::create([
+                'user_id' => Auth::id(),
+                'operation' => 'translation',
+                'prompt_tokens' => $result['promptTokens'],
+                'completion_tokens' => $result['completionTokens'],
+            ]);
         } catch (Exception $exception) {
             $this->translationError = $exception->getMessage();
         } finally {
@@ -102,11 +111,20 @@ trait ManagesTranslation
         $this->correctingStressRowIndex = $rowIndex;
 
         try {
-            $correctedText = $this->translationService->correctRussianStressMarks($russianText, $sourceText);
+            $result = $this->translationService->correctRussianStressMarksWithUsage($russianText, $sourceText);
 
-            if ($correctedText !== $russianText) {
-                $this->csvRows[$rowIndex][1] = $correctedText;
+            if ($result['text'] !== $russianText) {
+                $this->csvRows[$rowIndex][1] = $result['text'];
                 $this->autoSaveDraft();
+            }
+
+            if ($result['promptTokens'] > 0) {
+                ApiUsageLog::create([
+                    'user_id' => Auth::id(),
+                    'operation' => 'stress_correction',
+                    'prompt_tokens' => $result['promptTokens'],
+                    'completion_tokens' => $result['completionTokens'],
+                ]);
             }
         } catch (Exception $exception) {
             $this->translationError = $exception->getMessage();

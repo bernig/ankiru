@@ -23,16 +23,33 @@ readonly class OpenAiTranslationService
      */
     public function translateSourceToRussian(string $sourceText): string
     {
+        return $this->translateSourceToRussianWithUsage($sourceText)['text'];
+    }
+
+    /**
+     * Translate a source-language phrase to Russian, returning the text and
+     * exact token usage reported by the API.
+     *
+     * @return array{text: string, promptTokens: int, completionTokens: int}
+     *
+     * @throws RuntimeException when the AI request fails.
+     */
+    public function translateSourceToRussianWithUsage(string $sourceText): array
+    {
         $sourceText = trim($sourceText);
 
         Log::debug('Translating source → Russian.', ['input' => Str::limit($sourceText, 120)]);
 
         $response = (new SourceToRussianTranslatorAgent)->prompt($sourceText);
-        $result = trim((string) $response);
+        $result = trim($response->text);
 
         Log::debug('Translation complete.', ['output' => Str::limit($result, 120)]);
 
-        return $result;
+        return [
+            'text' => $result,
+            'promptTokens' => $response->usage->promptTokens,
+            'completionTokens' => $response->usage->completionTokens,
+        ];
     }
 
     /**

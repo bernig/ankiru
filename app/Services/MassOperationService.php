@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\MassOperationJob;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -114,7 +115,7 @@ class MassOperationService
     // Batch dispatching
     // -------------------------------------------------------------------------
     /**
-     * Initialise cache progress keys and dispatch one stress-correction job
+     * Initialize cache progress keys and dispatch one stress-correction job
      * per qualifying row. Returns the number of jobs dispatched (0 if none).
      *
      * @param  array<int, array<int, string>>  $csvRows
@@ -127,6 +128,8 @@ class MassOperationService
         }
         $total = count($qualifyingRows);
         $this->initialiseCacheKeys($sessionId, 'stress', $total);
+        $userId = Auth::id();
+
         foreach ($qualifyingRows as [$rowIndex, $sourceText, $russianText]) {
             MassOperationJob::dispatch(
                 operationType: 'stress',
@@ -135,6 +138,7 @@ class MassOperationService
                 totalRows: $total,
                 sourceText: $sourceText,
                 russianText: $russianText,
+                userId: $userId,
             );
         }
 
@@ -155,6 +159,8 @@ class MassOperationService
         }
         $total = count($qualifyingRows);
         $this->initialiseCacheKeys($sessionId, 'tts', $total);
+        $userId = Auth::id();
+
         foreach ($qualifyingRows as [$rowIndex, $sourceText, $russianText]) {
             MassOperationJob::dispatch(
                 operationType: 'tts',
@@ -163,6 +169,7 @@ class MassOperationService
                 totalRows: $total,
                 sourceText: $sourceText,
                 russianText: $russianText,
+                userId: $userId,
             );
         }
 

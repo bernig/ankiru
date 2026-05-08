@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Events\MassOperationProgressEvent;
+use App\Models\ApiUsageLog;
 use App\Services\OpenAiTranslationService;
 use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
@@ -39,6 +40,7 @@ class MassOperationJob implements ShouldQueue
      * @param  int  $totalRows  Total jobs dispatched for this batch (used to detect completion).
      * @param  string  $sourceText  Column 0 snapshot (French source phrase).
      * @param  string  $russianText  Column 1 snapshot (Russian phrase, may contain <b> stress tags).
+     * @param  int|null  $userId  Authenticated user ID for usage logging.
      */
     public function __construct(
         public readonly string $operationType,
@@ -47,6 +49,7 @@ class MassOperationJob implements ShouldQueue
         public readonly int $totalRows,
         public readonly string $sourceText,
         public readonly string $russianText,
+        public readonly ?int $userId = null,
     ) {}
 
     /**
@@ -144,6 +147,15 @@ class MassOperationJob implements ShouldQueue
             $result['text'],
             ttl: 3600,
         );
+
+        if ($this->userId !== null && $result['promptTokens'] > 0) {
+            ApiUsageLog::create([
+                'user_id' => $this->userId,
+                'operation' => 'stress_correction',
+                'prompt_tokens' => $result['promptTokens'],
+                'completion_tokens' => $result['completionTokens'],
+            ]);
+        }
     }
 
     /**
@@ -160,6 +172,8 @@ class MassOperationJob implements ShouldQueue
             return;
         }
 
+        $isNewGeneration = ! $ttsService->audioFileExists($this->russianText);
+
         $ttsService->generateAudio($this->russianText);
 
         // Accumulate the exact character count sent to the TTS API.
@@ -167,6 +181,14 @@ class MassOperationJob implements ShouldQueue
 
         // Count successfully generated audio files.
         Cache::increment($this->cacheKey('generated'));
+
+        if ($this->userId !== null && $isNewGeneration) {
+            ApiUsageLog::create([
+                'user_id' => $this->userId,
+                'operation' => 'tts',
+                'characters' => mb_strlen($normalizedText),
+            ]);
+        }
     }
 
     // -------------------------------------------------------------------------

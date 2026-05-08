@@ -15,6 +15,35 @@ namespace App\Models{
 /**
  * @property int $id
  * @property int $user_id
+ * @property string $operation
+ * @property int|null $prompt_tokens
+ * @property int|null $completion_tokens
+ * @property int|null $characters
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \App\Models\User $user
+ * @method static \Database\Factories\ApiUsageLogFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiUsageLog newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiUsageLog newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiUsageLog query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiUsageLog whereCharacters($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiUsageLog whereCompletionTokens($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiUsageLog whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiUsageLog whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiUsageLog whereOperation($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiUsageLog wherePromptTokens($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiUsageLog whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiUsageLog whereUserId($value)
+ * @noinspection PhpFullyQualifiedNameUsageInspection
+ * @noinspection PhpUnnecessaryFullyQualifiedNameInspection
+ */
+	class ApiUsageLog extends \Eloquent {}
+}
+
+namespace App\Models{
+/**
+ * @property int $id
+ * @property int $user_id
  * @property string $original_file_name
  * @property array<array-key, mixed>|null $csv_rows
  * @property bool $has_csv_loaded
@@ -48,6 +77,9 @@ namespace App\Models{
  * @property string|null $remember_token
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property string|null $openai_api_key
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ApiUsageLog> $apiUsageLogs
+ * @property-read int|null $api_usage_logs_count
  * @property-read \App\Models\CsvDraft|null $csvDraft
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
  * @property-read int|null $notifications_count
@@ -60,6 +92,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailVerifiedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereOpenaiApiKey($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)

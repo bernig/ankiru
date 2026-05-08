@@ -5,16 +5,16 @@
         <flux:heading size="lg">{{ __('profile.profile_information') }}</flux:heading>
         <flux:text>{{ __('profile.profile_information_description') }}</flux:text>
 
-        <form wire:submit="updateProfile" class="space-y-4">
+        <form class="space-y-4" wire:submit="updateProfile">
             <flux:field>
                 <flux:label>{{ __('profile.name') }}</flux:label>
-                <flux:input wire:model="name" type="text" autocomplete="name" required />
+                <flux:input type="text" wire:model="name" autocomplete="name" required />
                 <flux:error name="name" />
             </flux:field>
 
             <flux:field>
                 <flux:label>{{ __('profile.email') }}</flux:label>
-                <flux:input wire:model="email" type="email" autocomplete="email" required />
+                <flux:input type="email" wire:model="email" autocomplete="email" required />
                 <flux:error name="email" />
             </flux:field>
 
@@ -40,11 +40,53 @@
                     {{ __('profile.api_key_clear') }}
                 </flux:button>
             </div>
+
+            {{-- Statistiques d'utilisation API --}}
+            <flux:heading size="lg">{{ __('profile.api_usage_stats') }}</flux:heading>
+            <flux:text>{{ __('profile.api_usage_stats_description') }}</flux:text>
+
+            @if ($this->usageStats->isEmpty())
+                <flux:text class="italic text-zinc-400">{{ __('profile.api_usage_empty') }}</flux:text>
+            @else
+                <flux:table>
+                    <flux:table.columns>
+                        <flux:table.column>{{ __('profile.stats_operation') }}</flux:table.column>
+                        <flux:table.column class="text-right">{{ __('profile.stats_calls') }}</flux:table.column>
+                        <flux:table.column class="text-right">{{ __('profile.stats_tokens_in') }}</flux:table.column>
+                        <flux:table.column class="text-right">{{ __('profile.stats_tokens_out') }}</flux:table.column>
+                        <flux:table.column class="text-right">{{ __('profile.stats_characters') }}</flux:table.column>
+                        <flux:table.column class="text-right">{{ __('profile.stats_cost') }}</flux:table.column>
+                    </flux:table.columns>
+
+                    <flux:table.rows>
+                        @foreach ($this->usageStats as $stat)
+                            <flux:table.row>
+                                <flux:table.cell>{{ __('profile.operation_' . $stat['operation']) }}</flux:table.cell>
+                                <flux:table.cell class="text-right tabular-nums">{{ number_format($stat['calls']) }}</flux:table.cell>
+                                <flux:table.cell class="text-right tabular-nums">{{ $stat['prompt_tokens'] > 0 ? number_format($stat['prompt_tokens']) : '—' }}</flux:table.cell>
+                                <flux:table.cell class="text-right tabular-nums">{{ $stat['completion_tokens'] > 0 ? number_format($stat['completion_tokens']) : '—' }}</flux:table.cell>
+                                <flux:table.cell class="text-right tabular-nums">{{ $stat['characters'] > 0 ? number_format($stat['characters']) : '—' }}</flux:table.cell>
+                                <flux:table.cell class="text-right tabular-nums">${{ number_format($stat['estimated_cost'], 4) }}</flux:table.cell>
+                            </flux:table.row>
+                        @endforeach
+
+                        {{-- Ligne total --}}
+                        <flux:table.row class="border-t border-zinc-200 font-semibold">
+                            <flux:table.cell>{{ __('profile.stats_total') }}</flux:table.cell>
+                            <flux:table.cell class="text-right tabular-nums">{{ number_format($this->usageStats->sum('calls')) }}</flux:table.cell>
+                            <flux:table.cell class="text-right tabular-nums">{{ number_format($this->usageStats->sum('prompt_tokens')) }}</flux:table.cell>
+                            <flux:table.cell class="text-right tabular-nums">{{ number_format($this->usageStats->sum('completion_tokens')) }}</flux:table.cell>
+                            <flux:table.cell class="text-right tabular-nums">{{ number_format($this->usageStats->sum('characters')) }}</flux:table.cell>
+                            <flux:table.cell class="text-right tabular-nums">${{ number_format($this->usageStats->sum('estimated_cost'), 4) }}</flux:table.cell>
+                        </flux:table.row>
+                    </flux:table.rows>
+                </flux:table>
+            @endif
         @else
-            <form wire:submit="saveApiKey" class="space-y-4">
+            <form class="space-y-4" wire:submit="saveApiKey">
                 <flux:field>
                     <flux:label>{{ __('profile.openai_api_key') }}</flux:label>
-                    <flux:input wire:model="openai_api_key" type="password" placeholder="sk-..." viewable />
+                    <flux:input type="password" wire:model="openai_api_key" placeholder="sk-..." viewable />
                     <flux:error name="openai_api_key" />
                 </flux:field>
 
@@ -64,22 +106,22 @@
         <flux:heading size="lg">{{ __('profile.update_password') }}</flux:heading>
         <flux:text>{{ __('profile.update_password_description') }}</flux:text>
 
-        <form wire:submit="updatePassword" class="space-y-4">
+        <form class="space-y-4" wire:submit="updatePassword">
             <flux:field>
                 <flux:label>{{ __('profile.current_password') }}</flux:label>
-                <flux:input wire:model="current_password" type="password" autocomplete="current-password" required />
+                <flux:input type="password" wire:model="current_password" autocomplete="current-password" required />
                 <flux:error name="current_password" />
             </flux:field>
 
             <flux:field>
                 <flux:label>{{ __('profile.new_password') }}</flux:label>
-                <flux:input wire:model="password" type="password" autocomplete="new-password" required />
+                <flux:input type="password" wire:model="password" autocomplete="new-password" required />
                 <flux:error name="password" />
             </flux:field>
 
             <flux:field>
                 <flux:label>{{ __('profile.confirm_password') }}</flux:label>
-                <flux:input wire:model="password_confirmation" type="password" autocomplete="new-password" required />
+                <flux:input type="password" wire:model="password_confirmation" autocomplete="new-password" required />
                 <flux:error name="password_confirmation" />
             </flux:field>
 

@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Concerns;
 
+use App\Models\ApiUsageLog;
 use App\Services\RussianTextToSpeechService;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Ai\Exceptions\FailoverableException;
@@ -96,7 +98,17 @@ trait ManagesTtsAudio
         $this->ttsGeneratingRowIndex = $rowIndex;
 
         try {
+            $isNewGeneration = ! $this->ttsService->audioFileExists($rawRussianText);
+
             $this->ttsService->generateAudio($rawRussianText);
+
+            if ($isNewGeneration) {
+                ApiUsageLog::create([
+                    'user_id' => Auth::id(),
+                    'operation' => 'tts',
+                    'characters' => mb_strlen($normalizedText),
+                ]);
+            }
 
             $filenameHash = $this->ttsService->buildFilenameHash($rawRussianText);
             // Append a cache-busting timestamp so browsers always fetch the latest audio.
