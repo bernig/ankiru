@@ -29,5 +29,13 @@ return [
     'create_account' => 'Create account',
     'no_account_yet' => 'No account yet?',
     'already_registered' => 'Already registered?',
+    'forgot_password' => 'Forgot password?',
+    'forgot_password_subtitle' => 'Enter your email address and we\'ll send you a link to reset your password.',
+    'send_reset_link' => 'Send reset link',
+    'reset_password' => 'Reset password',
+    'reset_password_subtitle' => 'Enter your new password below.',
+    'new_password' => 'New password',
+    'save_password' => 'Save password',
+    'remember_password' => 'Remembered your password?',
 
 ];

@@ -10,7 +10,13 @@
                 @csrf
 
                 <flux:input id="email" name="email" type="email" value="{{ old('email') }}" label="{{ __('auth.email') }}" required />
-                <flux:input id="password" name="password" type="password" label="{{ __('auth.password_label') }}" required />
+                <flux:field>
+                    <div class="flex items-center justify-between">
+                        <flux:label>{{ __('auth.password_label') }}</flux:label>
+                        <a class="text-xs text-zinc-500 underline hover:text-zinc-700" href="{{ route('password.request') }}">{{ __('auth.forgot_password') }}</a>
+                    </div>
+                    <flux:input id="password" name="password" type="password" required />
+                </flux:field>
                 <flux:field variant="inline">
                     <flux:checkbox name="remember" type="checkbox" value="1" label="{{ __('auth.remember_me') }}" />
                 </flux:field>

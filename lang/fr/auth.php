@@ -29,5 +29,13 @@ return [
     'create_account' => 'Créer un compte',
     'no_account_yet' => 'Pas encore de compte ?',
     'already_registered' => 'Déjà inscrit ?',
+    'forgot_password' => 'Mot de passe oublié ?',
+    'forgot_password_subtitle' => 'Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.',
+    'send_reset_link' => 'Envoyer le lien',
+    'reset_password' => 'Réinitialiser le mot de passe',
+    'reset_password_subtitle' => 'Entrez votre nouveau mot de passe ci-dessous.',
+    'new_password' => 'Nouveau mot de passe',
+    'save_password' => 'Enregistrer le mot de passe',
+    'remember_password' => 'Vous vous souvenez de votre mot de passe ?',
 
 ];
