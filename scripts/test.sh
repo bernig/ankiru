@@ -11,12 +11,17 @@ check_tools "php"
 
 clear_laravel_caches
 
+# Tests should always boot with uncached config to avoid using non-testing DB settings.
+php artisan config:clear || {
+    error "Failed to clear config cache"
+    exit 1
+}
+
 log "Starting the tests..."
 php artisan test --coverage || {
     error "Tests failed"
     exit 1
 }
 
-cache_laravel_config
 cache_filament_components
 cache_views
