@@ -73,6 +73,9 @@ class CsvEditor extends Component
     /** The value bound to the rename input field. */
     public string $renameInput = '';
 
+    /** Name entered by the user for the combined multi-deck .apkg export. */
+    public string $collectionExportName = 'Collection';
+
     /**
      * Services are injected as protected so they are accessible from concern traits.
      * They are re-injected on each hydration cycle because Livewire does not
@@ -336,7 +339,7 @@ class CsvEditor extends Component
     }
 
     /**
-     * Build and download a .colpkg package containing all of the user's files as separate decks.
+     * Build and download a multi-deck .apkg package containing all of the user's files.
      * Only available when the user has at least two files.
      */
     public function downloadColpkg(): StreamedResponse
@@ -355,15 +358,16 @@ class CsvEditor extends Component
             ];
         }
 
-        $colpkgPath = $this->ankiExporterService->exportCollection($decks);
-        $downloadFileName = 'collection_'.now()->format('Ymd_His').'.colpkg';
+        $parentName = trim($this->collectionExportName) ?: 'Collection';
+        $apkgPath = $this->ankiExporterService->exportCollection($decks, $parentName);
+        $downloadFileName = $parentName.'_'.now()->format('Ymd_His').'.apkg';
 
-        return response()->streamDownload(function () use ($colpkgPath): void {
-            readfile($colpkgPath);
+        return response()->streamDownload(function () use ($apkgPath): void {
+            readfile($apkgPath);
 
-            if (! @unlink($colpkgPath)) {
-                Log::warning('Failed to delete temporary .colpkg file after streaming.', [
-                    'path' => $colpkgPath,
+            if (! @unlink($apkgPath)) {
+                Log::warning('Failed to delete temporary combined .apkg file after streaming.', [
+                    'path' => $apkgPath,
                 ]);
             }
         }, $downloadFileName, [

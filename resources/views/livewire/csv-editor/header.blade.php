@@ -76,7 +76,7 @@
                         </flux:menu.item>
                         @if (count($allDraftsMeta) >= 2)
                             <flux:menu.separator />
-                            <flux:menu.item wire:click="downloadColpkg" icon:variant="outline" icon="rectangle-stack">
+                            <flux:menu.item x-on:click="$flux.modal('collection-export').show()" icon:variant="outline" icon="rectangle-stack">
                                 {{ __('csv_editor.export_collection_package') }}
                             </flux:menu.item>
                         @endif

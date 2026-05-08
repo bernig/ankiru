@@ -62,18 +62,18 @@ class AnkiPackageExporterService
     }
 
     /**
-     * Build a .colpkg file containing multiple decks and return its absolute path.
+     * Build a multi-deck .apkg file and return its absolute path.
      * The caller is responsible for deleting the file after streaming it.
      *
      * @param  array<int, array{deckName: string, cards: array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}>}>  $decks
-     * @return string Absolute filesystem path to the generated .colpkg file.
+     * @return string Absolute filesystem path to the generated .apkg file.
      *
      * @throws RuntimeException when the ZIP archive cannot be created.
      */
-    public function exportCollection(array $decks): string
+    public function exportCollection(array $decks, string $parentDeckName = 'Collection'): string
     {
         $temporaryDbPath = sys_get_temp_dir().'/'.uniqid('anki_col_', true).'.anki2';
-        $colpkgPath = sys_get_temp_dir().'/'.uniqid('anki_pkg_', true).'.colpkg';
+        $apkgPath = sys_get_temp_dir().'/'.uniqid('anki_pkg_', true).'.apkg';
 
         $deckConfigs = [];
         foreach (array_values($decks) as $index => $deck) {
@@ -85,14 +85,14 @@ class AnkiPackageExporterService
         }
 
         try {
-            $this->buildMultiDeckDatabase($temporaryDbPath, $deckConfigs);
+            $this->buildMultiDeckDatabase($temporaryDbPath, $deckConfigs, $parentDeckName);
             $allCards = array_merge(...array_column($deckConfigs, 'cards'));
-            $this->assembleApkgZip($colpkgPath, $temporaryDbPath, $allCards);
+            $this->assembleApkgZip($apkgPath, $temporaryDbPath, $allCards);
         } finally {
             @unlink($temporaryDbPath);
         }
 
-        return $colpkgPath;
+        return $apkgPath;
     }
 
     // -------------------------------------------------------------------------
@@ -361,36 +361,39 @@ class AnkiPackageExporterService
      *
      * @param  array<int, array{id: int, name: string, cards: array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}>}>  $deckConfigs
      */
-    private function buildMultiDeckDatabase(string $dbPath, array $deckConfigs): void
+    private function buildMultiDeckDatabase(string $dbPath, array $deckConfigs, string $parentDeckName): void
     {
         $pdo = new PDO('sqlite:'.$dbPath);
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         $this->createSchema($pdo);
-        $this->insertCollectionRowMultiple($pdo, $deckConfigs);
+        $this->insertCollectionRowMultiple($pdo, $deckConfigs, $parentDeckName);
         $this->insertNotesAndCardsMultiple($pdo, $deckConfigs);
     }
 
     /**
-     * Insert the `col` row for a collection containing multiple decks.
+     * Insert the `col` row for a collection containing multiple decks grouped under a parent.
+     *
+     * Sub-deck names are stored as "Parent::Child" — Anki's convention for deck hierarchies.
+     * The parent deck uses DECK_ID; sub-decks use DECK_ID + 1, + 2, …
      *
      * @param  array<int, array{id: int, name: string, cards: array}>  $deckConfigs
      */
-    private function insertCollectionRowMultiple(PDO $pdo, array $deckConfigs): void
+    private function insertCollectionRowMultiple(PDO $pdo, array $deckConfigs, string $parentDeckName): void
     {
         $now = time();
         $schemaModTime = $now * 1000;
-        $firstDeckId = $deckConfigs[0]['id'];
+        $parentDeckId = self::DECK_ID;
 
         $conf = json_encode([
             'nextPos' => 1,
             'estTimes' => true,
-            'activeDecks' => array_column($deckConfigs, 'id'),
+            'activeDecks' => [$parentDeckId],
             'sortType' => 'noteFld',
             'timeLim' => 0,
             'sortBackwards' => false,
             'addToCur' => true,
-            'curDeck' => $firstDeckId,
+            'curDeck' => $parentDeckId,
             'newBury' => true,
             'newSpread' => 0,
             'dueCounts' => true,
@@ -406,7 +409,7 @@ class AnkiPackageExporterService
                 'mod' => $now,
                 'usn' => -1,
                 'sortf' => 0,
-                'did' => $firstDeckId,
+                'did' => $parentDeckId,
                 'tmpls' => [
                     [
                         'name' => 'Card 1',
@@ -439,11 +442,19 @@ class AnkiPackageExporterService
                 'newToday' => [0, 0], 'revToday' => [0, 0], 'lrnToday' => [0, 0],
                 'timeToday' => [0, 0], 'dyn' => 0, 'extendNew' => 10, 'conf' => 1, 'mod' => $now,
             ],
+            // Parent deck — no cards live here directly, only in sub-decks.
+            (string) $parentDeckId => [
+                'id' => $parentDeckId, 'name' => $parentDeckName, 'desc' => '', 'extendRev' => 50,
+                'usn' => -1, 'collapsed' => false, 'browserCollapsed' => false,
+                'newToday' => [0, 0], 'revToday' => [0, 0], 'lrnToday' => [0, 0],
+                'timeToday' => [0, 0], 'dyn' => 0, 'extendNew' => 10, 'conf' => 1, 'mod' => $now,
+            ],
         ];
 
         foreach ($deckConfigs as $deckConfig) {
             $decksJson[(string) $deckConfig['id']] = [
-                'id' => $deckConfig['id'], 'name' => $deckConfig['name'], 'desc' => '', 'extendRev' => 50,
+                // "Parent::Child" naming is how Anki creates sub-deck hierarchies.
+                'id' => $deckConfig['id'], 'name' => $parentDeckName.'::'.$deckConfig['name'], 'desc' => '', 'extendRev' => 50,
                 'usn' => -1, 'collapsed' => false, 'browserCollapsed' => false,
                 'newToday' => [0, 0], 'revToday' => [0, 0], 'lrnToday' => [0, 0],
                 'timeToday' => [0, 0], 'dyn' => 0, 'extendNew' => 10, 'conf' => 1, 'mod' => $now,
