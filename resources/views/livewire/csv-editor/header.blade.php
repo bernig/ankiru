@@ -1,19 +1,21 @@
-<div class="mx-auto mb-6 flex max-w-full flex-col gap-4">
+<div class="mx-auto mb-4 flex max-w-full flex-col gap-4">
     <x-site-header />
 
     @if ($hasCsvLoaded)
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-col items-center justify-start gap-2 md:flex-row">
 
             {{-- File selector / rename input --}}
             @if ($isRenamingFile)
-                <div class="flex items-center gap-1">
-                    <flux:input class="w-44" wire:model="renameInput" wire:keydown.enter="confirmRenameDraft" wire:keydown.escape="cancelRenameDraft" size="sm" autofocus />
-                    <flux:button wire:click="confirmRenameDraft" icon="check" size="sm" variant="ghost" />
-                    <flux:button wire:click="cancelRenameDraft" icon="x-mark" size="sm" variant="ghost" />
+                <div class="flex w-full items-center gap-1 md:w-auto">
+                    <flux:input.group>
+                        <flux:input wire:model="renameInput" wire:keydown.enter="confirmRenameDraft" wire:keydown.escape="cancelRenameDraft" autofocus />
+                        <flux:button wire:click="confirmRenameDraft" icon="check" />
+                        <flux:button wire:click="cancelRenameDraft" icon="x-mark" />
+                    </flux:input.group>
                 </div>
             @else
                 <flux:dropdown>
-                    <flux:button icon:trailing="chevron-down" variant="ghost" size="sm">
+                    <flux:button class="rounded-full!" icon:trailing="chevron-down" variant="ghost" size="sm">
                         {{ pathinfo($originalFileName, PATHINFO_FILENAME) }}
                     </flux:button>
 
@@ -26,11 +28,11 @@
 
                         <flux:menu.separator />
 
-                        <flux:menu.item icon="pencil" wire:click="startRenameDraft">
+                        <flux:menu.item icon:variant="outline" icon="pencil" wire:click="startRenameDraft">
                             {{ __('csv_editor.rename_file') }}
                         </flux:menu.item>
 
-                        <flux:menu.item icon="document-plus" wire:click="createNewFile">
+                        <flux:menu.item icon:variant="outline" icon="document-plus" wire:click="createNewFile">
                             {{ __('csv_editor.create_new_file') }}
                         </flux:menu.item>
 
@@ -40,7 +42,7 @@
 
                         <flux:menu.separator />
 
-                        <flux:menu.item icon="trash" variant="danger" wire:click="resetEditor" wire:confirm="{{ __('csv_editor.delete_file_confirm') }}">
+                        <flux:menu.item icon:variant="outline" icon="trash" variant="danger" wire:click="resetEditor" wire:confirm="{{ __('csv_editor.delete_file_confirm') }}">
                             {{ __('csv_editor.delete_file') }}
                         </flux:menu.item>
                     </flux:menu>
@@ -52,25 +54,27 @@
 
             <flux:spacer />
 
-            <flux:modal.trigger name="bulk-actions">
-                <flux:button icon="sparkles" variant="ghost" wire:click="openBulkActionsModal">
-                    {{ __('csv_editor.bulk_actions') }}
-                </flux:button>
-            </flux:modal.trigger>
+            <div class="flex flex-wrap justify-center gap-2 md:justify-end">
+                <flux:modal.trigger name="bulk-actions">
+                    <flux:button class="rounded-full!" icon:variant="outline" icon="sparkles" variant="ghost" wire:click="openBulkActionsModal">
+                        {{ __('csv_editor.bulk_actions') }}
+                    </flux:button>
+                </flux:modal.trigger>
 
-            <flux:dropdown position="bottom" align="end">
-                <flux:button icon="arrow-down-tray" icon:trailing="chevron-down" variant="primary">
-                    {{ __('csv_editor.export') }}
-                </flux:button>
-                <flux:menu>
-                    <flux:menu.item wire:click="downloadCsv" icon="document-text">
-                        {{ __('csv_editor.export_csv') }}
-                    </flux:menu.item>
-                    <flux:menu.item wire:click="downloadAnkiPackage" icon="archive-box-arrow-down">
-                        {{ __('csv_editor.export_anki_package') }}
-                    </flux:menu.item>
-                </flux:menu>
-            </flux:dropdown>
+                <flux:dropdown position="bottom" align="end">
+                    <flux:button class="rounded-full!" icon="arrow-down-tray" icon:trailing="chevron-down" variant="primary">
+                        {{ __('csv_editor.export') }}
+                    </flux:button>
+                    <flux:menu>
+                        <flux:menu.item wire:click="downloadCsv" icon:variant="outline" icon="document-text">
+                            {{ __('csv_editor.export_csv') }}
+                        </flux:menu.item>
+                        <flux:menu.item wire:click="downloadAnkiPackage" icon:variant="outline" icon="archive-box-arrow-down">
+                            {{ __('csv_editor.export_anki_package') }}
+                        </flux:menu.item>
+                    </flux:menu>
+                </flux:dropdown>
+            </div>
         </div>
     @endif
 </div>

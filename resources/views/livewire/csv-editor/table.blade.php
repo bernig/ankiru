@@ -47,7 +47,7 @@
             <flux:pagination class="w-full" :paginator="$this->paginatedRows" scroll-to="html" />
         @endif
 
-        <flux:button wire:click="addRow" icon="plus" variant="primary">
+        <flux:button class="rounded-full!" wire:click="addRow" icon="plus" variant="primary">
             {{ __('csv_editor.add_row') }}
         </flux:button>
     </div>

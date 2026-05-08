@@ -52,21 +52,21 @@
 
             @if ($ttsModalRowIndex >= 0 && $ttsModalAudioExists)
                 {{-- Delete: removes the cached file; modal stays open showing the "no audio" state --}}
-                <flux:button variant="danger" icon="trash" wire:click="deleteTtsAudio({{ $ttsModalRowIndex }})" wire:loading.attr="disabled" wire:target="deleteTtsAudio({{ $ttsModalRowIndex }})" :disabled="$this->isTtsBatchRunning" />
+                <flux:button class="hover:bg-red-50! text-red-600! hover:text-red-700! rounded-full!" variant="subtle" icon:variant="outline" icon="trash" wire:click="deleteTtsAudio({{ $ttsModalRowIndex }})" wire:loading.attr="disabled" wire:target="deleteTtsAudio({{ $ttsModalRowIndex }})" :disabled="$this->isTtsBatchRunning" />
 
                 {{-- Refresh: deletes + regenerates; tts-audio-ready updates the audio player src --}}
-                <flux:button icon="sparkles" wire:click="refreshTtsAudio({{ $ttsModalRowIndex }})" wire:loading.attr="disabled" wire:loading.class="opacity-60" wire:target="refreshTtsAudio({{ $ttsModalRowIndex }})" variant="primary" :disabled="$this->isTtsBatchRunning">
+                <flux:button class="rounded-full!" icon="sparkles" icon:variant="outline" wire:click="refreshTtsAudio({{ $ttsModalRowIndex }})" wire:loading.attr="disabled" wire:loading.class="opacity-60" wire:target="refreshTtsAudio({{ $ttsModalRowIndex }})" variant="primary" :disabled="$this->isTtsBatchRunning">
                     {{ __('csv_editor.regenerate') }}
                 </flux:button>
             @elseif ($ttsModalRowIndex >= 0)
                 {{-- Generate: creates audio for the first time --}}
-                <flux:button variant="primary" icon="speaker-wave" wire:click="generateTtsAudio({{ $ttsModalRowIndex }})" wire:loading.attr="disabled" wire:loading.class="opacity-60" wire:target="generateTtsAudio({{ $ttsModalRowIndex }})" :disabled="$this->isTtsBatchRunning">
+                <flux:button class="rounded-full!" variant="primary" icon="speaker-wave" wire:click="generateTtsAudio({{ $ttsModalRowIndex }})" wire:loading.attr="disabled" wire:loading.class="opacity-60" wire:target="generateTtsAudio({{ $ttsModalRowIndex }})" :disabled="$this->isTtsBatchRunning">
                     {{ __('csv_editor.generate_audio') }}
                 </flux:button>
             @endif
 
             <flux:modal.close>
-                <flux:button variant="filled">{{ __('csv_editor.close') }}</flux:button>
+                <flux:button class="rounded-full!" icon="check" variant="filled">{{ __('csv_editor.close') }}</flux:button>
             </flux:modal.close>
         </div>
     </div>

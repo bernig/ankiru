@@ -9,12 +9,12 @@
     <div class="flex items-center gap-2">
         {{-- Language switcher - available to both guests and authenticated users --}}
         <flux:dropdown position="bottom" align="end">
-            <flux:button variant="ghost" icon:trailing="chevron-down">
+            <flux:button class="rounded-full!" variant="ghost" icon:trailing="chevron-down">
                 {{ strtoupper(app()->getLocale()) }}
             </flux:button>
             <flux:navmenu>
                 <flux:navmenu.item href="{{ route('locale.update', 'fr') }}">
-                    {{ __('csv_editor.language_french') }}
+                    {{ __('csv_editor.language_french', [], 'fr') }}
                 </flux:navmenu.item>
                 <flux:navmenu.item href="{{ route('locale.update', 'en') }}">
                     {{ __('csv_editor.language_english', [], 'en') }}
@@ -25,12 +25,12 @@
         {{-- Profile/logout shown only to authenticated users --}}
         @auth
             <flux:dropdown position="bottom" align="end">
-                <flux:profile :avatar="$avatarUrl" :name="$displayName" />
+                <flux:profile circle :avatar="$avatarUrl" :name="$displayName" />
                 <flux:navmenu>
-                    <flux:navmenu.item href="{{ route('profile') }}" icon="user-circle">
+                    <flux:navmenu.item href="{{ route('profile') }}" icon="user-circle" icon:variant="outline">
                         {{ __('profile.title') }}
                     </flux:navmenu.item>
-                    <flux:navmenu.item href="#" icon="arrow-right-start-on-rectangle" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    <flux:navmenu.item href="#" icon="arrow-right-start-on-rectangle" icon:variant="outline" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" variant="danger">
                         {{ __('csv_editor.logout') }}
                     </flux:navmenu.item>
                 </flux:navmenu>

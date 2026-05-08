@@ -26,16 +26,16 @@
 }
 
 @theme {
-    --color-accent: var(--color-rose-500);
-    --color-accent-content: var(--color-rose-500);
-    --color-accent-foreground: var(--color-white);
+    --color-accent: var(--color-yellow-400);
+    --color-accent-content: var(--color-yellow-600);
+    --color-accent-foreground: var(--color-yellow-950);
 }
 
 @layer theme {
     .dark {
-        --color-accent: var(--color-rose-500);
-        --color-accent-content: var(--color-rose-400);
-        --color-accent-foreground: var(--color-white);
+        --color-accent: var(--color-yellow-400);
+        --color-accent-content: var(--color-yellow-400);
+        --color-accent-foreground: var(--color-yellow-950);
     }
 }
 

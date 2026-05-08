@@ -26,7 +26,7 @@
             <flux:separator class="flex-1" />
         </div>
 
-        <flux:button class="mt-4 w-full" wire:click="createNewFile" icon="document-plus">
+        <flux:button class="mt-4 w-full" icon:variant="outline" wire:click="createNewFile" icon="document-plus">
             {{ __('csv_editor.create_new_file') }}
         </flux:button>
     </flux:card>
