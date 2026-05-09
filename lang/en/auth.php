@@ -37,5 +37,10 @@ return [
     'new_password' => 'New password',
     'save_password' => 'Save password',
     'remember_password' => 'Remembered your password?',
+    'verify_email' => 'Verify your email',
+    'verify_email_subtitle' => 'Thanks for registering! Before getting started, please verify your email address by clicking the link we sent you. Didn\'t receive it? We\'ll send you another one.',
+    'verification_link_sent' => 'A new verification link has been sent to your email address.',
+    'resend_verification' => 'Resend verification email',
+    'sign_out' => 'Sign out',
 
 ];

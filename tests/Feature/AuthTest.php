@@ -2,13 +2,18 @@
 
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\URL;
 
 uses(RefreshDatabase::class);
 
-test('user can register and is redirected to editor', function () {
+test('user can register and is redirected to email verification notice', function () {
+    Notification::fake();
+
     $response = $this->post('/register', [
         'name' => 'Test User',
         'email' => 'test@example.com',
@@ -16,9 +21,10 @@ test('user can register and is redirected to editor', function () {
         'password_confirmation' => 'password',
     ]);
 
-    $response->assertRedirect('/');
+    $response->assertRedirect(route('verification.notice'));
     $this->assertAuthenticated();
     $this->assertDatabaseHas('users', ['email' => 'test@example.com']);
+    Notification::assertSentTo(User::where('email', 'test@example.com')->first(), VerifyEmail::class);
 });
 
 test('user can login with valid credentials', function () {
@@ -136,4 +142,82 @@ test('password reset fails with invalid token', function () {
     ]);
 
     $response->assertSessionHasErrors('email');
+});
+
+test('unverified user is redirected to verification notice when accessing protected routes', function () {
+    /** @var User $user */
+    $user = User::factory()->unverified()->create();
+
+    $this->actingAs($user);
+
+    $this->get('/')->assertRedirect(route('verification.notice'));
+    $this->get('/profile')->assertRedirect(route('verification.notice'));
+});
+
+test('verified user can access protected routes', function () {
+    /** @var User $user */
+    $user = User::factory()->create();
+
+    $this->actingAs($user);
+
+    $this->get('/')->assertOk();
+});
+
+test('verification notice page is accessible to authenticated unverified user', function () {
+    /** @var User $user */
+    $user = User::factory()->unverified()->create();
+
+    $this->actingAs($user)->get('/email/verify')->assertOk();
+});
+
+test('email is verified when clicking the signed verification link', function () {
+    /** @var User $user */
+    $user = User::factory()->unverified()->create();
+
+    $verificationUrl = URL::temporarySignedRoute(
+        'verification.verify',
+        now()->addMinutes(60),
+        ['id' => $user->id, 'hash' => sha1($user->email)]
+    );
+
+    $this->actingAs($user)->get($verificationUrl)->assertRedirect(route('csv-editor'));
+
+    expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
+});
+
+test('verification link can be resent', function () {
+    Notification::fake();
+
+    /** @var User $user */
+    $user = User::factory()->unverified()->create();
+
+    $response = $this->actingAs($user)->post('/email/verification-notification');
+
+    $response->assertRedirect();
+    $response->assertSessionHas('status', 'verification-link-sent');
+    Notification::assertSentTo($user, VerifyEmail::class);
+});
+
+test('verification email is sent in french when locale is fr', function () {
+    App::setLocale('fr');
+
+    /** @var User $user */
+    $user = User::factory()->unverified()->create();
+
+    $mail = (new VerifyEmail)->toMail($user);
+
+    expect($mail->subject)->toBe('Vérifiez votre adresse e-mail')
+        ->and($mail->actionText)->toBe("Vérifier l'adresse e-mail");
+});
+
+test('password reset email is sent in french when locale is fr', function () {
+    App::setLocale('fr');
+
+    /** @var User $user */
+    $user = User::factory()->create();
+
+    $mail = (new ResetPassword('fake-token'))->toMail($user);
+
+    expect($mail->subject)->toBe('Réinitialisez votre mot de passe')
+        ->and($mail->actionText)->toBe('Réinitialiser le mot de passe');
 });

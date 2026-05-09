@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\EmailVerificationHandlerController;
+use App\Http\Controllers\Auth\EmailVerificationNoticeController;
+use App\Http\Controllers\Auth\EmailVerificationResendController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -26,6 +29,18 @@ Route::get('locale/{locale}', [LocaleController::class, 'update'])
     ->whereIn('locale', ['en', 'fr']);
 
 Route::middleware('auth')->group(function (): void {
+    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
+    Route::get('email/verify', EmailVerificationNoticeController::class)->name('verification.notice');
+    Route::get('email/verify/{id}/{hash}', EmailVerificationHandlerController::class)
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify');
+    Route::post('email/verification-notification', EmailVerificationResendController::class)
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
+});
+
+Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/', function () {
         return view('csv-editor');
     })->name('csv-editor');
@@ -33,8 +48,6 @@ Route::middleware('auth')->group(function (): void {
     Route::get('profile', function () {
         return view('profile');
     })->name('profile');
-
-    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });
 
 /**

@@ -37,5 +37,10 @@ return [
     'new_password' => 'Nouveau mot de passe',
     'save_password' => 'Enregistrer le mot de passe',
     'remember_password' => 'Vous vous souvenez de votre mot de passe ?',
+    'verify_email' => 'Vérifiez votre e-mail',
+    'verify_email_subtitle' => 'Merci de vous être inscrit ! Avant de commencer, veuillez vérifier votre adresse e-mail en cliquant sur le lien que nous vous avons envoyé. Vous ne l\'avez pas reçu ? Nous vous en enverrons un autre.',
+    'verification_link_sent' => 'Un nouveau lien de vérification a été envoyé à votre adresse e-mail.',
+    'resend_verification' => 'Renvoyer l\'e-mail de vérification',
+    'sign_out' => 'Se déconnecter',
 
 ];
