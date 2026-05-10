@@ -10,6 +10,17 @@ document.addEventListener('alpine:init', () => {
         rowIndex: -1,
         columnIndex: -1,
     });
+
+    Alpine.store('csvSearch', {
+        active: false,
+    });
+});
+
+document.addEventListener('csv-file-switched', () => {
+    const store = Alpine.store('csvSearch');
+    if (store) {
+        store.active = false;
+    }
 });
 
 /**

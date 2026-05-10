@@ -17,7 +17,7 @@
             @empty
                 <flux:table.row>
                     <flux:table.cell class="text-center" colspan="4">
-                        {{ __('csv_editor.no_rows_yet') }}
+                        {{ $searchQuery !== '' ? __('csv_editor.no_search_results') : __('csv_editor.no_rows_yet') }}
                     </flux:table.cell>
                 </flux:table.row>
             @endforelse
@@ -41,7 +41,7 @@
     @endif
 
     {{-- ── Footer toolbar ── --}}
-    <div class="mx-auto mt-4 flex w-full flex-col items-center gap-3">
+    <div class="mx-auto mt-4 flex w-full flex-col items-center gap-3" x-show="!$store.csvSearch.active">
         {{-- Flux pagination (shown only when there is more than one page) --}}
         @if ($this->totalPages > 1)
             <flux:pagination class="w-full" :paginator="$this->paginatedRows" scroll-to="html" />

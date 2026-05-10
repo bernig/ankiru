@@ -58,6 +58,19 @@
             {{-- Hidden file input for "Add file" --}}
             <input class="sr-only" type="file" x-ref="addFileInput" wire:model="uploadedCsvFile" accept=".csv,text/csv" />
 
+            {{-- Search icon / input --}}
+            <div class="flex items-center" x-data>
+                <flux:button class="rounded-full!" title="{{ __('csv_editor.search_placeholder') }}" size="sm" icon="magnifying-glass" variant="subtle" x-show="!$store.csvSearch.active" @click="$store.csvSearch.active = true; $nextTick(() => $refs.csvSearchInput?.focus())" />
+
+                <div x-show="$store.csvSearch.active">
+                    <flux:input class="w-48" type="search" size="sm" x-ref="csvSearchInput" wire:model.live.debounce.300ms="searchQuery" placeholder="{{ __('csv_editor.search_placeholder') }}" @keydown.escape="$wire.set('searchQuery', ''); $store.csvSearch.active = false">
+                        <x-slot name="iconTrailing">
+                            <flux:button class="-mr-1" size="xs" icon="x-mark" @click="$wire.set('searchQuery', ''); $store.csvSearch.active = false" variant="ghost" />
+                        </x-slot>
+                    </flux:input>
+                </div>
+            </div>
+
             <flux:spacer />
 
             <div class="flex flex-wrap justify-center gap-2 md:justify-end">

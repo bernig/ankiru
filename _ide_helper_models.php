@@ -80,6 +80,7 @@ namespace App\Models{
  * @property string|null $openai_api_key
  * @property string|null $accent_color
  * @property bool $accent_bold
+ * @property bool $accent_unicode
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ApiUsageLog> $apiUsageLogs
  * @property-read int|null $api_usage_logs_count
  * @property-read \App\Models\CsvDraft|null $csvDraft
@@ -91,6 +92,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereAccentBold($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereAccentColor($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereAccentUnicode($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmail($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailVerifiedAt($value)

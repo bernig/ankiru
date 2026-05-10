@@ -26,6 +26,10 @@ return [
     'source_column' => 'Texte source',
     'russian_column' => 'Texte russe',
 
+    // Recherche
+    'search_placeholder' => 'Rechercher…',
+    'no_search_results' => 'Aucune ligne ne correspond à votre recherche.',
+
     // Tableau
     'no_rows_yet' => "Aucune ligne pour l'instant. Cliquez sur « Ajouter une ligne » pour en créer une.",
     'add_row' => 'Ajouter une ligne',

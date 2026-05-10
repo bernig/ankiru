@@ -55,6 +55,8 @@ class CsvEditor extends Component
 
     public string $validationError = '';
 
+    public string $searchQuery = '';
+
     public bool $hasCsvLoaded = false;
 
     /** Database ID of the currently displayed draft. 0 means no draft persisted yet. */
@@ -226,13 +228,14 @@ class CsvEditor extends Component
     #[Computed]
     public function paginatedRows(): LengthAwarePaginator
     {
+        $rows = $this->filteredRows();
         $currentPage = $this->getPage();
         $offset = ($currentPage - 1) * self::PER_PAGE;
-        $slicedItems = collect(array_slice($this->csvRows, $offset, self::PER_PAGE, true));
+        $slicedItems = collect(array_slice($rows, $offset, self::PER_PAGE, true));
 
         return new LengthAwarePaginator(
             $slicedItems,
-            count($this->csvRows),
+            count($rows),
             self::PER_PAGE,
             $currentPage,
             ['path' => request()->url()]
@@ -245,7 +248,12 @@ class CsvEditor extends Component
     #[Computed]
     public function totalPages(): int
     {
-        return max(1, (int) ceil(count($this->csvRows) / self::PER_PAGE));
+        return max(1, (int) ceil(count($this->filteredRows()) / self::PER_PAGE));
+    }
+
+    public function updatedSearchQuery(): void
+    {
+        $this->resetPage();
     }
 
     /**
@@ -442,7 +450,9 @@ class CsvEditor extends Component
         $this->isRenamingFile = false;
         $this->renameInput = '';
         $this->ttsModalRowIndex = -1;
+        $this->searchQuery = '';
         $this->resetPage();
+        $this->dispatch('csv-file-switched');
     }
 
     /**
@@ -467,7 +477,9 @@ class CsvEditor extends Component
         $this->isRenamingFile = false;
         $this->renameInput = '';
         $this->ttsModalRowIndex = -1;
+        $this->searchQuery = '';
         $this->resetPage();
+        $this->dispatch('csv-file-switched');
     }
 
     /**
@@ -480,7 +492,9 @@ class CsvEditor extends Component
         $this->hasCsvLoaded = true;
         $this->activeDraftId = 0;
         $this->ttsModalRowIndex = -1;
+        $this->searchQuery = '';
         $this->resetPage();
+        $this->dispatch('csv-file-switched');
 
         $this->autoSaveDraft();
         $this->startRenameDraft();
@@ -697,5 +711,38 @@ class CsvEditor extends Component
         }
 
         return $cards;
+    }
+
+    /**
+     * Return the subset of csvRows matching the current search query,
+     * preserving original array keys so row-index-based actions keep working.
+     *
+     * @return array<int, array<int, string>>
+     */
+    private function filteredRows(): array
+    {
+        $normalizedQuery = $this->normalizeForSearch(trim($this->searchQuery));
+
+        if ($normalizedQuery === '') {
+            return $this->csvRows;
+        }
+
+        return array_filter(
+            $this->csvRows,
+            fn (array $row): bool => str_contains($this->normalizeForSearch($row[0] ?? ''), $normalizedQuery)
+                || str_contains($this->normalizeForSearch($row[1] ?? ''), $normalizedQuery)
+        );
+    }
+
+    /**
+     * Strip HTML tags, remove combining acute accents (U+0301), and lowercase.
+     * Mirrors the normalisation done client-side in window.csvSearch.normalizeText().
+     */
+    private function normalizeForSearch(string $text): string
+    {
+        $text = strip_tags($text);
+        $text = preg_replace('/\x{0301}/u', '', $text) ?? $text;
+
+        return mb_strtolower($text);
     }
 }

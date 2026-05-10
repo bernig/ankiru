@@ -24,6 +24,10 @@ return [
     'language_english' => 'English',
     'logout' => 'Logout',
 
+    // Search
+    'search_placeholder' => 'Search…',
+    'no_search_results' => 'No rows match your search.',
+
     // Table
     'no_rows_yet' => 'No rows yet. Click "Add row" to add one.',
     'add_row' => 'Add row',
