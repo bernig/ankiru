@@ -357,8 +357,9 @@ window.csvAccentMode = (function () {
  * the correct style is set on the very first paint without a round-trip.
  * Also called directly from the style modal's save handler for instant feedback.
  *
- * @param {string|null} color  Hex color string or null (no color — bold only).
- * @param {boolean}     bold   Whether stressed vowels should be bold.
+ * @param {string|null} color   Hex color string or null (no color — bold only).
+ * @param {boolean}     bold    Whether stressed vowels should be bold.
+ * @param {boolean}     unicode unicode Whether stressed vowels should include the U+0301 combining acute in their text content.
  */
 window.applyAccentStyle = function (color, bold, unicode) {
     const root = document.documentElement;
