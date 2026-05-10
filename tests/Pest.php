@@ -44,7 +44,10 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function sampleRows(): array
 {
-    // ..
+    return [
+        ['Je travaille depuis chez moi.', 'Я раб<b>о</b>таю из д<b>о</b>ма.'],
+        ['Je suis développeur web.', 'Я веб-разраб<b>о</b>тчик.'],
+    ];
 }
