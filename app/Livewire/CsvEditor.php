@@ -38,8 +38,8 @@ class CsvEditor extends Component
         setPage as paginationSetPage;
     }
 
-    /** Number of rows displayed per page. */
-    private const int PER_PAGE = 50;
+    /** Number of rows displayed per page (user-configurable). */
+    public int $perPage = 50;
 
     /** @var TemporaryUploadedFile|null */
     public $uploadedCsvFile = null;
@@ -230,13 +230,13 @@ class CsvEditor extends Component
     {
         $rows = $this->filteredRows();
         $currentPage = $this->getPage();
-        $offset = ($currentPage - 1) * self::PER_PAGE;
-        $slicedItems = collect(array_slice($rows, $offset, self::PER_PAGE, true));
+        $offset = ($currentPage - 1) * $this->perPage;
+        $slicedItems = collect(array_slice($rows, $offset, $this->perPage, true));
 
         return new LengthAwarePaginator(
             $slicedItems,
             count($rows),
-            self::PER_PAGE,
+            $this->perPage,
             $currentPage,
             ['path' => request()->url()]
         );
@@ -248,10 +248,15 @@ class CsvEditor extends Component
     #[Computed]
     public function totalPages(): int
     {
-        return max(1, (int) ceil(count($this->filteredRows()) / self::PER_PAGE));
+        return max(1, (int) ceil(count($this->filteredRows()) / $this->perPage));
     }
 
     public function updatedSearchQuery(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage(): void
     {
         $this->resetPage();
     }

@@ -33,6 +33,7 @@ return [
     // Tableau
     'no_rows_yet' => "Aucune ligne pour l'instant. Cliquez sur « Ajouter une ligne » pour en créer une.",
     'add_row' => 'Ajouter une ligne',
+    'per_page' => 'Lignes par page',
 
     // Actions sur les lignes (infobulles des boutons)
     'edit_source_text' => 'Modifier le texte source',

@@ -44,11 +44,25 @@
     <div class="mx-auto mt-4 flex w-full flex-col items-center gap-3" x-show="!$store.csvSearch.active">
         {{-- Flux pagination (shown only when there is more than one page) --}}
         @if ($this->totalPages > 1)
-            <flux:pagination class="w-full" :paginator="$this->paginatedRows" scroll-to="html" />
+            <flux:pagination class="w-full flex-wrap" :paginator="$this->paginatedRows" scroll-to="html" />
         @endif
 
-        <flux:button class="rounded-full!" wire:click="addRow" icon="plus" variant="primary">
-            {{ __('csv_editor.add_row') }}
-        </flux:button>
+        <div class="flex w-full flex-wrap items-center justify-between gap-6">
+            <div class="flex items-center gap-2 whitespace-nowrap text-xs font-medium text-zinc-500">
+                <span>{{ __('csv_editor.per_page') }}</span>
+                <flux:select wire:model.live="perPage" size="xs">
+                    <flux:select.option value="10">10</flux:select.option>
+                    <flux:select.option value="25">25</flux:select.option>
+                    <flux:select.option value="50">50</flux:select.option>
+                    <flux:select.option value="100">100</flux:select.option>
+                </flux:select>
+            </div>
+
+            <flux:button class="rounded-full!" wire:click="addRow" icon="plus" variant="primary">
+                {{ __('csv_editor.add_row') }}
+            </flux:button>
+
+            <div class="w-32"></div>
+        </div>
     </div>
 </flux:card>

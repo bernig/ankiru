@@ -31,6 +31,7 @@ return [
     // Table
     'no_rows_yet' => 'No rows yet. Click "Add row" to add one.',
     'add_row' => 'Add row',
+    'per_page' => 'Rows per page',
     'source_column' => 'Source text',
     'russian_column' => 'Russian text',
 
