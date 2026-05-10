@@ -1,50 +1,70 @@
 {{--
     Accent Style modal.
 
-    State is sourced from the Livewire component ($accentColor / $accentBold),
-    which are loaded from the database on mount and persisted by saveAccentStyle().
+    State is sourced from the Livewire component ($accentColor / $accentBold /
+    $accentUnicode), which are loaded from the database on mount and persisted
+    by saveAccentStyle().
 
-    CSS vars are updated immediately on save (via window.applyAccentStyle) so the
-    visual change is instant without waiting for the Livewire round-trip.
-
-    Constraint: at least one of color or bold must be active so that stressed
-    vowels remain visually distinguishable. When no color is selected the bold
-    toggle is locked on automatically.
+    All combinations are valid — including "none" (no color, no bold, no unicode),
+    in which case accented vowels are rendered as plain <span data-vowel-pos>
+    elements: invisible but still clickable so the stored accent position is kept.
 --}}
 <flux:modal class="md:w-sm" name="accent-style">
-    <div class="flex flex-col gap-6" x-data="{
-        color: '',
-        bold: true,
-        init() {
-            this.color = $wire.accentColor || '';
-            this.bold = $wire.accentBold;
-            this.$watch('color', (val) => {
-                if (!val) { this.bold = true; }
-            });
-        },
-        save() {
-            const color = this.color || null;
-            const bold = this.bold;
-            window.applyAccentStyle(color, bold);
-            $wire.saveAccentStyle(color, bold);
-        },
-    }">
+    <div
+        class="flex flex-col gap-6"
+        x-data="{
+            color: '',
+            bold: true,
+            unicode: false,
+            get noneActive() { return !this.color && !this.bold && !this.unicode; },
+            init() {
+                this.color = $wire.accentColor || '';
+                this.bold = $wire.accentBold;
+                this.unicode = $wire.accentUnicode;
+            },
+            save() {
+                const color = this.color || null;
+                const bold = this.bold;
+                const unicode = this.unicode;
+                window.applyAccentStyle(color, bold, unicode);
+                $wire.saveAccentStyle(color, bold, unicode);
+            },
+        }"
+    >
         <flux:heading size="lg">{{ __('csv_editor.accent_style_title') }}</flux:heading>
 
         <div class="flex flex-col gap-5">
+            {{-- Unicode combining accent toggle --}}
+            <flux:switch
+                wire:ignore
+                :label="__('csv_editor.accent_unicode')"
+                :description="__('csv_editor.accent_unicode_description')"
+                x-model="unicode"
+            />
+
             {{-- Color picker --}}
             <div class="flex flex-col gap-2">
                 <flux:label>{{ __('csv_editor.accent_color') }}</flux:label>
 
-                <flux:color-picker type="button" clearable wire:ignore x-model="color" />
-
-                <flux:text class="text-xs" x-show="!color">
-                    {{ __('csv_editor.accent_no_color_note') }}
-                </flux:text>
+                <flux:color-picker
+                    type="button"
+                    clearable
+                    wire:ignore
+                    x-model="color"
+                />
             </div>
 
             {{-- Bold toggle --}}
-            <flux:switch wire:ignore :label="__('csv_editor.accent_bold')" x-model="bold" x-bind:disabled="!color" />
+            <flux:switch
+                wire:ignore
+                :label="__('csv_editor.accent_bold')"
+                x-model="bold"
+            />
+
+            {{-- "None active" hint --}}
+            <flux:callout x-show="noneActive" variant="warning" icon="eye-slash">
+                <flux:callout.text>{{ __('csv_editor.accent_none_note') }}</flux:callout.text>
+            </flux:callout>
         </div>
 
         <div class="flex justify-end gap-2">

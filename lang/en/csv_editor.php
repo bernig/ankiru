@@ -87,7 +87,9 @@ return [
     'accent_style_title' => 'Accented Letters Style',
     'accent_color' => 'Color',
     'accent_bold' => 'Bold',
-    'accent_no_color_note' => 'Without a color, bold is required to distinguish stressed vowels.',
+    'accent_none_note' => 'No style active — the accent position is preserved in the data but not visible on screen.',
+    'accent_unicode' => 'Combining accent (á, é, о́…)',
+    'accent_unicode_description' => 'Replaces the stressed vowel with its combining acute accent version.',
     'accent_style_save' => 'Apply',
 
     // Validation / error messages

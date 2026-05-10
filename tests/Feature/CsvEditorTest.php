@@ -66,6 +66,34 @@ test('parses an uploaded csv file into component state', function () {
         ->assertSet('csvRows.0.1', 'Я раб<b>о</b>таю из д<b>о</b>ма.')
         ->assertSet('csvRows.1.0', 'Je suis développeur web.');
 });
+test('normalises colour+bold font wrappers to plain bold tags on import', function (): void {
+    $csvContent = '"Bonjour","раб<font color=""#ff0000""><b>о</b></font>тать"';
+    $uploadedFile = UploadedFile::fake()->createWithContent('test.csv', $csvContent);
+
+    Livewire::test(CsvEditor::class)
+        ->set('uploadedCsvFile', $uploadedFile)
+        ->assertSet('csvRows.0.1', 'раб<b>о</b>тать');
+});
+
+test('normalises colour-only font wrappers to bold tags on import', function (): void {
+    $csvContent = '"Bonjour","раб<font color=""#ff0000"">о</font>тать"';
+    $uploadedFile = UploadedFile::fake()->createWithContent('test.csv', $csvContent);
+
+    Livewire::test(CsvEditor::class)
+        ->set('uploadedCsvFile', $uploadedFile)
+        ->assertSet('csvRows.0.1', 'раб<b>о</b>тать');
+});
+
+test('normalises combining acute accent to bold tags on import', function (): void {
+    // CSV exported from unicode mode: о + U+0301
+    $csvContent = "\"Bonjour\",\"рабо\u{0301}тать\"";
+    $uploadedFile = UploadedFile::fake()->createWithContent('test.csv', $csvContent);
+
+    Livewire::test(CsvEditor::class)
+        ->set('uploadedCsvFile', $uploadedFile)
+        ->assertSet('csvRows.0.1', 'раб<b>о</b>тать');
+});
+
 test('rejects an empty csv file with a validation error', function () {
     $uploadedFile = UploadedFile::fake()->createWithContent('empty.csv', '');
     Livewire::test(CsvEditor::class)
@@ -1015,6 +1043,94 @@ test('csv export wraps stressed vowels with font tag only when color is set and 
     // fputcsv doubles quote characters inside quoted fields.
     expect($content)->toContain('<font color=""#0000ff"">о</font>')
         ->and($content)->not->toContain('<b>');
+});
+
+test('saveAccentStyle persists unicode mode to the database', function (): void {
+    /** @var User $user */
+    $user = User::factory()->create(['accent_unicode' => false]);
+
+    Livewire::actingAs($user)
+        ->test(CsvEditor::class)
+        ->call('saveAccentStyle', null, true, true);
+
+    $user->refresh();
+    expect($user->accent_unicode)->toBeTrue();
+});
+
+test('mount loads accent_unicode from the authenticated user', function (): void {
+    /** @var User $user */
+    $user = User::factory()->create(['accent_unicode' => true]);
+
+    Livewire::actingAs($user)
+        ->test(CsvEditor::class)
+        ->assertSet('accentUnicode', true);
+});
+
+test('csv export replaces stressed vowels with combining acute accent in unicode mode', function (): void {
+    /** @var User $user */
+    $user = User::factory()->create([
+        'accent_unicode' => true,
+        'accent_color' => null,
+        'accent_bold' => false,
+    ]);
+
+    $test = Livewire::actingAs($user)
+        ->test(CsvEditor::class)
+        ->set('csvRows', [['Bonjour', 'раб<b>о</b>тать']])
+        ->set('hasCsvLoaded', true)
+        ->set('originalFileName', 'test.csv')
+        ->call('downloadCsv');
+
+    $content = base64_decode($test->effects['download']['content']);
+
+    // о + U+0301 combining acute accent, no HTML tags
+    expect($content)->toContain("рабо\u{0301}тать")
+        ->and($content)->not->toContain('<b>')
+        ->and($content)->not->toContain('<font');
+});
+
+test('csv export does not add combining accent to ё in unicode mode', function (): void {
+    /** @var User $user */
+    $user = User::factory()->create([
+        'accent_unicode' => true,
+        'accent_color' => null,
+        'accent_bold' => false,
+    ]);
+
+    $test = Livewire::actingAs($user)
+        ->test(CsvEditor::class)
+        ->set('csvRows', [['Bonjour', 'в<b>ё</b>л']])
+        ->set('hasCsvLoaded', true)
+        ->set('originalFileName', 'test.csv')
+        ->call('downloadCsv');
+
+    $content = base64_decode($test->effects['download']['content']);
+
+    // ё should stay as-is — no combining accent added
+    expect($content)->toContain('вёл')
+        ->and($content)->not->toContain('<b>');
+});
+
+test('csv export combines unicode accent, color, and bold when all three options are active', function (): void {
+    /** @var User $user */
+    $user = User::factory()->create([
+        'accent_unicode' => true,
+        'accent_color' => '#ff0000',
+        'accent_bold' => true,
+    ]);
+
+    $test = Livewire::actingAs($user)
+        ->test(CsvEditor::class)
+        ->set('csvRows', [['Bonjour', 'раб<b>о</b>тать']])
+        ->set('hasCsvLoaded', true)
+        ->set('originalFileName', 'test.csv')
+        ->call('downloadCsv');
+
+    $content = base64_decode($test->effects['download']['content']);
+
+    // fputcsv doubles quote characters inside quoted fields.
+    // о + U+0301 inside <b> inside <font color>
+    expect($content)->toContain("<font color=\"\"#ff0000\"\"><b>о\u{0301}</b></font>");
 });
 
 test('csv export keeps plain bold tags when no color is set', function (): void {

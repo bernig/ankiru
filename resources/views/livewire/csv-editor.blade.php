@@ -1,6 +1,6 @@
 <div>
     {{-- Apply the user's saved accent style to CSS vars on first paint. --}}
-    <div class="hidden" x-data x-init="window.applyAccentStyle(@js($accentColor), @js($accentBold))"></div>
+    <div class="hidden" x-data x-init="window.applyAccentStyle(@js($accentColor), @js($accentBold), @js($accentUnicode))"></div>
 
     @include('livewire.csv-editor.header')
 

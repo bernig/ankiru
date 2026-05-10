@@ -82,6 +82,9 @@ class CsvEditor extends Component
     /** Whether stressed vowels are bold in the exported CSV. */
     public bool $accentBold = true;
 
+    /** When true, stressed vowels are exported as vowel + U+0301 (combining acute accent) instead of HTML tags. */
+    public bool $accentUnicode = false;
+
     /**
      * Services are injected as protected so they are accessible from concern traits.
      * They are re-injected on each hydration cycle because Livewire does not
@@ -117,8 +120,9 @@ class CsvEditor extends Component
     public function mount(): void
     {
         $user = auth()->user();
-        $this->accentColor = $user->accent_color;
-        $this->accentBold = (bool) $user->accent_bold;
+        $this->accentColor = $user?->accent_color;
+        $this->accentBold = (bool) ($user?->accent_bold ?? true);
+        $this->accentUnicode = (bool) ($user?->accent_unicode ?? false);
         $this->restoreFromDraft();
     }
 
@@ -126,7 +130,7 @@ class CsvEditor extends Component
      * Persist the user's accent style preference (color + bold) and update
      * the local Livewire state so the next CSV export uses the new values.
      */
-    public function saveAccentStyle(?string $color, bool $bold): void
+    public function saveAccentStyle(?string $color, bool $bold, bool $unicode = false): void
     {
         if ($color !== null && ! preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
             return;
@@ -134,10 +138,12 @@ class CsvEditor extends Component
 
         $this->accentColor = $color;
         $this->accentBold = $bold;
+        $this->accentUnicode = $unicode;
 
         auth()->user()->update([
             'accent_color' => $color,
             'accent_bold' => $bold,
+            'accent_unicode' => $unicode,
         ]);
     }
 
@@ -189,11 +195,13 @@ class CsvEditor extends Component
 
         $columnCount = count($parsed[0]);
 
-        // Normalize each row to match the first row's column count.
+        // Normalize each row to match the first row's column count, and convert
+        // any accent-marker format (font tags, combining accents) to <b>…</b>.
         $this->csvRows = array_map(function (array $row) use ($columnCount): array {
             $normalised = array_pad($row, $columnCount, '');
+            $normalised = array_slice($normalised, 0, $columnCount);
 
-            return array_slice($normalised, 0, $columnCount);
+            return array_map($this->accentService->normalizeImportedCellValue(...), $normalised);
         }, $parsed);
 
         $this->hasCsvLoaded = true;
@@ -597,20 +605,47 @@ class CsvEditor extends Component
      *   color + bold  → <font color="#HEX"><b>X</b></font>
      *   color only    → <font color="#HEX">X</font>
      *   bold only     → <b>X</b>  (unchanged — no color tag added)
+     *
+     * When multiple options are active they are combined:
+     *   unicode + color + bold → <font color="#HEX"><b>X́</b></font>
      */
     private function applyAccentStyle(string $cellValue): string
     {
-        if (! $this->accentColor || ! str_contains($cellValue, '<b>')) {
+        if (! str_contains($cellValue, '<b>')) {
             return $cellValue;
         }
 
-        $color = htmlspecialchars($this->accentColor, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $unicode = $this->accentUnicode;
         $bold = $this->accentBold;
+        $color = $this->accentColor
+            ? htmlspecialchars($this->accentColor, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+            : null;
 
-        return preg_replace_callback('/<b>(.*?)<\/b>/s', static function (array $m) use ($color, $bold): string {
-            return $bold
-                ? "<font color=\"{$color}\"><b>{$m[1]}</b></font>"
-                : "<font color=\"{$color}\">{$m[1]}</font>";
+        // Nothing to do — keep the raw <b> tags as the accent position marker.
+        if (! $unicode && ! $bold && ! $color) {
+            return $cellValue;
+        }
+
+        return preg_replace_callback('/<b>(.*?)<\/b>/s', static function (array $m) use ($unicode, $bold, $color): string {
+            $vowel = $m[1];
+
+            // 1. Optionally append the combining acute accent (U+0301).
+            //    ё/Ё are inherently stressed — no additional mark needed.
+            $content = ($unicode && $vowel !== 'ё' && $vowel !== 'Ё')
+                ? $vowel."\u{0301}"
+                : $vowel;
+
+            // 2. Optionally wrap in <b>.
+            if ($bold) {
+                $content = "<b>{$content}</b>";
+            }
+
+            // 3. Optionally wrap in <font color>.
+            if ($color) {
+                $content = "<font color=\"{$color}\">{$content}</font>";
+            }
+
+            return $content;
         }, $cellValue) ?? $cellValue;
     }
 

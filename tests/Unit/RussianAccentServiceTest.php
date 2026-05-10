@@ -85,3 +85,54 @@ test('textNeedsStressCorrection returns false when all multi-vowel words are eit
     // Both "идёт" (ё tagged) and "домой" (о tagged) are correctly marked.
     expect($service->textNeedsStressCorrection('Он ид<b>ё</b>т д<b>о</b>мой.'))->toBeFalse();
 });
+
+// ── normalizeImportedCellValue ────────────────────────────────────────────────
+
+test('normalizeImportedCellValue leaves plain text unchanged', function () {
+    $service = new RussianAccentService;
+
+    expect($service->normalizeImportedCellValue('работать'))->toBe('работать');
+});
+
+test('normalizeImportedCellValue leaves canonical <b> tags unchanged', function () {
+    $service = new RussianAccentService;
+
+    expect($service->normalizeImportedCellValue('раб<b>о</b>тать'))->toBe('раб<b>о</b>тать');
+});
+
+test('normalizeImportedCellValue strips font wrapper from colour+bold export format', function () {
+    $service = new RussianAccentService;
+
+    expect($service->normalizeImportedCellValue('раб<font color="#ff0000"><b>о</b></font>тать'))
+        ->toBe('раб<b>о</b>тать');
+});
+
+test('normalizeImportedCellValue wraps vowel in bold when stripping colour-only font wrapper', function () {
+    $service = new RussianAccentService;
+
+    expect($service->normalizeImportedCellValue('раб<font color="#ff0000">о</font>тать'))
+        ->toBe('раб<b>о</b>тать');
+});
+
+test('normalizeImportedCellValue converts combining acute accent to bold tag', function () {
+    $service = new RussianAccentService;
+
+    // о + U+0301 combining acute
+    expect($service->normalizeImportedCellValue("рабо\u{0301}тать"))->toBe('раб<b>о</b>тать');
+});
+
+test('normalizeImportedCellValue handles combining accent on uppercase vowel', function () {
+    $service = new RussianAccentService;
+
+    expect($service->normalizeImportedCellValue("А\u{0301}"))->toBe('<b>А</b>');
+});
+
+test('normalizeImportedCellValue handles full sentence with multiple accent formats', function () {
+    $service = new RussianAccentService;
+
+    // Mix of combining accent and font wrapper in the same cell
+    $input = "Я рабо\u{0301}таю из <font color=\"#d97706\"><b>д</b></font>ома.";
+    $expected = 'Я раб<b>о</b>таю из <b>д</b>ома.';
+
+    expect($service->normalizeImportedCellValue($input))->toBe($expected);
+});

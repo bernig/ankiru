@@ -26,6 +26,23 @@ window.csvAccentMode = (function () {
     /** Regex that matches maximal runs of Cyrillic characters (= one Russian word). */
     const CYRILLIC_WORD_RE = /[а-яёА-ЯЁ]+/g;
 
+    /** Unicode combining acute accent (U+0301), appended to the stressed vowel in unicode mode. */
+    const COMBINING_ACUTE = '́';
+
+    /** ё and Ё are inherently stressed — never add a combining accent on top of them. */
+    const YO_CHARS = new Set(['ё', 'Ё']);
+
+    /** When true, stressed vowels include the U+0301 combining acute accent in their text content. */
+    let unicodeMode = false;
+
+    /**
+     * When false (all three of color/bold/unicode are off), accented vowels in
+     * multi-syllable words are rendered as plain <span data-vowel-pos> with no
+     * CSS class — invisible but still clickable so the stored position is kept.
+     * Single-syllable accented vowels become bare characters.
+     */
+    let anyStyleActive = true;
+
     /**
      * Memoization caches keyed by raw text → result.
      * These are pure functions so the same input always yields the same output.
@@ -156,14 +173,28 @@ window.csvAccentMode = (function () {
                 const pos = plainPos + j;
 
                 if (RUSSIAN_VOWELS.has(ch) && inWord.has(pos)) {
+                    const isAccented = seg.bold;
+                    const unicodeDisplay = (isAccented && unicodeMode && !YO_CHARS.has(ch)) ? ch + COMBINING_ACUTE : ch;
+
                     if (singleSyllable.has(pos)) {
                         // Single-syllable word: show accent state but no click interaction.
-                        const cssClass = seg.bold ? 'rv-vowel-accented' : '';
-                        result += cssClass ? `<span class="${cssClass}">${ch}</span>` : ch;
+                        if (isAccented && anyStyleActive) {
+                            result += `<span class="rv-vowel-accented">${unicodeDisplay}</span>`;
+                        } else {
+                            result += ch;
+                        }
                     } else {
-                        // Multi-syllable word: render as a clickable, colour-coded vowel span.
-                        const cssClass = seg.bold ? 'rv-vowel-accented' : 'rv-vowel';
-                        result += `<span class="${cssClass}" data-vowel-pos="${pos}">${ch}</span>`;
+                        // Multi-syllable word: render as a clickable vowel span.
+                        if (isAccented) {
+                            if (anyStyleActive) {
+                                result += `<span class="rv-vowel-accented" data-vowel-pos="${pos}">${unicodeDisplay}</span>`;
+                            } else {
+                                // No active style: plain span retains click target and stored position.
+                                result += `<span data-vowel-pos="${pos}">${ch}</span>`;
+                            }
+                        } else {
+                            result += `<span class="rv-vowel" data-vowel-pos="${pos}">${ch}</span>`;
+                        }
                     }
                 } else if (seg.bold) {
                     // Non-vowel inside <b> (edge case) — preserve bold rendering.
@@ -282,7 +313,29 @@ window.csvAccentMode = (function () {
         _cellNeedsAccentCache.delete(rawText);
     }
 
-    return { buildHtml, handleClick, cellNeedsAccent, invalidateCache };
+    /**
+     * Update the accent display mode from the three user style settings.
+     *
+     * Clears the buildHtml cache whenever any of the three values changes,
+     * because the generated HTML structure can differ (e.g. adding combining
+     * acute, switching between rv-vowel-accented and a plain <span>, etc.).
+     *
+     * @param {string|null} color  Hex color or null.
+     * @param {boolean}     bold
+     * @param {boolean}     unicode
+     */
+    function setStyleMode(color, bold, unicode) {
+        const newUnicode = !!unicode;
+        const newAnyActive = !!(color || bold || unicode);
+
+        if (unicodeMode !== newUnicode || anyStyleActive !== newAnyActive) {
+            unicodeMode = newUnicode;
+            anyStyleActive = newAnyActive;
+            _buildHtmlCache.clear();
+        }
+    }
+
+    return { buildHtml, handleClick, cellNeedsAccent, invalidateCache, setStyleMode };
 
 }());
 
@@ -296,9 +349,10 @@ window.csvAccentMode = (function () {
  * @param {string|null} color  Hex color string or null (no color — bold only).
  * @param {boolean}     bold   Whether stressed vowels should be bold.
  */
-window.applyAccentStyle = function (color, bold) {
+window.applyAccentStyle = function (color, bold, unicode) {
     const root = document.documentElement;
     root.style.setProperty('--rv-accent-color', color || 'inherit');
     root.style.setProperty('--rv-accent-bold', bold ? 'bold' : 'normal');
+    window.csvAccentMode.setStyleMode(color, bold, unicode || false);
 };
 

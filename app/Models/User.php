@@ -27,6 +27,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'openai_api_key',
         'accent_color',
         'accent_bold',
+        'accent_unicode',
     ];
 
     /**
@@ -66,6 +67,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'openai_api_key' => 'encrypted',
             'accent_bold' => 'boolean',
+            'accent_unicode' => 'boolean',
         ];
     }
 }

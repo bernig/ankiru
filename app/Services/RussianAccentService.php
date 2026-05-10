@@ -216,6 +216,43 @@ class RussianAccentService
     }
 
     /**
+     * Normalise a cell value that may carry accent markers in any of the formats
+     * this application can produce (or that external sources may use), converting
+     * them all to the canonical <b>vowel</b> internal representation:
+     *
+     *   <font color="…"><b>X</b></font>  →  <b>X</b>   (colour + bold export)
+     *   <font color="…">X</font>          →  <b>X</b>   (colour-only export)
+     *   X + U+0301 (combining acute)      →  <b>X</b>   (unicode export / external)
+     *   <b>X</b>                          →  <b>X</b>   (already canonical, untouched)
+     *
+     * Safe to call on non-Russian text — the patterns are specific enough that
+     * they will not transform ordinary Latin or punctuation content.
+     */
+    public function normalizeImportedCellValue(string $rawText): string
+    {
+        // Strip <font> wrappers. Handle <font><b>X</b></font> first so the
+        // second pass does not double-wrap an already-bold payload.
+        $text = preg_replace(
+            '/<font[^>]*><b>(.*?)<\/b><\/font>/us',
+            '<b>$1</b>',
+            $rawText,
+        ) ?? $rawText;
+
+        $text = preg_replace(
+            '/<font[^>]*>(.*?)<\/font>/us',
+            '<b>$1</b>',
+            $text,
+        ) ?? $text;
+
+        // Convert vowel + U+0301 (combining acute accent) to <b>vowel</b>.
+        return preg_replace(
+            '/([аеёиоуыэюяАЕЁИОУЫЭЮЯ])\x{0301}/u',
+            '<b>$1</b>',
+            $text,
+        ) ?? $text;
+    }
+
+    /**
      * Parse a raw text string with <b>…</b> tags into flat segments.
      *
      * @return array<int, array{text: string, bold: bool}>
