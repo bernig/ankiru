@@ -19,7 +19,7 @@
 
             <p class="mt-4 text-sm text-zinc-600">
                 {{ __('auth.already_registered') }}
-                <a class="text-color-accent font-medium underline" href="{{ route('login') }}">
+                <a class="font-medium text-zinc-900 underline" href="{{ route('login') }}">
                     {{ __('auth.sign_in') }}
                 </a>
             </p>
