@@ -14,14 +14,14 @@
 
             <form action="{{ route('verification.send') }}" method="POST">
                 @csrf
-                <flux:button type="submit" variant="primary" class="w-full">
+                <flux:button class="w-full" type="submit" variant="primary">
                     {{ __('auth.resend_verification') }}
                 </flux:button>
             </form>
 
             <form class="mt-3" action="{{ route('logout') }}" method="POST">
                 @csrf
-                <flux:button type="submit" variant="ghost" class="w-full">
+                <flux:button class="w-full" type="submit" variant="ghost">
                     {{ __('auth.sign_out') }}
                 </flux:button>
             </form>

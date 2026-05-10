@@ -25,6 +25,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'openai_api_key',
+        'accent_color',
+        'accent_bold',
     ];
 
     /**
@@ -63,6 +65,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'openai_api_key' => 'encrypted',
+            'accent_bold' => 'boolean',
         ];
     }
 }

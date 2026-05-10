@@ -82,6 +82,14 @@ return [
     'bulk_warning_queue' => "Le driver de file d'attente est réglé sur 'sync'. Les traitements groupés bloqueront la requête au lieu de s'exécuter en arrière-plan.",
     'bulk_warning_broadcast' => "Le driver de broadcast est réglé sur 'log'. Les mises à jour en temps réel ne seront pas disponibles.",
 
+    // Style des accents
+    'accent_style' => 'Style des accents',
+    'accent_style_title' => 'Style des lettres accentuées',
+    'accent_color' => 'Couleur',
+    'accent_bold' => 'Gras',
+    'accent_no_color_note' => 'Sans couleur, le gras est obligatoire pour distinguer les voyelles accentuées.',
+    'accent_style_save' => 'Appliquer',
+
     // Messages de validation / erreur
     'error_cannot_read_file' => 'Impossible de lire le fichier importé.',
     'error_csv_empty_or_malformed' => 'Le fichier CSV semble vide ou malformé.',

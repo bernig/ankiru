@@ -82,6 +82,14 @@ return [
     'bulk_warning_queue' => "Queue driver is set to 'sync'. Bulk jobs will block the request instead of running in the background.",
     'bulk_warning_broadcast' => "Broadcast driver is set to 'log'. Real-time progress updates will not be available.",
 
+    // Accent style
+    'accent_style' => 'Accent style',
+    'accent_style_title' => 'Accented Letters Style',
+    'accent_color' => 'Color',
+    'accent_bold' => 'Bold',
+    'accent_no_color_note' => 'Without a color, bold is required to distinguish stressed vowels.',
+    'accent_style_save' => 'Apply',
+
     // Validation / error messages
     'error_cannot_read_file' => 'Could not read the uploaded file.',
     'error_csv_empty_or_malformed' => 'The CSV file appears to be empty or malformed.',

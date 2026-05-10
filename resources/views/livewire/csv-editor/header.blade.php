@@ -42,6 +42,12 @@
 
                         <flux:menu.separator />
 
+                        <flux:menu.item icon:variant="outline" icon="swatch" x-on:click="$flux.modal('accent-style').show()">
+                            {{ __('csv_editor.accent_style') }}
+                        </flux:menu.item>
+
+                        <flux:menu.separator />
+
                         <flux:menu.item icon:variant="outline" icon="trash" variant="danger" wire:click="resetEditor" wire:confirm="{{ __('csv_editor.delete_file_confirm') }}">
                             {{ __('csv_editor.delete_file') }}
                         </flux:menu.item>

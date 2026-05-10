@@ -57,14 +57,14 @@
 
 /* Stressed (accented) Russian vowel — already wrapped in <b> */
 .rv-vowel-accented {
-    color: #d97706;
-    font-weight: bold;
+    color: var(--rv-accent-color, #d97706);
+    font-weight: var(--rv-accent-bold, bold);
     cursor: pointer;
     border-radius: 2px;
     padding: 0 1px;
 }
 
 .rv-vowel-accented:hover {
-    color: #b45309;
+    filter: brightness(0.75);
 }
 

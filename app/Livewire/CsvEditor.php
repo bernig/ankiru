@@ -76,6 +76,12 @@ class CsvEditor extends Component
     /** Name entered by the user for the combined multi-deck .apkg export. */
     public string $collectionExportName = 'Collection';
 
+    /** Hex color applied to stressed vowels in the exported CSV (#RRGGBB), or null for plain bold only. */
+    public ?string $accentColor = null;
+
+    /** Whether stressed vowels are bold in the exported CSV. */
+    public bool $accentBold = true;
+
     /**
      * Services are injected as protected so they are accessible from concern traits.
      * They are re-injected on each hydration cycle because Livewire does not
@@ -110,7 +116,29 @@ class CsvEditor extends Component
 
     public function mount(): void
     {
+        $user = auth()->user();
+        $this->accentColor = $user->accent_color;
+        $this->accentBold = (bool) $user->accent_bold;
         $this->restoreFromDraft();
+    }
+
+    /**
+     * Persist the user's accent style preference (color + bold) and update
+     * the local Livewire state so the next CSV export uses the new values.
+     */
+    public function saveAccentStyle(?string $color, bool $bold): void
+    {
+        if ($color !== null && ! preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
+            return;
+        }
+
+        $this->accentColor = $color;
+        $this->accentBold = $bold;
+
+        auth()->user()->update([
+            'accent_color' => $color,
+            'accent_bold' => $bold,
+        ]);
     }
 
     /**
@@ -535,6 +563,10 @@ class CsvEditor extends Component
 
     /**
      * Build a CSV string from the current rows (no header row).
+     *
+     * Stressed vowels (stored as <b>X</b>) are re-encoded using the user's
+     * current accent style: a <font color> wrapper is added when a color is
+     * selected, and the <b> wrapper is kept or removed based on the bold flag.
      */
     private function buildCsvContent(): string
     {
@@ -546,7 +578,7 @@ class CsvEditor extends Component
 
         try {
             foreach ($this->csvRows as $row) {
-                fputcsv($buffer, $row);
+                fputcsv($buffer, array_map($this->applyAccentStyle(...), $row));
             }
 
             rewind($buffer);
@@ -555,6 +587,31 @@ class CsvEditor extends Component
         } finally {
             fclose($buffer);
         }
+    }
+
+    /**
+     * Re-encode <b>X</b> accent markers in a cell value using the user's
+     * chosen export style (color and/or bold).
+     *
+     * Possible outputs for a stressed vowel X:
+     *   color + bold  → <font color="#HEX"><b>X</b></font>
+     *   color only    → <font color="#HEX">X</font>
+     *   bold only     → <b>X</b>  (unchanged — no color tag added)
+     */
+    private function applyAccentStyle(string $cellValue): string
+    {
+        if (! $this->accentColor || ! str_contains($cellValue, '<b>')) {
+            return $cellValue;
+        }
+
+        $color = htmlspecialchars($this->accentColor, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $bold = $this->accentBold;
+
+        return preg_replace_callback('/<b>(.*?)<\/b>/s', static function (array $m) use ($color, $bold): string {
+            return $bold
+                ? "<font color=\"{$color}\"><b>{$m[1]}</b></font>"
+                : "<font color=\"{$color}\">{$m[1]}</font>";
+        }, $cellValue) ?? $cellValue;
     }
 
     /**

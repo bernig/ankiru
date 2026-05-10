@@ -286,3 +286,19 @@ window.csvAccentMode = (function () {
 
 }());
 
+/**
+ * Apply accent style CSS custom properties to the document root.
+ *
+ * Called from the Blade template (x-init) with server-rendered values so
+ * the correct style is set on the very first paint without a round-trip.
+ * Also called directly from the style modal's save handler for instant feedback.
+ *
+ * @param {string|null} color  Hex color string or null (no color — bold only).
+ * @param {boolean}     bold   Whether stressed vowels should be bold.
+ */
+window.applyAccentStyle = function (color, bold) {
+    const root = document.documentElement;
+    root.style.setProperty('--rv-accent-color', color || 'inherit');
+    root.style.setProperty('--rv-accent-bold', bold ? 'bold' : 'normal');
+};
+
