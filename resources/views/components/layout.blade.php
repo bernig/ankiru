@@ -17,10 +17,17 @@
     </main>
 
     <footer class="bg-taupe-200 border-taupe-300 border-t py-6">
-        <div class="flex items-center justify-center gap-2 text-sm text-zinc-700">
-            <span>&copy; {{ date('Y') }} {{ config('app.name') }}</span>
-            <flux:separator vertical />
-            <a class="hover:text-zinc-900" href="#">GitHub</a>
+        <div class="flex flex-col items-center gap-3">
+            <div class="flex flex-wrap items-center justify-center gap-2 text-sm text-zinc-700">
+                <a class="hover:text-zinc-900" href="{{ route('about') }}">À propos</a>
+                <flux:separator vertical />
+                <a class="hover:text-zinc-900" href="{{ route('contact') }}">Contact</a>
+                <flux:separator vertical />
+                <a class="hover:text-zinc-900" href="{{ route('legal.mentions') }}">Mentions légales</a>
+                <flux:separator vertical />
+                <a class="hover:text-zinc-900" href="{{ route('legal.privacy') }}">Confidentialité</a>
+            </div>
+            <span class="text-xs text-zinc-500">&copy; {{ date('Y') }} {{ config('app.name') }}</span>
         </div>
     </footer>
     @fluxScripts
