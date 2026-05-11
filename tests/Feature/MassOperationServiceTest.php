@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\OperationType;
 use App\Jobs\MassOperationJob;
 use App\Services\MassOperationService;
 use App\Services\RussianAccentService;
@@ -133,7 +134,7 @@ it('dispatches stress jobs with the correct operation type', function (): void {
     Queue::fake();
     makeService()->dispatchStressBatch(stressSampleRows(), 'sess-1');
     Queue::assertPushed(MassOperationJob::class, function (MassOperationJob $job): bool {
-        return $job->operationType === 'stress'
+        return $job->operationType === OperationType::Stress
             && $job->sessionId === 'sess-1'
             && $job->totalRows === 1;
     });
@@ -166,7 +167,7 @@ it('dispatches TTS jobs with the correct operation type', function (): void {
     Storage::fake('local');
     makeService()->dispatchTtsBatch(ttsSampleRows(), 'sess-4');
     Queue::assertPushed(MassOperationJob::class, function (MassOperationJob $job): bool {
-        return $job->operationType === 'tts';
+        return $job->operationType === OperationType::Tts;
     });
 });
 it('returns 0 and dispatches nothing when all TTS audio exists', function (): void {
@@ -183,7 +184,7 @@ it('returns 0 and dispatches nothing when all TTS audio exists', function (): vo
 // Progress reading
 // ---------------------------------------------------------------------------
 it('returns idle progress when no batch has been started', function (): void {
-    $progress = makeService()->getOperationProgress('unknown-session', 'stress');
+    $progress = makeService()->getOperationProgress('unknown-session', OperationType::Stress);
     expect($progress['status'])->toBe('idle')
         ->and($progress['total'])->toBe(0)
         ->and($progress['processed'])->toBe(0)
@@ -194,7 +195,7 @@ it('returns the current progress from cache', function (): void {
     Cache::put('mass_op:sess-6:tts:total', 10, 3600);
     Cache::put('mass_op:sess-6:tts:processed', 4, 3600);
     Cache::put('mass_op:sess-6:tts:failed', 1, 3600);
-    $progress = makeService()->getOperationProgress('sess-6', 'tts');
+    $progress = makeService()->getOperationProgress('sess-6', OperationType::Tts);
     expect($progress['status'])->toBe('running')
         ->and($progress['total'])->toBe(10)
         ->and($progress['processed'])->toBe(4)

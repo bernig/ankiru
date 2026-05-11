@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\OperationType;
 use App\Jobs\MassOperationJob;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -127,12 +128,12 @@ class MassOperationService
             return 0;
         }
         $total = count($qualifyingRows);
-        $this->initialiseCacheKeys($sessionId, 'stress', $total);
+        $this->initialiseCacheKeys($sessionId, OperationType::Stress, $total);
         $userId = Auth::id();
 
         foreach ($qualifyingRows as [$rowIndex, $sourceText, $russianText]) {
             MassOperationJob::dispatch(
-                operationType: 'stress',
+                operationType: OperationType::Stress,
                 sessionId: $sessionId,
                 rowIndex: $rowIndex,
                 totalRows: $total,
@@ -158,12 +159,12 @@ class MassOperationService
             return 0;
         }
         $total = count($qualifyingRows);
-        $this->initialiseCacheKeys($sessionId, 'tts', $total);
+        $this->initialiseCacheKeys($sessionId, OperationType::Tts, $total);
         $userId = Auth::id();
 
         foreach ($qualifyingRows as [$rowIndex, $sourceText, $russianText]) {
             MassOperationJob::dispatch(
-                operationType: 'tts',
+                operationType: OperationType::Tts,
                 sessionId: $sessionId,
                 rowIndex: $rowIndex,
                 totalRows: $total,
@@ -184,9 +185,9 @@ class MassOperationService
      *
      * @return array{status: string, total: int, processed: int, failed: int}
      */
-    public function getOperationProgress(string $sessionId, string $operationType): array
+    public function getOperationProgress(string $sessionId, OperationType $operationType): array
     {
-        $prefix = "mass_op:{$sessionId}:{$operationType}";
+        $prefix = "mass_op:{$sessionId}:{$operationType->value}";
 
         return [
             'status' => (string) Cache::get("{$prefix}:status", 'idle'),
@@ -286,23 +287,23 @@ class MassOperationService
     /**
      * Write the initial cache keys for a fresh batch so progress starts at zero.
      */
-    private function initialiseCacheKeys(string $sessionId, string $operationType, int $total): void
+    private function initialiseCacheKeys(string $sessionId, OperationType $operationType, int $total): void
     {
-        $prefix = "mass_op:{$sessionId}:{$operationType}";
+        $prefix = "mass_op:{$sessionId}:{$operationType->value}";
         Cache::put("{$prefix}:status", 'running', ttl: 3600);
         Cache::put("{$prefix}:total", $total, ttl: 3600);
         Cache::put("{$prefix}:processed", 0, ttl: 3600);
         Cache::put("{$prefix}:failed", 0, ttl: 3600);
 
         // Stress-only counters for the post-batch report.
-        if ($operationType === 'stress') {
+        if ($operationType === OperationType::Stress) {
             Cache::put("{$prefix}:corrected", 0, ttl: 3600);
             Cache::put("{$prefix}:prompt_tokens", 0, ttl: 3600);
             Cache::put("{$prefix}:completion_tokens", 0, ttl: 3600);
         }
 
         // TTS-only counters for the post-batch report.
-        if ($operationType === 'tts') {
+        if ($operationType === OperationType::Tts) {
             Cache::put("{$prefix}:generated", 0, ttl: 3600);
             Cache::put("{$prefix}:actual_chars", 0, ttl: 3600);
         }

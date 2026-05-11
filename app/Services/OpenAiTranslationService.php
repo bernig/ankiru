@@ -12,9 +12,9 @@ use RuntimeException;
  * Handles source-language → Russian translation and Russian stress-mark correction
  * via the Laravel AI SDK agents backed by OpenAI.
  */
-readonly class OpenAiTranslationService
+class OpenAiTranslationService
 {
-    public function __construct(private RussianAccentService $accentService) {}
+    public function __construct(private readonly RussianAccentService $accentService) {}
 
     /**
      * Translate a source-language phrase to natural Russian with stress marks.

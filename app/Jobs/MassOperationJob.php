@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\OperationType;
 use App\Events\MassOperationProgressEvent;
 use App\Models\ApiUsageLog;
 use App\Services\OpenAiTranslationService;
@@ -34,7 +35,7 @@ class MassOperationJob implements ShouldQueue
     public int $timeout = 60;
 
     /**
-     * @param  string  $operationType  'stress' | 'tts'
+     * @param  OperationType  $operationType  The type of bulk operation to perform.
      * @param  string  $sessionId  Browser session ID — scopes cache keys and broadcast channel.
      * @param  int  $rowIndex  Original CSV row index (0-based).
      * @param  int  $totalRows  Total jobs dispatched for this batch (used to detect completion).
@@ -43,7 +44,7 @@ class MassOperationJob implements ShouldQueue
      * @param  int|null  $userId  Authenticated user ID for usage logging.
      */
     public function __construct(
-        public readonly string $operationType,
+        public readonly OperationType $operationType,
         public readonly string $sessionId,
         public readonly int $rowIndex,
         public readonly int $totalRows,
@@ -68,8 +69,8 @@ class MassOperationJob implements ShouldQueue
     ): void {
         try {
             match ($this->operationType) {
-                'stress' => $this->handleStressCorrection($accentService, $translationService),
-                'tts' => $this->handleTtsGeneration($ttsService),
+                OperationType::Stress => $this->handleStressCorrection($accentService, $translationService),
+                OperationType::Tts => $this->handleTtsGeneration($ttsService),
             };
         } catch (Throwable $exception) {
             Log::error('MassOperationJob row failed.', [
@@ -210,7 +211,7 @@ class MassOperationJob implements ShouldQueue
         }
 
         MassOperationProgressEvent::dispatch(
-            $this->operationType,
+            $this->operationType->value,
             $this->sessionId,
             $isDone ? 'done' : 'running',
             $processedCount,
@@ -227,6 +228,6 @@ class MassOperationJob implements ShouldQueue
      */
     private function cacheKey(string $suffix): string
     {
-        return "mass_op:{$this->sessionId}:{$this->operationType}:{$suffix}";
+        return "mass_op:{$this->sessionId}:{$this->operationType->value}:{$suffix}";
     }
 }

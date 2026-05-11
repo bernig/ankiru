@@ -80,7 +80,7 @@ trait ManagesTtsAudio
         }
 
         $rawRussianText = $this->csvRows[$rowIndex][1] ?? '';
-        $normalizedText = trim(str_replace(['<b>', '</b>'], '', $rawRussianText));
+        $normalizedText = $this->ttsService->normalizeForSpeech($rawRussianText);
 
         if (empty($normalizedText)) {
             return;

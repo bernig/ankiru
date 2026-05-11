@@ -54,15 +54,9 @@ trait ManagesTranslation
             return;
         }
 
-        $rateLimitKey = 'ai-translation:'.session()->getId();
-
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
-            $this->translationError = __('csv_editor.error_rate_limit');
-
+        if ($this->checkAiRateLimitExceeded()) {
             return;
         }
-
-        RateLimiter::hit($rateLimitKey, 60);
 
         $this->translatingRowIndex = $rowIndex;
 
@@ -110,15 +104,9 @@ trait ManagesTranslation
             return;
         }
 
-        $rateLimitKey = 'ai-translation:'.session()->getId();
-
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
-            $this->translationError = __('csv_editor.error_rate_limit');
-
+        if ($this->checkAiRateLimitExceeded()) {
             return;
         }
-
-        RateLimiter::hit($rateLimitKey, 60);
 
         $this->correctingStressRowIndex = $rowIndex;
 
@@ -154,5 +142,24 @@ trait ManagesTranslation
         return $this->accentService->textNeedsStressCorrection(
             $this->csvRows[$rowIndex][1] ?? ''
         );
+    }
+
+    /**
+     * Returns true and sets $translationError when the per-session AI rate limit
+     * is exceeded, false (and records a hit) when the request may proceed.
+     */
+    private function checkAiRateLimitExceeded(): bool
+    {
+        $rateLimitKey = 'ai-translation:'.session()->getId();
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
+            $this->translationError = __('csv_editor.error_rate_limit');
+
+            return true;
+        }
+
+        RateLimiter::hit($rateLimitKey, 60);
+
+        return false;
     }
 }

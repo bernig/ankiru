@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\OperationType;
 use App\Events\MassOperationProgressEvent;
 use App\Jobs\MassOperationJob;
 use App\Services\OpenAiTranslationService;
@@ -69,7 +70,7 @@ it('writes corrected text to the per-row cache key', function (): void {
         ->andReturn(['text' => $corrected, 'promptTokens' => 120, 'completionTokens' => 40]);
 
     (new MassOperationJob(
-        operationType: 'stress',
+        operationType: OperationType::Stress,
         sessionId: massOpSessionId(),
         rowIndex: 3,
         totalRows: 1,
@@ -94,7 +95,7 @@ it('increments the processed counter after a successful stress job', function ()
         ->shouldReceive('correctRussianStressMarksWithUsage')
         ->andReturn(['text' => 'result', 'promptTokens' => 100, 'completionTokens' => 30]);
 
-    (new MassOperationJob('stress', massOpSessionId(), 0, 3, 'source', 'russian'))->handle(
+    (new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 3, 'source', 'russian'))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
@@ -113,7 +114,7 @@ it('sets status to done when the last stress row is processed', function (): voi
         ->shouldReceive('correctRussianStressMarksWithUsage')
         ->andReturn(['text' => 'result', 'promptTokens' => 100, 'completionTokens' => 30]);
 
-    (new MassOperationJob('stress', massOpSessionId(), 0, 1, 'source', 'russian'))->handle(
+    (new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 1, 'source', 'russian'))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
@@ -132,7 +133,7 @@ it('broadcasts a MassOperationProgressEvent after a successful stress job', func
         ->shouldReceive('correctRussianStressMarksWithUsage')
         ->andReturn(['text' => 'result', 'promptTokens' => 100, 'completionTokens' => 30]);
 
-    (new MassOperationJob('stress', massOpSessionId(), 0, 1, 'source', 'russian'))->handle(
+    (new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 1, 'source', 'russian'))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
@@ -159,7 +160,7 @@ it('skips correction when the row no longer needs stress marks', function (): vo
     $this->mock(OpenAiTranslationService::class)
         ->shouldNotReceive('correctRussianStressMarksWithUsage');
 
-    (new MassOperationJob('stress', massOpSessionId(), 0, 1, 'source', 'Я раб<b>о</b>таю.'))->handle(
+    (new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 1, 'source', 'Я раб<b>о</b>таю.'))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
@@ -185,12 +186,12 @@ it('accumulates exact token counts and increments corrected counter on success',
             ['text' => 'second', 'promptTokens' => 150, 'completionTokens' => 40],
         );
 
-    (new MassOperationJob('stress', massOpSessionId(), 0, 2, 'src', 'russian'))->handle(
+    (new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 2, 'src', 'russian'))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
     );
-    (new MassOperationJob('stress', massOpSessionId(), 1, 2, 'src', 'russian'))->handle(
+    (new MassOperationJob(OperationType::Stress, massOpSessionId(), 1, 2, 'src', 'russian'))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
@@ -216,7 +217,7 @@ it('records a failure and keeps the batch running when a stress API call throws'
         ->andThrow(new RuntimeException('API timeout'));
 
     // Should NOT throw — exception must be caught inside handle()
-    (new MassOperationJob('stress', massOpSessionId(), 0, 2, 'source', 'russian'))->handle(
+    (new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 2, 'source', 'russian'))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
@@ -232,7 +233,7 @@ it('increments failed and processed counters when a stress job fails externally'
     Event::fake([MassOperationProgressEvent::class]);
     seedBatchCache('stress', 1);
 
-    $job = new MassOperationJob('stress', massOpSessionId(), 0, 1, 'source', 'russian');
+    $job = new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 1, 'source', 'russian');
     $job->failed(new RuntimeException('AI timeout'));
 
     expect((int) Cache::get(massOpCacheKey('stress', 'failed')))->toBe(1);
@@ -244,7 +245,7 @@ it('broadcasts a done event when the last stress row fails externally', function
     Event::fake([MassOperationProgressEvent::class]);
     seedBatchCache('stress', 1);
 
-    $job = new MassOperationJob('stress', massOpSessionId(), 0, 1, 'source', 'russian');
+    $job = new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 1, 'source', 'russian');
     $job->failed(new RuntimeException('boom'));
 
     Event::assertDispatched(MassOperationProgressEvent::class, function ($event): bool {
@@ -266,9 +267,10 @@ it('calls generateAudio with the russian text for a TTS job', function (): void 
 
     $ttsMock = $this->mock(RussianTextToSpeechService::class);
     $ttsMock->shouldReceive('normalizeForSpeech')->with($russianText)->andReturn($normalizedText);
+    $ttsMock->shouldReceive('audioFileExists')->andReturn(false);
     $ttsMock->shouldReceive('generateAudio')->with($russianText)->once();
 
-    (new MassOperationJob('tts', massOpSessionId(), 0, 1, '', $russianText))->handle(
+    (new MassOperationJob(OperationType::Tts, massOpSessionId(), 0, 1, '', $russianText))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
@@ -285,7 +287,7 @@ it('skips TTS generation when the russian text is empty', function (): void {
     $ttsMock->shouldReceive('normalizeForSpeech')->with('   ')->andReturn('');
     $ttsMock->shouldNotReceive('generateAudio');
 
-    (new MassOperationJob('tts', massOpSessionId(), 0, 1, '', '   '))->handle(
+    (new MassOperationJob(OperationType::Tts, massOpSessionId(), 0, 1, '', '   '))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
@@ -300,9 +302,10 @@ it('sets status to done when the last TTS row is processed', function (): void {
 
     $ttsMock = $this->mock(RussianTextToSpeechService::class);
     $ttsMock->shouldReceive('normalizeForSpeech')->andReturn('russian');
+    $ttsMock->shouldReceive('audioFileExists')->andReturn(false);
     $ttsMock->shouldReceive('generateAudio')->once();
 
-    (new MassOperationJob('tts', massOpSessionId(), 0, 1, '', 'russian'))->handle(
+    (new MassOperationJob(OperationType::Tts, massOpSessionId(), 0, 1, '', 'russian'))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
@@ -315,7 +318,7 @@ it('increments failed and processed counters when a TTS job fails', function ():
     Event::fake([MassOperationProgressEvent::class]);
     seedBatchCache('tts', 1);
 
-    $job = new MassOperationJob('tts', massOpSessionId(), 0, 1, '', 'russian');
+    $job = new MassOperationJob(OperationType::Tts, massOpSessionId(), 0, 1, '', 'russian');
     $job->failed(new RuntimeException('TTS API error'));
 
     expect((int) Cache::get(massOpCacheKey('tts', 'failed')))->toBe(1);
@@ -329,10 +332,11 @@ it('records a failure and keeps the batch running when a TTS API call throws', f
 
     $ttsMock = $this->mock(RussianTextToSpeechService::class);
     $ttsMock->shouldReceive('normalizeForSpeech')->andReturn('russian');
+    $ttsMock->shouldReceive('audioFileExists')->andReturn(false);
     $ttsMock->shouldReceive('generateAudio')->andThrow(new RuntimeException('TTS API error'));
 
     // Should NOT throw — exception must be caught inside handle()
-    (new MassOperationJob('tts', massOpSessionId(), 0, 2, '', 'russian'))->handle(
+    (new MassOperationJob(OperationType::Tts, massOpSessionId(), 0, 2, '', 'russian'))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
@@ -354,15 +358,17 @@ it('increments generated count and accumulates actual chars after a successful T
     $this->mock(RussianTextToSpeechService::class)
         ->shouldReceive('normalizeForSpeech')
         ->andReturnUsing(fn (string $text) => trim(str_replace(['<b>', '</b>'], '', $text)))
+        ->shouldReceive('audioFileExists')
+        ->andReturn(false)
         ->shouldReceive('generateAudio')
         ->twice();
 
-    (new MassOperationJob('tts', massOpSessionId(), 0, 2, '', $russianA))->handle(
+    (new MassOperationJob(OperationType::Tts, massOpSessionId(), 0, 2, '', $russianA))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
     );
-    (new MassOperationJob('tts', massOpSessionId(), 1, 2, '', $russianB))->handle(
+    (new MassOperationJob(OperationType::Tts, massOpSessionId(), 1, 2, '', $russianB))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Concerns;
 
+use App\Enums\OperationType;
 use App\Services\MassOperationService;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Computed;
@@ -204,28 +205,11 @@ trait ManagesMassOperations
         $processedCount = (int) ($event['processedCount'] ?? 0);
         $totalCount = (int) ($event['totalCount'] ?? 0);
         $failedCount = (int) ($event['failedCount'] ?? 0);
-        if ($operationType === 'stress') {
-            $this->stressBatchStatus = $status;
-            $this->stressBatchProgress = $processedCount;
-            $this->stressBatchTotal = $totalCount;
-            $this->stressBatchFailed = $failedCount;
-            if ($status === 'done') {
-                $this->mergeStressResultsFromCache();
-                $this->refreshEstimates();
-            }
-        } elseif ($operationType === 'tts') {
-            $this->ttsBatchStatus = $status;
-            $this->ttsBatchProgress = $processedCount;
-            $this->ttsBatchTotal = $totalCount;
-            $this->ttsBatchFailed = $failedCount;
-            if ($status === 'done') {
-                $this->mergeTtsReportFromCache();
-                // Force Livewire to recompute audioExistenceByRowIndex on the
-                // next render by clearing the computed cache.
-                unset($this->audioExistenceByRowIndex);
-                $this->refreshEstimates();
-            }
-        }
+        match (OperationType::tryFrom($operationType)) {
+            OperationType::Stress => $this->applyStressProgressUpdate($status, $processedCount, $totalCount, $failedCount),
+            OperationType::Tts => $this->applyTtsProgressUpdate($status, $processedCount, $totalCount, $failedCount),
+            default => null,
+        };
     }
 
     // -------------------------------------------------------------------------
@@ -278,8 +262,8 @@ trait ManagesMassOperations
     private function syncProgressFromCache(): void
     {
         $sessionId = $this->getMassOpSessionId();
-        $stressProgress = $this->massOperationService->getOperationProgress($sessionId, 'stress');
-        $ttsProgress = $this->massOperationService->getOperationProgress($sessionId, 'tts');
+        $stressProgress = $this->massOperationService->getOperationProgress($sessionId, OperationType::Stress);
+        $ttsProgress = $this->massOperationService->getOperationProgress($sessionId, OperationType::Tts);
         if ($stressProgress['status'] !== 'idle') {
             $this->stressBatchStatus = $stressProgress['status'];
             $this->stressBatchTotal = $stressProgress['total'];
@@ -352,7 +336,7 @@ trait ManagesMassOperations
      */
     private function applyStressBatchCompletionIfAlreadyDone(string $sessionId): void
     {
-        $progress = $this->massOperationService->getOperationProgress($sessionId, 'stress');
+        $progress = $this->massOperationService->getOperationProgress($sessionId, OperationType::Stress);
 
         if ($progress['status'] !== 'done') {
             return;
@@ -372,7 +356,7 @@ trait ManagesMassOperations
      */
     private function applyTtsBatchCompletionIfAlreadyDone(string $sessionId): void
     {
-        $progress = $this->massOperationService->getOperationProgress($sessionId, 'tts');
+        $progress = $this->massOperationService->getOperationProgress($sessionId, OperationType::Tts);
 
         if ($progress['status'] !== 'done') {
             return;
@@ -415,6 +399,35 @@ trait ManagesMassOperations
 
         if ($anyChanged) {
             $this->autoSaveDraft();
+        }
+    }
+
+    private function applyStressProgressUpdate(string $status, int $processedCount, int $totalCount, int $failedCount): void
+    {
+        $this->stressBatchStatus = $status;
+        $this->stressBatchProgress = $processedCount;
+        $this->stressBatchTotal = $totalCount;
+        $this->stressBatchFailed = $failedCount;
+
+        if ($status === 'done') {
+            $this->mergeStressResultsFromCache();
+            $this->refreshEstimates();
+        }
+    }
+
+    private function applyTtsProgressUpdate(string $status, int $processedCount, int $totalCount, int $failedCount): void
+    {
+        $this->ttsBatchStatus = $status;
+        $this->ttsBatchProgress = $processedCount;
+        $this->ttsBatchTotal = $totalCount;
+        $this->ttsBatchFailed = $failedCount;
+
+        if ($status === 'done') {
+            $this->mergeTtsReportFromCache();
+            // Force Livewire to recompute audioExistenceByRowIndex on the
+            // next render by clearing the computed cache.
+            unset($this->audioExistenceByRowIndex);
+            $this->refreshEstimates();
         }
     }
 

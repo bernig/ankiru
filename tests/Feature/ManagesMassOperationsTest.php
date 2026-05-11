@@ -1,6 +1,7 @@
 <?php
 
 use App\Ai\Agents\RussianStressCorrectorAgent;
+use App\Enums\OperationType;
 use App\Jobs\MassOperationJob;
 use App\Livewire\CsvEditor;
 use App\Models\User;
@@ -71,11 +72,11 @@ it('syncs in-flight stress progress from cache when modal is opened', function (
     $mockService = Mockery::mock(MassOperationService::class);
 
     $mockService->shouldReceive('getOperationProgress')
-        ->with(Mockery::any(), 'stress')
+        ->with(Mockery::any(), OperationType::Stress)
         ->andReturn(['status' => 'running', 'total' => 5, 'processed' => 3, 'failed' => 1]);
 
     $mockService->shouldReceive('getOperationProgress')
-        ->with(Mockery::any(), 'tts')
+        ->with(Mockery::any(), OperationType::Tts)
         ->andReturn(['status' => 'idle', 'total' => 0, 'processed' => 0, 'failed' => 0]);
 
     $mockService->shouldReceive('estimateStressBatchCost')->andReturn([
@@ -201,7 +202,7 @@ it('immediately applies stress batch completion when the sync queue driver runs 
     $mockService->shouldReceive('dispatchStressBatch')->once()->andReturn(2);
 
     $mockService->shouldReceive('getOperationProgress')
-        ->with(Mockery::any(), 'stress')
+        ->with(Mockery::any(), OperationType::Stress)
         ->andReturn(['status' => 'done', 'total' => 2, 'processed' => 2, 'failed' => 0]);
 
     $mockService->shouldReceive('getStressReport')
@@ -303,11 +304,11 @@ it('merges pending stress corrections when the modal is opened after a missed do
     $mockService = Mockery::mock(MassOperationService::class);
 
     $mockService->shouldReceive('getOperationProgress')
-        ->with(Mockery::any(), 'stress')
+        ->with(Mockery::any(), OperationType::Stress)
         ->andReturn(['status' => 'done', 'total' => 2, 'processed' => 2, 'failed' => 0]);
 
     $mockService->shouldReceive('getOperationProgress')
-        ->with(Mockery::any(), 'tts')
+        ->with(Mockery::any(), OperationType::Tts)
         ->andReturn(['status' => 'idle', 'total' => 0, 'processed' => 0, 'failed' => 0]);
 
     $mockService->shouldReceive('getStressReport')
@@ -494,6 +495,8 @@ it('blocks correctStressMarks while a stress batch is running', function () {
 it('blocks generateTtsAudio while a TTS batch is running', function () {
     $ttsService = Mockery::mock(RussianTextToSpeechService::class);
     $ttsService->shouldNotReceive('generateAudio');
+    // normalizeForSpeech is called before the batch-running guard.
+    $ttsService->shouldReceive('normalizeForSpeech')->andReturn('Я говорю.');
     // audioFilesExistBatch is called during render for the audioExistenceByRowIndex computed.
     $ttsService->shouldReceive('audioFilesExistBatch')->andReturn([]);
     app()->instance(RussianTextToSpeechService::class, $ttsService);

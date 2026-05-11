@@ -208,21 +208,7 @@ class AnkiPackageExporterService
         // scm (schema modification time) is stored in milliseconds.
         $schemaModTime = $now * 1000;
 
-        $conf = json_encode([
-            'nextPos' => 1,
-            'estTimes' => true,
-            'activeDecks' => [self::DECK_ID],
-            'sortType' => 'noteFld',
-            'timeLim' => 0,
-            'sortBackwards' => false,
-            'addToCur' => true,
-            'curDeck' => self::DECK_ID,
-            'newBury' => true,
-            'newSpread' => 0,
-            'dueCounts' => true,
-            'curModel' => (string) self::MODEL_ID,
-            'collapseTime' => 1200,
-        ]);
+        $conf = $this->buildConf(self::DECK_ID);
 
         $models = json_encode([
             (string) self::MODEL_ID => [
@@ -259,30 +245,11 @@ class AnkiPackageExporterService
         ]);
 
         $decks = json_encode([
-            // Anki always expects the default deck (id=1) to be present.
-            '1' => [
-                'id' => 1, 'name' => 'Default', 'desc' => '', 'extendRev' => 50,
-                'usn' => 0, 'collapsed' => false, 'browserCollapsed' => false,
-                'newToday' => [0, 0], 'revToday' => [0, 0], 'lrnToday' => [0, 0],
-                'timeToday' => [0, 0], 'dyn' => 0, 'extendNew' => 10, 'conf' => 1, 'mod' => $now,
-            ],
-            (string) self::DECK_ID => [
-                'id' => self::DECK_ID, 'name' => $deckName, 'desc' => '', 'extendRev' => 50,
-                'usn' => -1, 'collapsed' => false, 'browserCollapsed' => false,
-                'newToday' => [0, 0], 'revToday' => [0, 0], 'lrnToday' => [0, 0],
-                'timeToday' => [0, 0], 'dyn' => 0, 'extendNew' => 10, 'conf' => 1, 'mod' => $now,
-            ],
+            '1' => $this->buildDefaultDeckData($now),
+            (string) self::DECK_ID => $this->buildDeckData(self::DECK_ID, $deckName, $now),
         ]);
 
-        $dconf = json_encode([
-            '1' => [
-                'id' => 1, 'name' => 'Default', 'replayq' => true, 'autoplay' => true,
-                'timer' => 0, 'maxTaken' => 60, 'usn' => 0, 'mod' => $now,
-                'lapse' => ['leechFails' => 8, 'delays' => [10], 'minInt' => 1, 'leechAction' => 0, 'mult' => 0.0],
-                'rev' => ['perDay' => 100, 'ease4' => 1.3, 'fuzz' => 0.05, 'minSpace' => 1, 'ivlFct' => 1.0, 'maxIvl' => 36500, 'bury' => true, 'hardFactor' => 1.2],
-                'new' => ['perDay' => 20, 'delays' => [1, 10], 'separate' => true, 'ints' => [1, 4, 7], 'initialFactor' => 2500, 'bury' => true, 'order' => 1],
-            ],
-        ]);
+        $dconf = $this->buildDconf($now);
 
         $pdo->prepare('INSERT INTO col VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
             ->execute([1, $now, $now, $schemaModTime, 11, 0, -1, 0, $conf, $models, $decks, $dconf, '{}']);
@@ -385,21 +352,7 @@ class AnkiPackageExporterService
         $schemaModTime = $now * 1000;
         $parentDeckId = self::DECK_ID;
 
-        $conf = json_encode([
-            'nextPos' => 1,
-            'estTimes' => true,
-            'activeDecks' => [$parentDeckId],
-            'sortType' => 'noteFld',
-            'timeLim' => 0,
-            'sortBackwards' => false,
-            'addToCur' => true,
-            'curDeck' => $parentDeckId,
-            'newBury' => true,
-            'newSpread' => 0,
-            'dueCounts' => true,
-            'curModel' => (string) self::MODEL_ID,
-            'collapseTime' => 1200,
-        ]);
+        $conf = $this->buildConf($parentDeckId);
 
         $models = json_encode([
             (string) self::MODEL_ID => [
@@ -435,41 +388,22 @@ class AnkiPackageExporterService
             ],
         ]);
 
+        // Parent deck — no cards live here directly, only in sub-decks.
         $decksJson = [
-            '1' => [
-                'id' => 1, 'name' => 'Default', 'desc' => '', 'extendRev' => 50,
-                'usn' => 0, 'collapsed' => false, 'browserCollapsed' => false,
-                'newToday' => [0, 0], 'revToday' => [0, 0], 'lrnToday' => [0, 0],
-                'timeToday' => [0, 0], 'dyn' => 0, 'extendNew' => 10, 'conf' => 1, 'mod' => $now,
-            ],
-            // Parent deck — no cards live here directly, only in sub-decks.
-            (string) $parentDeckId => [
-                'id' => $parentDeckId, 'name' => $parentDeckName, 'desc' => '', 'extendRev' => 50,
-                'usn' => -1, 'collapsed' => false, 'browserCollapsed' => false,
-                'newToday' => [0, 0], 'revToday' => [0, 0], 'lrnToday' => [0, 0],
-                'timeToday' => [0, 0], 'dyn' => 0, 'extendNew' => 10, 'conf' => 1, 'mod' => $now,
-            ],
+            '1' => $this->buildDefaultDeckData($now),
+            (string) $parentDeckId => $this->buildDeckData($parentDeckId, $parentDeckName, $now),
         ];
 
         foreach ($deckConfigs as $deckConfig) {
-            $decksJson[(string) $deckConfig['id']] = [
-                // "Parent::Child" naming is how Anki creates sub-deck hierarchies.
-                'id' => $deckConfig['id'], 'name' => $parentDeckName.'::'.$deckConfig['name'], 'desc' => '', 'extendRev' => 50,
-                'usn' => -1, 'collapsed' => false, 'browserCollapsed' => false,
-                'newToday' => [0, 0], 'revToday' => [0, 0], 'lrnToday' => [0, 0],
-                'timeToday' => [0, 0], 'dyn' => 0, 'extendNew' => 10, 'conf' => 1, 'mod' => $now,
-            ];
+            // "Parent::Child" naming is how Anki creates sub-deck hierarchies.
+            $decksJson[(string) $deckConfig['id']] = $this->buildDeckData(
+                $deckConfig['id'],
+                $parentDeckName.'::'.$deckConfig['name'],
+                $now,
+            );
         }
 
-        $dconf = json_encode([
-            '1' => [
-                'id' => 1, 'name' => 'Default', 'replayq' => true, 'autoplay' => true,
-                'timer' => 0, 'maxTaken' => 60, 'usn' => 0, 'mod' => $now,
-                'lapse' => ['leechFails' => 8, 'delays' => [10], 'minInt' => 1, 'leechAction' => 0, 'mult' => 0.0],
-                'rev' => ['perDay' => 100, 'ease4' => 1.3, 'fuzz' => 0.05, 'minSpace' => 1, 'ivlFct' => 1.0, 'maxIvl' => 36500, 'bury' => true, 'hardFactor' => 1.2],
-                'new' => ['perDay' => 20, 'delays' => [1, 10], 'separate' => true, 'ints' => [1, 4, 7], 'initialFactor' => 2500, 'bury' => true, 'order' => 1],
-            ],
-        ]);
+        $dconf = $this->buildDconf($now);
 
         $pdo->prepare('INSERT INTO col VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
             ->execute([1, $now, $now, $schemaModTime, 11, 0, -1, 0, $conf, $models, json_encode($decksJson), $dconf, '{}']);
@@ -612,6 +546,77 @@ class AnkiPackageExporterService
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
+
+    /**
+     * Build the `conf` JSON string (collection-level scheduler settings).
+     * Identical across single-deck and multi-deck exports.
+     */
+    private function buildConf(int $activeDeckId): string
+    {
+        return json_encode([
+            'nextPos' => 1,
+            'estTimes' => true,
+            'activeDecks' => [$activeDeckId],
+            'sortType' => 'noteFld',
+            'timeLim' => 0,
+            'sortBackwards' => false,
+            'addToCur' => true,
+            'curDeck' => $activeDeckId,
+            'newBury' => true,
+            'newSpread' => 0,
+            'dueCounts' => true,
+            'curModel' => (string) self::MODEL_ID,
+            'collapseTime' => 1200,
+        ]);
+    }
+
+    /**
+     * Build the `dconf` JSON string (deck option group settings).
+     * Identical across single-deck and multi-deck exports.
+     */
+    private function buildDconf(int $now): string
+    {
+        return json_encode([
+            '1' => [
+                'id' => 1, 'name' => 'Default', 'replayq' => true, 'autoplay' => true,
+                'timer' => 0, 'maxTaken' => 60, 'usn' => 0, 'mod' => $now,
+                'lapse' => ['leechFails' => 8, 'delays' => [10], 'minInt' => 1, 'leechAction' => 0, 'mult' => 0.0],
+                'rev' => ['perDay' => 100, 'ease4' => 1.3, 'fuzz' => 0.05, 'minSpace' => 1, 'ivlFct' => 1.0, 'maxIvl' => 36500, 'bury' => true, 'hardFactor' => 1.2],
+                'new' => ['perDay' => 20, 'delays' => [1, 10], 'separate' => true, 'ints' => [1, 4, 7], 'initialFactor' => 2500, 'bury' => true, 'order' => 1],
+            ],
+        ]);
+    }
+
+    /**
+     * Build the data array for Anki's built-in default deck (id=1).
+     * Anki always expects this deck to be present in every collection.
+     *
+     * @return array<string, mixed>
+     */
+    private function buildDefaultDeckData(int $now): array
+    {
+        return [
+            'id' => 1, 'name' => 'Default', 'desc' => '', 'extendRev' => 50,
+            'usn' => 0, 'collapsed' => false, 'browserCollapsed' => false,
+            'newToday' => [0, 0], 'revToday' => [0, 0], 'lrnToday' => [0, 0],
+            'timeToday' => [0, 0], 'dyn' => 0, 'extendNew' => 10, 'conf' => 1, 'mod' => $now,
+        ];
+    }
+
+    /**
+     * Build the data array for a named deck entry.
+     *
+     * @return array<string, mixed>
+     */
+    private function buildDeckData(int $id, string $name, int $now): array
+    {
+        return [
+            'id' => $id, 'name' => $name, 'desc' => '', 'extendRev' => 50,
+            'usn' => -1, 'collapsed' => false, 'browserCollapsed' => false,
+            'newToday' => [0, 0], 'revToday' => [0, 0], 'lrnToday' => [0, 0],
+            'timeToday' => [0, 0], 'dyn' => 0, 'extendNew' => 10, 'conf' => 1, 'mod' => $now,
+        ];
+    }
 
     /**
      * Compute Anki's field checksum used for duplicate detection within a collection.
