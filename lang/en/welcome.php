@@ -19,4 +19,7 @@ return [
 
     'feature_export_title' => 'Anki Export',
     'feature_export_description' => 'Export your cards as a .apkg file ready to import into Anki, with audio bundled inside each card.',
+
+    'open_source_badge' => 'Open source',
+    'open_source_label' => 'See on GitHub',
 ];

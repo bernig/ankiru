@@ -19,4 +19,7 @@ return [
 
     'feature_export_title' => 'Экспорт в Anki',
     'feature_export_description' => 'Экспортируйте карточки в файл .apkg для импорта в Anki — с аудио внутри каждой карточки.',
+
+    'open_source_badge' => 'Open source',
+    'open_source_label' => 'Смотреть на GitHub',
 ];
