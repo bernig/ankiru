@@ -20,6 +20,7 @@ return [
     'success_text' => 'We have received your message and will get back to you as soon as possible.',
     'rate_limit' => 'Too many attempts. Please try again in :seconds seconds.',
 
+    'mail_subject_prefix' => 'Contact',
     'mail_heading' => 'Message received via the contact form',
     'mail_reply' => 'Reply directly to [:email](mailto::email) to contact the sender.',
 ];

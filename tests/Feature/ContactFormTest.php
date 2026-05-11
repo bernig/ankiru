@@ -2,6 +2,7 @@
 
 use App\Livewire\Contact;
 use App\Mail\ContactFormMail;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Livewire;
@@ -109,4 +110,17 @@ test('contact form resets fields after successful submission', function (): void
         ->assertSet('email', '')
         ->assertSet('subject', '')
         ->assertSet('message', '');
+});
+
+test('contact form mail subject is translated in russian', function (): void {
+    App::setLocale('ru');
+
+    $mail = new ContactFormMail(
+        senderName: 'Ivan Ivanov',
+        senderEmail: 'ivan@example.com',
+        emailSubject: 'Вопрос',
+        messageBody: 'Здравствуйте!',
+    );
+
+    expect($mail->envelope()->subject)->toBe('[Контакт] Вопрос');
 });

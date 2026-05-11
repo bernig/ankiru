@@ -1,25 +1,25 @@
-<x-layout title="Mentions légales">
+<x-layout :title="__('legal.mentions_title')">
     <x-site-header />
 
     <div class="mx-auto max-w-2xl py-8">
         <x-breadcrumbs>
-            <flux:breadcrumbs.item>Mentions légales</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item>{{ __('legal.mentions_title') }}</flux:breadcrumbs.item>
         </x-breadcrumbs>
 
-        <flux:heading class="mb-2" size="xl">Mentions légales</flux:heading>
-        <flux:subheading class="mb-8">Informations légales relatives à ce site.</flux:subheading>
+        <flux:heading class="mb-2" size="xl">{{ __('legal.mentions_title') }}</flux:heading>
+        <flux:subheading class="mb-8">{{ __('legal.mentions_subtitle') }}</flux:subheading>
 
         <div class="space-y-6 text-sm text-zinc-700">
             <section>
-                <flux:heading class="mb-2" size="lg">Éditeur du site</flux:heading>
-                <p>{{ config('app.name') }}<br>Le contenu de cette section sera complété ultérieurement.</p>
+                <flux:heading class="mb-2" size="lg">{{ __('legal.publisher_title') }}</flux:heading>
+                <p>{{ config('app.name') }}<br>{{ __('legal.publisher_content') }}</p>
             </section>
 
             <flux:separator />
 
             <section>
-                <flux:heading class="mb-2" size="lg">Hébergement</flux:heading>
-                <p>Le contenu de cette section sera complété ultérieurement.</p>
+                <flux:heading class="mb-2" size="lg">{{ __('legal.hosting_title') }}</flux:heading>
+                <p>{{ __('legal.hosting_content') }}</p>
             </section>
         </div>
     </div>

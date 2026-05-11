@@ -20,6 +20,7 @@ return [
     'success_text' => 'Nous avons bien reçu votre message et vous répondrons dans les meilleurs délais.',
     'rate_limit' => 'Trop de tentatives. Réessayez dans :seconds secondes.',
 
+    'mail_subject_prefix' => 'Contact',
     'mail_heading' => 'Message reçu via le formulaire de contact',
     'mail_reply' => 'Répondez directement à [:email](mailto::email) pour contacter l\'expéditeur.',
 ];

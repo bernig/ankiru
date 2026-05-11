@@ -27,16 +27,34 @@ test('login and register pages render french translations from session locale', 
     $registerResponse->assertSee(__('auth.create_account', [], 'fr'));
 });
 
+test('login and register pages render russian translations from session locale', function () {
+    $loginResponse = $this->withSession(['locale' => 'ru'])->get(route('login'));
+
+    $loginResponse->assertOk();
+    $loginResponse->assertSee(__('auth.login', [], 'ru'));
+    $loginResponse->assertSee(__('auth.login_subtitle', [], 'ru'));
+    $loginResponse->assertSee(__('auth.no_account_yet', [], 'ru'));
+
+    $registerResponse = $this->withSession(['locale' => 'ru'])->get(route('register'));
+
+    $registerResponse->assertOk();
+    $registerResponse->assertSee(__('auth.register', [], 'ru'));
+    $registerResponse->assertSee(__('auth.register_subtitle', [], 'ru'));
+    $registerResponse->assertSee(__('auth.create_account', [], 'ru'));
+});
+
 test('site header with app name and language switcher is visible to guests on auth pages', function () {
     $loginResponse = $this->get(route('login'));
     $loginResponse->assertOk();
     $loginResponse->assertSee(config('app.name'));
     $loginResponse->assertSee(route('locale.update', 'fr'));
     $loginResponse->assertSee(route('locale.update', 'en'));
+    $loginResponse->assertSee(route('locale.update', 'ru'));
 
     $registerResponse = $this->get(route('register'));
     $registerResponse->assertOk();
     $registerResponse->assertSee(config('app.name'));
     $registerResponse->assertSee(route('locale.update', 'fr'));
     $registerResponse->assertSee(route('locale.update', 'en'));
+    $registerResponse->assertSee(route('locale.update', 'ru'));
 });

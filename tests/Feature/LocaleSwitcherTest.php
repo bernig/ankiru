@@ -11,6 +11,7 @@ test('authenticated user sees language options in top menu', function () {
     $response->assertOk();
     $response->assertSee(__('csv_editor.language_french'));
     $response->assertSee(__('csv_editor.language_english', [], 'en'));
+    $response->assertSee(__('csv_editor.language_russian', [], 'ru'));
 });
 
 test('authenticated user can switch locale and preference is stored in session', function () {
@@ -50,10 +51,23 @@ test('guest can switch locale from french to english', function () {
     $loginResponse->assertSee(__('auth.login', [], 'en'));
 });
 
+test('guest can switch locale to russian and see russian translations', function () {
+    $switchResponse = $this->from(route('login'))
+        ->get(route('locale.update', 'ru'));
+
+    $switchResponse->assertRedirect(route('login'));
+    $switchResponse->assertSessionHas('locale', 'ru');
+
+    $loginResponse = $this->withSession(['locale' => 'ru'])->get(route('login'));
+    $loginResponse->assertOk();
+    $loginResponse->assertSee(__('auth.login', [], 'ru'));
+});
+
 test('guest language switcher renders navigable locale links', function () {
     $response = $this->get(route('login'));
 
     $response->assertOk();
     $response->assertSee('href="'.route('locale.update', 'fr').'"', false);
     $response->assertSee('href="'.route('locale.update', 'en').'"', false);
+    $response->assertSee('href="'.route('locale.update', 'ru').'"', false);
 });

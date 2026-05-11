@@ -22,6 +22,7 @@ return [
     'delete_file_confirm' => 'Delete this file from the list? This cannot be undone.',
     'language_french' => 'French',
     'language_english' => 'English',
+    'language_russian' => 'Russian',
     'logout' => 'Logout',
 
     // Search

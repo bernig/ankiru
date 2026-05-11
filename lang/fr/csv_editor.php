@@ -22,6 +22,7 @@ return [
     'delete_file_confirm' => 'Supprimer ce fichier de la liste ? Cette action est irréversible.',
     'language_french' => 'Français',
     'language_english' => 'Anglais',
+    'language_russian' => 'Russe',
     'logout' => 'Se déconnecter',
     'source_column' => 'Texte source',
     'russian_column' => 'Texte russe',

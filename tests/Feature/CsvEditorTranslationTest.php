@@ -2,7 +2,7 @@
 
 /**
  * Verify that all csv_editor translation keys resolve to non-empty strings
- * in both the English and French locales.
+ * in the English, French, and Russian locales.
  */
 $translationKeys = [
     'title',
@@ -32,6 +32,7 @@ $translationKeys = [
     'dropzone_heading',
     'dropzone_text',
     'parsing',
+    'language_russian',
     'error_cannot_read_file',
     'error_csv_empty_or_malformed',
     'error_audio_generation_failed',
@@ -49,6 +50,14 @@ it('resolves every csv_editor key in English', function (string $key) {
 
 it('resolves every csv_editor key in French', function (string $key) {
     app()->setLocale('fr');
+    $translated = __("csv_editor.{$key}", ['date' => 'today', 'message' => 'err']);
+
+    expect($translated)->not->toBe("csv_editor.{$key}");
+    expect($translated)->not->toBeEmpty();
+})->with($translationKeys);
+
+it('resolves every csv_editor key in Russian', function (string $key) {
+    app()->setLocale('ru');
     $translated = __("csv_editor.{$key}", ['date' => 'today', 'message' => 'err']);
 
     expect($translated)->not->toBe("csv_editor.{$key}");

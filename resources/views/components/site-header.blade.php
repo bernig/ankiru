@@ -1,3 +1,11 @@
+@php
+    $localeLabels = [
+        'fr' => __('csv_editor.language_french', [], 'fr'),
+        'en' => __('csv_editor.language_english', [], 'en'),
+        'ru' => __('csv_editor.language_russian', [], 'ru'),
+    ];
+@endphp
+
 <div class="flex flex-wrap items-center justify-between gap-3">
     <div class="flex items-center gap-3">
         <a class="group flex items-center gap-3" href="{{ route('csv-editor') }}">
@@ -13,12 +21,13 @@
                 {{ strtoupper(app()->getLocale()) }}
             </flux:button>
             <flux:navmenu>
-                <flux:navmenu.item href="{{ route('locale.update', 'fr') }}">
-                    {{ __('csv_editor.language_french', [], 'fr') }}
-                </flux:navmenu.item>
-                <flux:navmenu.item href="{{ route('locale.update', 'en') }}">
-                    {{ __('csv_editor.language_english', [], 'en') }}
-                </flux:navmenu.item>
+                @foreach (config('app.supported_locales') as $supportedLocale)
+                    @continue(! array_key_exists($supportedLocale, $localeLabels))
+
+                    <flux:navmenu.item href="{{ route('locale.update', $supportedLocale) }}">
+                        {{ $localeLabels[$supportedLocale] }}
+                    </flux:navmenu.item>
+                @endforeach
             </flux:navmenu>
         </flux:dropdown>
 

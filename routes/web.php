@@ -31,7 +31,7 @@ Route::middleware('guest')->group(function (): void {
 
 Route::get('locale/{locale}', [LocaleController::class, 'update'])
     ->name('locale.update')
-    ->whereIn('locale', ['en', 'fr']);
+    ->whereIn('locale', config('app.supported_locales'));
 
 Route::middleware('auth')->group(function (): void {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');

@@ -229,6 +229,30 @@ test('password reset email is sent in french when locale is fr', function () {
         ->and($mail->actionText)->toBe('Réinitialiser le mot de passe');
 });
 
+test('verification email is sent in russian when locale is ru', function () {
+    App::setLocale('ru');
+
+    /** @var User $user */
+    $user = User::factory()->unverified()->create();
+
+    $mail = (new VerifyEmail)->toMail($user);
+
+    expect($mail->subject)->toBe('Подтвердите свой email')
+        ->and($mail->actionText)->toBe('Подтвердить email');
+});
+
+test('password reset email is sent in russian when locale is ru', function () {
+    App::setLocale('ru');
+
+    /** @var User $user */
+    $user = User::factory()->create();
+
+    $mail = (new ResetPassword('fake-token'))->toMail($user);
+
+    expect($mail->subject)->toBe('Сбросьте пароль')
+        ->and($mail->actionText)->toBe('Сбросить пароль');
+});
+
 test('login is rate limited after 5 consecutive attempts', function (): void {
     foreach (range(1, 5) as $_) {
         $this->post('/login', ['email' => 'any@test.com', 'password' => 'wrong']);
