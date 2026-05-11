@@ -9,14 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('csv_drafts', function (Blueprint $table) {
+            $table->dropForeign(['user_id']);
             $table->dropUnique(['user_id']);
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });
     }
 
     public function down(): void
     {
         Schema::table('csv_drafts', function (Blueprint $table) {
+            $table->dropForeign(['user_id']);
             $table->unique('user_id');
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });
     }
 };
