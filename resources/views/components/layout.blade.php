@@ -31,7 +31,13 @@
                 <flux:separator vertical />
                 <a class="hover:text-zinc-900" href="{{ route('legal.privacy') }}">{{ __('legal.privacy_title') }}</a>
             </div>
-            <span class="text-xs text-zinc-500">&copy; {{ date('Y') }} {{ config('app.name') }}</span>
+            <div class="flex items-center gap-3">
+                <span class="text-xs text-zinc-500">&copy; {{ date('Y') }} {{ config('app.name') }}</span>
+                <a class="text-accent-content hover:text-accent-foreground flex items-center gap-1.5 text-xs" href="https://buymeacoffee.com/bernig" target="_blank" rel="noopener noreferrer">
+                    <span>☕</span>
+                    <span>Buy me a coffee</span>
+                </a>
+            </div>
         </div>
     </footer>
     @fluxScripts
