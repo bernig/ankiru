@@ -123,7 +123,7 @@ return [
 
         'openai' => [
             'driver' => 'openai',
-            'key' => env('OPENAI_API_KEY'),
+            'key' => null,
             'url' => env('OPENAI_URL', 'https://api.openai.com/v1'),
         ],
 
