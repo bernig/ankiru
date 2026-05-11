@@ -73,6 +73,12 @@ trait ManagesTtsAudio
     {
         $this->ttsError = '';
 
+        if (! auth()->user()?->openai_api_key) {
+            $this->dispatch('open-openai-key-setup');
+
+            return;
+        }
+
         $rawRussianText = $this->csvRows[$rowIndex][1] ?? '';
         $normalizedText = trim(str_replace(['<b>', '</b>'], '', $rawRussianText));
 

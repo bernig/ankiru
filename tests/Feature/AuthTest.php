@@ -78,10 +78,9 @@ test('authenticated user can logout', function () {
     $this->assertGuest();
 });
 
-test('guest cannot access the csv editor', function () {
-    $response = $this->get('/');
-
-    $response->assertRedirect(route('login'));
+test('guest sees the welcome page and cannot access the profile', function () {
+    $this->get('/')->assertOk()->assertSee(__('welcome.hero_title'));
+    $this->get('/profile')->assertRedirect(route('login'));
 });
 
 test('forgot password page is accessible to guests', function () {
@@ -157,7 +156,7 @@ test('unverified user is redirected to verification notice when accessing protec
 
     $this->actingAs($user);
 
-    $this->get('/')->assertRedirect(route('verification.notice'));
+    $this->get('/')->assertOk()->assertSee(__('welcome.hero_title'));
     $this->get('/profile')->assertRedirect(route('verification.notice'));
 });
 

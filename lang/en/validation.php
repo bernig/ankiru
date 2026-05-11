@@ -195,6 +195,16 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'name' => 'name',
+        'email' => 'email address',
+        'password' => 'password',
+        'password_confirmation' => 'password confirmation',
+        'current_password' => 'current password',
+        'subject' => 'subject',
+        'message' => 'message',
+        'uploadedCsvFile' => 'CSV file',
+        'openai_api_key' => 'OpenAI API key',
+    ],
 
 ];

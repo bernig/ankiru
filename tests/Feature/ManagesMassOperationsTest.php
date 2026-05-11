@@ -3,6 +3,7 @@
 use App\Ai\Agents\RussianStressCorrectorAgent;
 use App\Jobs\MassOperationJob;
 use App\Livewire\CsvEditor;
+use App\Models\User;
 use App\Services\MassOperationService;
 use App\Services\OpenAiTranslationService;
 use App\Services\RussianTextToSpeechService;
@@ -10,6 +11,13 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+
+beforeEach(function (): void {
+    /** @var User $authenticatedUser */
+    $authenticatedUser = User::factory()->create(['openai_api_key' => 'sk-test-key-for-automated-tests']);
+
+    $this->actingAs($authenticatedUser);
+});
 
 // ---------------------------------------------------------------------------
 // Helpers

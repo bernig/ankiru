@@ -10,7 +10,7 @@ use Livewire\Livewire;
 
 beforeEach(function (): void {
     /** @var User $authenticatedUser */
-    $authenticatedUser = User::factory()->create();
+    $authenticatedUser = User::factory()->create(['openai_api_key' => 'sk-test-key-for-automated-tests']);
 
     $this->actingAs($authenticatedUser);
 });

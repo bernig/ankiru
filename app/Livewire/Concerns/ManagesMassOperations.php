@@ -113,6 +113,12 @@ trait ManagesMassOperations
      */
     public function dispatchStressBatch(): void
     {
+        if (! auth()->user()?->openai_api_key) {
+            $this->dispatch('open-openai-key-setup');
+
+            return;
+        }
+
         if (! $this->hasCsvLoaded || $this->stressBatchStatus === 'running') {
             return;
         }
@@ -152,6 +158,12 @@ trait ManagesMassOperations
      */
     public function dispatchTtsBatch(): void
     {
+        if (! auth()->user()?->openai_api_key) {
+            $this->dispatch('open-openai-key-setup');
+
+            return;
+        }
+
         if (! $this->hasCsvLoaded || $this->ttsBatchStatus === 'running') {
             return;
         }

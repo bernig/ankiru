@@ -32,4 +32,11 @@ return [
     'api_key_clear_confirm' => 'Remove your OpenAI API key? The application key will be used instead.',
     'go_to_api_keys' => 'Get an API key',
     'go_to_api_usage' => 'Check your API usage',
+    'openai_key_modal_title' => 'OpenAI API Key Required',
+    'openai_key_modal_description' => 'AI features (translation, stress correction, text-to-speech) require your own OpenAI API key. Your key is stored in encrypted form and used exclusively for your requests.',
+    'openai_key_modal_how_to_get' => 'How to get your API key:',
+    'openai_key_modal_step_1' => 'Go to platform.openai.com and sign in or create an account',
+    'openai_key_modal_step_2' => 'Navigate to the "API Keys" section in your dashboard',
+    'openai_key_modal_step_3' => 'Click "Create new secret key", copy the key and paste it below',
+    'openai_key_modal_later' => 'Later',
 ];

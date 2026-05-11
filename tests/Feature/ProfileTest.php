@@ -124,7 +124,7 @@ test('la clé API OpenAI peut être supprimée', function () {
 });
 
 test('les statistiques d\'utilisation sont vides sans logs', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['openai_api_key' => 'sk-test-cle-api-valide-de-plus-de-20-caracteres']);
 
     Livewire::actingAs($user)
         ->test(Profile::class)

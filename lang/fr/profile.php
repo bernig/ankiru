@@ -32,4 +32,11 @@ return [
     'api_key_clear_confirm' => 'Supprimer votre clé API OpenAI ? La clé de l\'application sera utilisée à la place.',
     'go_to_api_keys' => 'Obtenir une clé d\'API',
     'go_to_api_usage' => 'Vérifier votre utilisation de l\'API',
+    'openai_key_modal_title' => 'Clé API OpenAI requise',
+    'openai_key_modal_description' => 'Les fonctionnalités IA (traduction, correction d\'accents, synthèse vocale) nécessitent votre propre clé API OpenAI. Votre clé est stockée de façon chiffrée et utilisée uniquement pour vos requêtes.',
+    'openai_key_modal_how_to_get' => 'Comment obtenir votre clé API :',
+    'openai_key_modal_step_1' => 'Rendez-vous sur platform.openai.com et connectez-vous ou créez un compte',
+    'openai_key_modal_step_2' => 'Accédez à la section « API Keys » dans votre tableau de bord',
+    'openai_key_modal_step_3' => 'Cliquez sur « Create new secret key », copiez la clé et collez-la ci-dessous',
+    'openai_key_modal_later' => 'Plus tard',
 ];

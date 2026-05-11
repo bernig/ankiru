@@ -37,6 +37,12 @@ trait ManagesTranslation
     {
         $this->translationError = '';
 
+        if (! auth()->user()?->openai_api_key) {
+            $this->dispatch('open-openai-key-setup');
+
+            return;
+        }
+
         $sourceText = $this->csvRows[$rowIndex][0] ?? '';
 
         if (empty(trim($sourceText))) {
@@ -85,6 +91,12 @@ trait ManagesTranslation
     public function correctStressMarks(int $rowIndex): void
     {
         $this->translationError = '';
+
+        if (! auth()->user()?->openai_api_key) {
+            $this->dispatch('open-openai-key-setup');
+
+            return;
+        }
 
         $sourceText = trim($this->csvRows[$rowIndex][0] ?? '');
         $russianText = trim($this->csvRows[$rowIndex][1] ?? '');

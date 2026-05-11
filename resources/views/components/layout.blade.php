@@ -40,6 +40,9 @@
             </div>
         </div>
     </footer>
+    @auth
+        <livewire:open-ai-key-setup />
+    @endauth
     @fluxScripts
 </body>
 

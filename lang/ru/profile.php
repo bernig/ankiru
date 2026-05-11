@@ -32,4 +32,11 @@ return [
     'api_key_clear_confirm' => 'Удалить ваш API-ключ OpenAI? Вместо него будет использоваться ключ приложения.',
     'go_to_api_keys' => 'Получить API-ключ',
     'go_to_api_usage' => 'Проверить использование API',
+    'openai_key_modal_title' => 'Требуется API-ключ OpenAI',
+    'openai_key_modal_description' => 'Функции ИИ (перевод, исправление ударений, синтез речи) требуют вашего собственного API-ключа OpenAI. Ключ хранится в зашифрованном виде и используется только для ваших запросов.',
+    'openai_key_modal_how_to_get' => 'Как получить API-ключ:',
+    'openai_key_modal_step_1' => 'Перейдите на platform.openai.com и войдите или создайте аккаунт',
+    'openai_key_modal_step_2' => 'Перейдите в раздел «API Keys» в панели управления',
+    'openai_key_modal_step_3' => 'Нажмите «Create new secret key», скопируйте ключ и вставьте его ниже',
+    'openai_key_modal_later' => 'Позже',
 ];
