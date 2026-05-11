@@ -12,6 +12,7 @@
         "php": "^8.3",
         "ext-pdo": "*",
         "ext-zip": "*",
+        "devrabiul/laravel-cookie-consent": "^2.1",
         "laravel/ai": "^0.6.6",
         "laravel/framework": "^13.7",
         "laravel/mcp": "^0.7.0",

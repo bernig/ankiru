@@ -23765,6 +23765,87 @@ namespace Illuminate\Support\Facades {
             }
     }
 
+namespace Devrabiul\CookieConsent\Facades {
+    /**
+     */
+    class CookieConsent {
+        /**
+         * Generate the HTML for the required styles.
+         *
+         * @return string The HTML link tag for the stylesheet.
+         * @static
+         */
+        public static function styles()
+        {
+            /** @var \Devrabiul\CookieConsent\CookieConsent $instance */
+            return $instance->styles();
+        }
+
+        /**
+         * Render the cookie consent view with the given configuration.
+         *
+         * @param array $cookieConfig Optional cookie configuration overrides.
+         * @return \View The cookie consent view.
+         * @static
+         */
+        public static function content($cookieConfig = [])
+        {
+            /** @var \Devrabiul\CookieConsent\CookieConsent $instance */
+            return $instance->content($cookieConfig);
+        }
+
+        /**
+         * Generate the HTML for the required JavaScript with optional configuration overrides.
+         *
+         * @param array $options Optional configuration overrides.
+         * @return \View The cookie consent script view.
+         * @static
+         */
+        public static function scripts($options = [])
+        {
+            /** @var \Devrabiul\CookieConsent\CookieConsent $instance */
+            return $instance->scripts($options);
+        }
+
+        /**
+         * Generate the HTML for the required scripts.
+         *
+         * @return string The HTML link tag for the scripts.
+         * @static
+         */
+        public static function scriptsPath()
+        {
+            /** @var \Devrabiul\CookieConsent\CookieConsent $instance */
+            return $instance->scriptsPath();
+        }
+
+        /**
+         * @static
+         */
+        public static function getRemoveInvalidCharacters($str)
+        {
+            return \Devrabiul\CookieConsent\CookieConsent::getRemoveInvalidCharacters($str);
+        }
+
+        /**
+         * Translates a given key using the `messages.php` language file in the current locale.
+         *
+         * - If the key does not exist in the file, it creates the file and inserts the key with a default value.
+         * - It ensures the required language directory and file exist.
+         * - Falls back to Laravel translation helper if the key is not found after insertion.
+         *
+         * @param string $key The translation key, e.g. 'messages.privacy_policy'.
+         * @param null $default The default value to use if the key doesn't exist.
+         * @static
+         */
+        public static function translate($key, $default = null)
+        {
+            return \Devrabiul\CookieConsent\CookieConsent::translate($key, $default);
+        }
+
+            }
+    }
+
 namespace Flux {
     /**
      * @see \Flux\FluxManager
@@ -29881,6 +29962,7 @@ namespace  {
     class Validator extends \Illuminate\Support\Facades\Validator {}
     class View extends \Illuminate\Support\Facades\View {}
     class Vite extends \Illuminate\Support\Facades\Vite {}
+    class CookieConsent extends \Devrabiul\CookieConsent\Facades\CookieConsent {}
     class Flux extends \Flux\Flux {}
     class Livewire extends \Livewire\Livewire {}
 }
