@@ -1,4 +1,4 @@
-{{--@formatter:off--}}
+{{-- blade-formatter-disable --}}
 <x-mail::layout>
 <x-slot:header>
     <x-mail::header :url="config('app.url')">
