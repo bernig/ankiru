@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -41,17 +42,25 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register named rate limiters for AI translation and TTS generation actions.
+     * Register named rate limiters.
      *
-     * Both limiters are keyed by session ID so each browser session has its own
-     * independent quota, regardless of IP address or authentication state.
-     *
-     * Limits per minute:
-     *   - ai-translation : 30 requests (translate + stress-correct actions combined)
-     *   - tts-generation : 10 requests  (generate audio action)
+     * Auth limiters are keyed by IP address.
+     * AI/TTS limiters are keyed by session ID.
      */
     protected function configureRateLimiters(): void
     {
+        RateLimiter::for('login', function (Request $request) {
+            return Limit::perMinute(5)->by($request->ip());
+        });
+
+        RateLimiter::for('register', function (Request $request) {
+            return Limit::perHour(5)->by($request->ip());
+        });
+
+        RateLimiter::for('password-reset-request', function (Request $request) {
+            return Limit::perMinute(5)->by($request->ip());
+        });
+
         RateLimiter::for('ai-translation', function () {
             return Limit::perMinute(30)->by(session()->getId());
         });

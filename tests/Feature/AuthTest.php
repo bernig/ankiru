@@ -7,9 +7,16 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 
 uses(RefreshDatabase::class);
+
+beforeEach(function (): void {
+    RateLimiter::clear(md5('login127.0.0.1'));
+    RateLimiter::clear(md5('register127.0.0.1'));
+    RateLimiter::clear(md5('password-reset-request127.0.0.1'));
+});
 
 test('user can register and is redirected to email verification notice', function () {
     Notification::fake();
@@ -220,4 +227,33 @@ test('password reset email is sent in french when locale is fr', function () {
 
     expect($mail->subject)->toBe('Réinitialisez votre mot de passe')
         ->and($mail->actionText)->toBe('Réinitialiser le mot de passe');
+});
+
+test('login is rate limited after 5 consecutive attempts', function (): void {
+    foreach (range(1, 5) as $_) {
+        $this->post('/login', ['email' => 'any@test.com', 'password' => 'wrong']);
+    }
+
+    $this->post('/login', ['email' => 'any@test.com', 'password' => 'wrong'])
+        ->assertStatus(429);
+});
+
+test('register is rate limited after 5 consecutive attempts', function (): void {
+    foreach (range(1, 5) as $_) {
+        $this->post('/register', []);
+    }
+
+    $this->post('/register', [])
+        ->assertStatus(429);
+});
+
+test('forgot password is rate limited after 5 consecutive attempts', function (): void {
+    Notification::fake();
+
+    foreach (range(1, 5) as $_) {
+        $this->post('/forgot-password', ['email' => 'test@example.com']);
+    }
+
+    $this->post('/forgot-password', ['email' => 'test@example.com'])
+        ->assertStatus(429);
 });
