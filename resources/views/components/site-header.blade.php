@@ -22,7 +22,7 @@
             </flux:button>
             <flux:navmenu>
                 @foreach (config('app.supported_locales') as $supportedLocale)
-                    @continue(! array_key_exists($supportedLocale, $localeLabels))
+                    @continue(!array_key_exists($supportedLocale, $localeLabels))
 
                     <flux:navmenu.item href="{{ route('locale.update', $supportedLocale) }}">
                         {{ $localeLabels[$supportedLocale] }}
@@ -30,6 +30,16 @@
                 @endforeach
             </flux:navmenu>
         </flux:dropdown>
+
+        {{-- Login/register shown only to guests --}}
+        @guest
+            <flux:button class="rounded-full!" href="{{ route('login') }}" variant="ghost">
+                {{ __('auth.login') }}
+            </flux:button>
+            <flux:button class="rounded-full!" href="{{ route('register') }}" variant="primary">
+                {{ __('auth.register') }}
+            </flux:button>
+        @endguest
 
         {{-- Profile/logout shown only to authenticated users --}}
         @auth

@@ -1,6 +1,14 @@
 <x-layout title="{{ config('app.name') }} - {{ __('auth.forgot_password') }}">
     <x-site-header />
-    <main class="flex justify-center py-16">
+
+    <div class="mx-auto max-w-md">
+        <x-breadcrumbs>
+            <flux:breadcrumbs.item href="{{ route('login') }}">{{ __('auth.login') }}</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item>{{ __('auth.forgot_password') }}</flux:breadcrumbs.item>
+        </x-breadcrumbs>
+    </div>
+
+    <main class="flex justify-center pb-16 pt-4">
         <div class="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
             <h1 class="mb-2 text-2xl font-semibold text-zinc-900">{{ __('auth.forgot_password') }}</h1>
 

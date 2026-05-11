@@ -1,7 +1,7 @@
 <x-layout title="{{ __('contact.title') }}">
     <x-site-header />
 
-    <div class="mx-auto max-w-2xl py-8">
+    <div class="mx-auto max-w-2xl">
         <x-breadcrumbs>
             <flux:breadcrumbs.item>{{ __('contact.heading') }}</flux:breadcrumbs.item>
         </x-breadcrumbs>
