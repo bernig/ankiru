@@ -1,7 +1,8 @@
 <?php
 
-test('guests are redirected to login', function () {
+test('guests see the welcome page at the root', function () {
     $response = $this->get('/');
 
-    $response->assertRedirect(route('login'));
+    $response->assertOk();
+    $response->assertSee(__('welcome.hero_title'));
 });
