@@ -45,11 +45,15 @@ Route::middleware('auth')->group(function (): void {
         ->name('verification.send');
 });
 
-Route::middleware(['auth', 'verified'])->group(function (): void {
-    Route::get('/', function () {
+Route::get('/', function () {
+    if (auth()->check() && auth()->user()->hasVerifiedEmail()) {
         return view('csv-editor');
-    })->name('csv-editor');
+    }
 
+    return view('welcome');
+})->name('csv-editor');
+
+Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('profile', function () {
         return view('profile');
     })->name('profile');

@@ -5,8 +5,12 @@ dataset('russianStaticPages', [
         'routeName' => 'about',
         'expectedTranslations' => [
             ['key' => 'about.title'],
-            ['key' => 'about.subtitle', 'usesAppName' => true],
-            ['key' => 'about.description', 'usesAppName' => true],
+            ['key' => 'about.subtitle'],
+            ['key' => 'about.paragraph_1'],
+            ['key' => 'about.how_title'],
+            ['key' => 'about.how_translation_title'],
+            ['key' => 'about.key_title'],
+            ['key' => 'about.key_paragraph_1'],
         ],
     ],
     'contact' => [
