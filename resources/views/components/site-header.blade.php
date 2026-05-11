@@ -1,7 +1,7 @@
 <div class="flex flex-wrap items-center justify-between gap-3">
     <div class="flex items-center gap-3">
         <a class="group flex items-center gap-3" href="{{ route('csv-editor') }}">
-            <flux:icon.table-cells class="size-7 text-zinc-700 group-hover:text-zinc-900" />
+            <img class="size-7" src="{{ asset('logo.svg') }}" alt="{{ config('app.name') }}" />
             <flux:heading class="text-zinc-700 group-hover:text-zinc-900" size="xl">{{ config('app.name') }}</flux:heading>
         </a>
     </div>

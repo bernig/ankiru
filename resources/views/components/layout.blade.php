@@ -7,6 +7,10 @@
     <title>{{ $title ?? config('app.name') }}</title>
     <link href="/favicon.ico" rel="icon" sizes="any">
     <link type="image/svg+xml" href="/favicon.svg" rel="icon">
+    <link href="/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180">
+    <link type="image/png" href="/favicon-32x32.png" rel="icon" sizes="32x32">
+    <link type="image/png" href="/favicon-16x16.png" rel="icon" sizes="16x16">
+    <link href="/site.webmanifest" rel="manifest">
     @fonts
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
