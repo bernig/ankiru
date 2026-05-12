@@ -46,6 +46,9 @@ jobs:
       - name: Create SQLite Database
         run: touch database/database.sqlite
 
+      - name: Override Cache Store for CI
+        run: sed -i 's/CACHE_STORE=database/CACHE_STORE=array/' .env
+
       - name: Add Flux Credentials Loaded From ENV
         run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
 
