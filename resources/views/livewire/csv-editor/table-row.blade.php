@@ -24,7 +24,7 @@
 
     {{-- ── Pencil column: edit source text ── --}}
     <flux:table.cell class="py-2! whitespace-nowrap px-2 first:ps-2 last:pe-2">
-        <div class="flex items-center whitespace-nowrap rounded-full border border-zinc-200 bg-white opacity-0 transition-opacity group-hover:opacity-100" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 0">
+        <div class="flex items-center whitespace-nowrap rounded-full border border-zinc-200 bg-white opacity-0 transition-opacity group-hover:opacity-100 [@media(hover:none)]:opacity-100" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 0">
             <button class="cursor-pointer rounded text-zinc-400 hover:text-blue-500" title="{{ __('csv_editor.edit_source_text') }}" @click="$store.csvEditing.rowIndex = rowIndex; $store.csvEditing.columnIndex = 0; $nextTick(() => $refs.input_0?.focus())">
                 <flux:icon.pencil class="m-2 size-4" />
             </button>
@@ -43,14 +43,14 @@
     <flux:table.cell class="py-2! px-2 first:ps-2 last:pe-2">
         <div class="flex justify-end gap-2">
             @if (!empty(trim($row[0] ?? '')) || !empty(trim($row[1] ?? '')))
-                <div class="flex items-center whitespace-nowrap rounded-full border border-zinc-200 bg-white px-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-blue-500 group-hover:opacity-100" title="{{ __('csv_editor.edit_russian_text') }}" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1" @click="$store.csvEditing.rowIndex = rowIndex; $store.csvEditing.columnIndex = 1; $nextTick(() => $refs.input_1?.focus())">
+                <div class="flex items-center whitespace-nowrap rounded-full border border-zinc-200 bg-white px-1 opacity-0 transition-opacity group-hover:opacity-100 [@media(hover:none)]:opacity-100">
+                    <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-blue-500 group-hover:opacity-100 [@media(hover:none)]:opacity-100" title="{{ __('csv_editor.edit_russian_text') }}" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1" @click="$store.csvEditing.rowIndex = rowIndex; $store.csvEditing.columnIndex = 1; $nextTick(() => $refs.input_1?.focus())">
                         <flux:icon.pencil class="mx-1 my-2 size-4" />
                     </button>
 
                     {{-- TTS button: always visible when Russian text exists; opens the audio player modal --}}
                     @if (!empty(trim($row[1] ?? '')))
-                        <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100" title="{{ $this->isTtsBatchRunning ? __('csv_editor.bulk_tts_in_progress') : __('csv_editor.open_audio_player') }}" wire:click="openTtsModal({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})" @disabled($this->isTtsBatchRunning)>
+                        <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 [@media(hover:none)]:opacity-100" title="{{ $this->isTtsBatchRunning ? __('csv_editor.bulk_tts_in_progress') : __('csv_editor.open_audio_player') }}" wire:click="openTtsModal({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})" @disabled($this->isTtsBatchRunning)>
                             <span wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})">
                                 <flux:icon.speaker-wave class="mx-1 my-2 size-4" />
                             </span>
@@ -59,7 +59,7 @@
 
                     {{-- Translate button: visible when source has text and Russian is empty --}}
                     @if (!empty(trim($row[0] ?? '')) && empty(trim($row[1] ?? '')))
-                        <button class="cursor-pointer rounded px-0 text-zinc-400 opacity-0 transition-opacity hover:text-violet-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100" title="{{ __('csv_editor.translate_with_chatgpt') }}" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
+                        <button class="cursor-pointer rounded px-0 text-zinc-400 opacity-0 transition-opacity hover:text-violet-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 [@media(hover:none)]:opacity-100" title="{{ __('csv_editor.translate_with_chatgpt') }}" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
                             <span wire:loading wire:target="translateWithChatGpt({{ $rowIndex }})">
                                 <flux:icon.arrow-path class="mx-1 my-2 size-4 animate-spin" />
                             </span>
@@ -71,7 +71,7 @@
 
                     {{-- Re-translate button: visible when both source and Russian text exist --}}
                     @if (!empty(trim($row[0] ?? '')) && !empty(trim($row[1] ?? '')))
-                        <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-violet-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100" title="{{ __('csv_editor.retranslate_with_chatgpt') }}" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
+                        <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-violet-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 [@media(hover:none)]:opacity-100" title="{{ __('csv_editor.retranslate_with_chatgpt') }}" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
                             <span wire:loading wire:target="translateWithChatGpt({{ $rowIndex }})">
                                 <flux:icon.arrow-path class="mx-1 my-2 size-4 animate-spin" />
                             </span>
@@ -83,7 +83,7 @@
 
                     {{-- Correct-stress button: visible when right column has text --}}
                     @if (!empty(trim($row[1] ?? '')))
-                        <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-orange-500 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100" title="{{ $this->isStressBatchRunning ? __('csv_editor.bulk_stress_in_progress') : __('csv_editor.fix_stress_marks') }}" wire:click="correctStressMarks({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="correctStressMarks({{ $rowIndex }})" @disabled($this->isStressBatchRunning)>
+                        <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-orange-500 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 [@media(hover:none)]:opacity-100" title="{{ $this->isStressBatchRunning ? __('csv_editor.bulk_stress_in_progress') : __('csv_editor.fix_stress_marks') }}" wire:click="correctStressMarks({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="correctStressMarks({{ $rowIndex }})" @disabled($this->isStressBatchRunning)>
                             <span wire:loading wire:target="correctStressMarks({{ $rowIndex }})">
                                 <flux:icon.arrow-path class="mx-1 my-2 size-4 animate-spin" />
                             </span>
@@ -94,11 +94,11 @@
                     @endif
                 </div>
 
-                <flux:separator class="my-1 opacity-0 transition-opacity group-hover:opacity-75" vertical />
+                <flux:separator class="my-1 opacity-0 transition-opacity group-hover:opacity-75 [@media(hover:none)]:opacity-75" vertical />
             @endif
 
-            <div class="flex items-center whitespace-nowrap rounded-full border border-zinc-200 bg-white opacity-0 transition-opacity group-hover:opacity-100">
-                <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100" title="{{ __('csv_editor.delete_row') }}" wire:click="deleteRow({{ $rowIndex }})">
+            <div class="flex items-center whitespace-nowrap rounded-full border border-zinc-200 bg-white opacity-0 transition-opacity group-hover:opacity-100 [@media(hover:none)]:opacity-100">
+                <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100 [@media(hover:none)]:opacity-100" title="{{ __('csv_editor.delete_row') }}" wire:click="deleteRow({{ $rowIndex }})">
                     <flux:icon.trash class="m-2 size-4" />
                 </button>
             </div>

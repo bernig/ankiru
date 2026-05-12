@@ -35,6 +35,8 @@ return [
     'per_page' => 'Rows per page',
     'source_column' => 'Source text',
     'russian_column' => 'Russian text',
+    'legend_accent_needed' => 'Russian stress marks to review',
+    'legend_audio_missing' => 'Audio not yet generated',
 
     // Table row actions (button tooltips)
     'edit_source_text' => 'Edit source text',
@@ -54,7 +56,7 @@ return [
 
     // Upload panel
     'upload_heading' => 'Upload a CSV file',
-    'upload_subtext' => 'Select a .csv file to start editing.',
+    'upload_subtext' => 'Import a CSV spreadsheet (.csv) or create a blank file.',
     'dropzone_heading' => 'Drop your CSV here',
     'dropzone_text' => 'or click to browse',
     'parsing' => 'Parsing…',
@@ -63,7 +65,9 @@ return [
     // Bulk Actions modal
     'bulk_actions' => 'Bulk Actions',
     'bulk_stress_title' => 'Fix Missing Stress Marks',
+    'bulk_stress_tooltip' => 'AI analyzes each Russian phrase and adds stress marks (ударения) — the stressed syllables — in the correct positions for accurate pronunciation.',
     'bulk_tts_title' => 'Generate Missing Audio',
+    'bulk_tts_tooltip' => 'AI generates a synthetic voice audio file for each Russian phrase. This audio will be embedded in your Anki cards.',
     'bulk_done' => 'Done',
     'bulk_running' => 'Running…',
     'bulk_last_run' => 'Previous run',
@@ -83,8 +87,8 @@ return [
     'bulk_widget_chars' => 'chars',
     'bulk_stress_in_progress' => 'Bulk stress correction in progress',
     'bulk_tts_in_progress' => 'Bulk audio generation in progress',
-    'bulk_estimate_tokens' => '~:input input / :output output tokens (≈ $:cost) · :model',
-    'bulk_estimate_chars' => '~:chars characters (≈ $:cost) · :model',
+    'bulk_estimate_tokens' => 'Est. cost ≈ $:cost · ~:input/:output tokens · :model',
+    'bulk_estimate_chars' => 'Est. cost ≈ $:cost · ~:chars chars · :model',
     'bulk_cancel' => 'Stop',
     'bulk_warning_queue' => "Queue driver is set to 'sync'. Bulk jobs will block the request instead of running in the background.",
     'bulk_warning_broadcast' => "Broadcast driver is set to 'log'. Real-time progress updates will not be available.",

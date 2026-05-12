@@ -36,6 +36,9 @@
             <div class="flex items-center gap-2">
                 <flux:icon.sparkles class="size-5 shrink-0 text-zinc-500" />
                 <flux:text class="font-semibold">{{ __('csv_editor.bulk_stress_title') }}</flux:text>
+                <flux:tooltip toggleable :content="__('csv_editor.bulk_stress_tooltip')">
+                    <flux:button class="text-zinc-400!" icon="information-circle" variant="ghost" size="xs" />
+                </flux:tooltip>
             </div>
 
             @if ($stressBatchStatus === 'running')
@@ -51,7 +54,7 @@
                         </x-slot>
                     </flux:label>
 
-                    <flux:progress :value="$stressBatchTotal > 0 ? intval($stressBatchProgress / $stressBatchTotal * 100) : 0" color="blue" />
+                    <flux:progress :value="$stressBatchTotal > 0 ? intval($stressBatchProgress / $stressBatchTotal * 100) : 0" color="amber" />
 
                     @if ($stressBatchFailed > 0)
                         <flux:description class="text-red-500">
@@ -124,6 +127,9 @@
             <div class="flex items-center gap-2">
                 <flux:icon.musical-note class="size-5 shrink-0 text-zinc-500" />
                 <flux:text class="font-semibold">{{ __('csv_editor.bulk_tts_title') }}</flux:text>
+                <flux:tooltip toggleable :content="__('csv_editor.bulk_tts_tooltip')">
+                    <flux:button class="text-zinc-400!" icon="information-circle" variant="ghost" size="xs" />
+                </flux:tooltip>
             </div>
 
             @if ($ttsBatchStatus === 'running')
@@ -139,7 +145,7 @@
                         </x-slot>
                     </flux:label>
 
-                    <flux:progress :value="$ttsBatchTotal > 0 ? intval($ttsBatchProgress / $ttsBatchTotal * 100) : 0" color="blue" />
+                    <flux:progress :value="$ttsBatchTotal > 0 ? intval($ttsBatchProgress / $ttsBatchTotal * 100) : 0" color="amber" />
 
                     @if ($ttsBatchFailed > 0)
                         <flux:description class="text-red-500">

@@ -42,12 +42,17 @@
 
     {{-- ── Footer toolbar ── --}}
     <div class="mx-auto mt-4 flex w-full flex-col items-center gap-3" x-show="!$store.csvSearch.active">
+
+        <flux:button class="rounded-full! mb-4" wire:click="addRow" icon="plus" variant="primary">
+            {{ __('csv_editor.add_row') }}
+        </flux:button>
+
         {{-- Flux pagination (shown only when there is more than one page) --}}
         @if ($this->totalPages > 1)
             <flux:pagination class="w-full flex-wrap" :paginator="$this->paginatedRows" scroll-to="html" />
         @endif
 
-        <div class="flex w-full flex-wrap items-center justify-between gap-6">
+        <div class="flex w-full flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-2 whitespace-nowrap text-xs font-medium text-zinc-500">
                 <span>{{ __('csv_editor.per_page') }}</span>
                 <flux:select wire:model.live="perPage" size="xs">
@@ -58,11 +63,20 @@
                 </flux:select>
             </div>
 
-            <flux:button class="rounded-full!" wire:click="addRow" icon="plus" variant="primary">
-                {{ __('csv_editor.add_row') }}
-            </flux:button>
-
-            <div class="w-32"></div>
+            {{-- Color legend --}}
+            @if ($this->paginatedRows->isNotEmpty())
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-400 dark:text-zinc-500">
+                    <div class="flex items-center gap-1.5">
+                        <span class="inline-block size-3 rounded-sm bg-amber-200 dark:bg-amber-900/50"></span>
+                        <span>{{ __('csv_editor.legend_accent_needed') }}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="inline-block size-3 rounded-sm bg-blue-200 dark:bg-blue-900/30"></span>
+                        <span>{{ __('csv_editor.legend_audio_missing') }}</span>
+                    </div>
+                </div>
+            @endif
         </div>
+
     </div>
 </flux:card>

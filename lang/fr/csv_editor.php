@@ -35,6 +35,8 @@ return [
     'no_rows_yet' => "Aucune ligne pour l'instant. Cliquez sur « Ajouter une ligne » pour en créer une.",
     'add_row' => 'Ajouter une ligne',
     'per_page' => 'Lignes par page',
+    'legend_accent_needed' => 'Accents toniques à vérifier',
+    'legend_audio_missing' => 'Audio non généré',
 
     // Actions sur les lignes (infobulles des boutons)
     'edit_source_text' => 'Modifier le texte source',
@@ -54,7 +56,7 @@ return [
 
     // Panneau d'import
     'upload_heading' => 'Importer un fichier CSV',
-    'upload_subtext' => "Sélectionnez un fichier .csv pour commencer l'édition.",
+    'upload_subtext' => 'Importez un tableau au format CSV, ou créez un nouveau fichier vide.',
     'dropzone_heading' => 'Déposez votre CSV ici',
     'dropzone_text' => 'ou cliquez pour parcourir',
     'parsing' => 'Traitement…',
@@ -63,7 +65,9 @@ return [
     // Actions groupées
     'bulk_actions' => 'Actions groupées',
     'bulk_stress_title' => 'Corriger les accents manquants',
+    'bulk_stress_tooltip' => "L'IA analyse chaque phrase russe et place les accents toniques (ударения) — les syllabes accentuées — aux bonnes positions, pour une prononciation correcte.",
     'bulk_tts_title' => 'Générer les audios manquants',
+    'bulk_tts_tooltip' => "L'IA génère un fichier audio de synthèse vocale pour chaque phrase russe. Cet audio sera intégré dans vos cartes Anki.",
     'bulk_done' => 'Terminé',
     'bulk_running' => 'En cours…',
     'bulk_last_run' => 'Dernier lancement',
@@ -83,8 +87,8 @@ return [
     'bulk_widget_chars' => 'caractères',
     'bulk_stress_in_progress' => 'Correction groupée des accents en cours',
     'bulk_tts_in_progress' => 'Génération audio groupée en cours',
-    'bulk_estimate_tokens' => '~:input entrée / :output sortie tokens (≈ $:cost) · :model',
-    'bulk_estimate_chars' => '~:chars caractères (≈ $:cost) · :model',
+    'bulk_estimate_tokens' => 'Coût estimé ≈ $:cost · ~:input/:output tokens · :model',
+    'bulk_estimate_chars' => 'Coût estimé ≈ $:cost · ~:chars caractères · :model',
     'bulk_cancel' => 'Arrêter',
     'bulk_warning_queue' => "Le driver de file d'attente est réglé sur 'sync'. Les traitements groupés bloqueront la requête au lieu de s'exécuter en arrière-plan.",
     'bulk_warning_broadcast' => "Le driver de broadcast est réglé sur 'log'. Les mises à jour en temps réel ne seront pas disponibles.",

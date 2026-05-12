@@ -60,7 +60,7 @@
                     </div>
 
                     @if ($stressBatchStatus === 'running')
-                        <flux:progress class="h-1.5" :value="$stressBatchTotal > 0 ? intval($stressBatchProgress / $stressBatchTotal * 100) : 0" color="blue" />
+                        <flux:progress class="h-1.5" :value="$stressBatchTotal > 0 ? intval($stressBatchProgress / $stressBatchTotal * 100) : 0" color="amber" />
                         @if ($stressBatchFailed > 0)
                             <span class="text-xs text-red-400">
                                 {{ __('csv_editor.bulk_failed', ['count' => $stressBatchFailed]) }}
@@ -106,7 +106,7 @@
                     </div>
 
                     @if ($ttsBatchStatus === 'running')
-                        <flux:progress class="h-1.5" :value="$ttsBatchTotal > 0 ? intval($ttsBatchProgress / $ttsBatchTotal * 100) : 0" color="blue" />
+                        <flux:progress class="h-1.5" :value="$ttsBatchTotal > 0 ? intval($ttsBatchProgress / $ttsBatchTotal * 100) : 0" color="amber" />
                         @if ($ttsBatchFailed > 0)
                             <span class="text-xs text-red-400">
                                 {{ __('csv_editor.bulk_failed', ['count' => $ttsBatchFailed]) }}

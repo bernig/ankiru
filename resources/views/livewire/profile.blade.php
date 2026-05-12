@@ -100,7 +100,14 @@
                     <flux:table.columns>
                         <flux:table.column>{{ __('profile.stats_operation') }}</flux:table.column>
                         <flux:table.column class="text-right">{{ __('profile.stats_calls') }}</flux:table.column>
-                        <flux:table.column class="text-right">{{ __('profile.stats_tokens_in_out') }}</flux:table.column>
+                        <flux:table.column class="text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                {{ __('profile.stats_tokens_in_out') }}
+                                <flux:tooltip toggleable :content="__('profile.stats_tokens_tooltip')">
+                                    <flux:button class="text-zinc-400!" icon="information-circle" variant="ghost" size="xs" />
+                                </flux:tooltip>
+                            </div>
+                        </flux:table.column>
                         <flux:table.column class="text-right">{{ __('profile.stats_characters') }}</flux:table.column>
                         <flux:table.column class="text-right">{{ __('profile.stats_cost') }}</flux:table.column>
                     </flux:table.columns>
