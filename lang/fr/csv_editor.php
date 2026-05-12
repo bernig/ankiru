@@ -45,7 +45,8 @@ return [
     'translate_with_chatgpt' => 'Traduire avec ChatGPT',
     'retranslate_with_chatgpt' => 'Régénérer la traduction avec ChatGPT',
     'fix_stress_marks' => 'Corriger les accents avec ChatGPT',
-    'delete_row' => 'Supprimer la ligne',
+    'delete_row' => 'Supprimer',
+    'open_row' => 'Ouvrir',
 
     // Fenêtre TTS
     'generated_at' => 'Généré le :date',

@@ -1,13 +1,13 @@
 <flux:card class="flex flex-col space-y-6">
-    <flux:table container:class="w-full ">
+    <flux:table class="max-sm:block max-sm:min-w-0" container:class="w-full">
         @if ($this->paginatedRows->isNotEmpty())
-            <flux:table.columns class="" sticky>
+            <flux:table.columns class="max-sm:hidden" sticky>
                 <flux:table.column class="py-2! px-2 first:ps-2 last:pe-2" colspan="2">{{ __('csv_editor.source_column') }}</flux:table.column>
                 <flux:table.column class="py-2! px-2 first:ps-2 last:pe-2" colspan="2">{{ __('csv_editor.russian_column') }}</flux:table.column>
             </flux:table.columns>
         @endif
 
-        <flux:table.rows>
+        <flux:table.rows class="max-sm:block">
             @forelse ($this->paginatedRows as $rowIndex => $row)
                 @php
                     $rowHasAudio = $this->audioExistenceByRowIndex[$rowIndex] ?? false;
@@ -79,4 +79,49 @@
         </div>
 
     </div>
+
+    {{-- ── Mobile row-edit modal ── --}}
+    {{-- One shared modal driven by $store.mobileEdit.rowIndex, only visible on small screens. --}}
+    <flux:modal class="sm:max-w-lg!" name="mobile-edit">
+        <div class="flex flex-col gap-5">
+
+            <flux:field>
+                <flux:label>{{ __('csv_editor.source_column') }}</flux:label>
+                <textarea class="block w-full resize-none rounded-lg border border-zinc-200 bg-white p-3 text-sm text-zinc-700 placeholder-zinc-400 outline-none transition-colors focus:border-zinc-400 dark:border-white/10 dark:bg-white/10 dark:text-zinc-300" rows="3" :value="$store.mobileEdit.rowIndex >= 0 ? ($wire.csvRows[$store.mobileEdit.rowIndex]?.[0] ?? '') : ''" x-on:blur="if ($store.mobileEdit.rowIndex >= 0) $wire.updateCell($store.mobileEdit.rowIndex, 0, $event.target.value)"></textarea>
+            </flux:field>
+
+            <flux:field>
+                <flux:label>{{ __('csv_editor.russian_column') }}</flux:label>
+                <textarea class="block w-full resize-none rounded-lg border border-zinc-200 bg-white p-3 text-sm text-zinc-700 placeholder-zinc-400 outline-none transition-colors focus:border-zinc-400 dark:border-white/10 dark:bg-white/10 dark:text-zinc-300" rows="3" :value="$store.mobileEdit.rowIndex >= 0 ? ($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '') : ''" x-on:blur="if ($store.mobileEdit.rowIndex >= 0) $wire.updateCell($store.mobileEdit.rowIndex, 1, $event.target.value)"></textarea>
+            </flux:field>
+
+            <flux:button.group class="justify-end">
+                <flux:button variant="ghost" x-bind:title="($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim() ?
+                    '{{ __('csv_editor.retranslate_with_chatgpt') }}' :
+                    '{{ __('csv_editor.translate_with_chatgpt') }}'" x-show="($wire.csvRows[$store.mobileEdit.rowIndex]?.[0] ?? '').trim()" wire:loading.attr="disabled" wire:target="translateWithChatGpt" @click="$wire.translateWithChatGpt($store.mobileEdit.rowIndex)">
+
+                    <flux:icon.loading class="size-4" wire:loading wire:target="translateWithChatGpt" />
+                    <flux:icon.arrow-path class="size-4" wire:loading.remove wire:target="translateWithChatGpt" x-show="($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()" />
+                    <flux:icon.sparkles class="size-4" wire:loading.remove wire:target="translateWithChatGpt" x-show="!($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()" />
+                </flux:button>
+                <flux:button title="{{ __('csv_editor.fix_stress_marks') }}" variant="ghost" x-show="($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()" :disabled="$this->isStressBatchRunning" wire:loading.attr="disabled" wire:target="correctStressMarks" @click="$wire.correctStressMarks($store.mobileEdit.rowIndex)">
+                    <flux:icon.loading class="size-4" wire:loading wire:target="correctStressMarks" />
+                    <flux:icon.exclamation-circle class="size-4" wire:loading.remove wire:target="correctStressMarks" />
+                </flux:button>
+                <flux:button title="{{ __('csv_editor.open_audio_player') }}" variant="ghost" x-show="($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()" :disabled="$this->isTtsBatchRunning" wire:loading.attr="disabled" wire:target="openTtsModal" @click="$wire.openTtsModal($store.mobileEdit.rowIndex)">
+                    <flux:icon.loading class="size-4" wire:loading wire:target="openTtsModal" />
+                    <flux:icon.speaker-wave class="size-4" wire:loading.remove wire:target="openTtsModal" />
+                </flux:button>
+            </flux:button.group>
+
+            <div class="flex items-center justify-between border-t border-zinc-100 pt-3 dark:border-zinc-700">
+                <flux:button square icon="trash" icon:variant="outline" variant="danger" @click="$wire.deleteRow($store.mobileEdit.rowIndex); $flux.modal('mobile-edit').close()" />
+                <flux:modal.close>
+                    <flux:button variant="filled" icon="check">{{ __('csv_editor.close') }}</flux:button>
+                </flux:modal.close>
+            </div>
+
+        </div>
+    </flux:modal>
+
 </flux:card>

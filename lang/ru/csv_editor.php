@@ -40,7 +40,8 @@ return [
     'translate_with_chatgpt' => 'Перевести с помощью ChatGPT',
     'retranslate_with_chatgpt' => 'Сгенерировать перевод заново с помощью ChatGPT',
     'fix_stress_marks' => 'Исправить ударения с помощью ChatGPT',
-    'delete_row' => 'Удалить строку',
+    'delete_row' => 'Удалить',
+    'open_row' => 'Открыть',
 
     'generated_at' => 'Сгенерировано: :date',
     'no_audio_yet' => 'Для этой фразы аудиофайл еще не создан.',

@@ -14,6 +14,10 @@ document.addEventListener('alpine:init', () => {
     Alpine.store('csvSearch', {
         active: false,
     });
+
+    Alpine.store('mobileEdit', {
+        rowIndex: -1,
+    });
 });
 
 document.addEventListener('csv-file-switched', () => {

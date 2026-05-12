@@ -45,7 +45,8 @@ return [
     'translate_with_chatgpt' => 'Translate with ChatGPT',
     'retranslate_with_chatgpt' => 'Regenerate translation with ChatGPT',
     'fix_stress_marks' => 'Fix stress marks with ChatGPT',
-    'delete_row' => 'Delete row',
+    'delete_row' => 'Delete',
+    'open_row' => 'Open',
 
     // TTS modal
     'generated_at' => 'Generated :date',
