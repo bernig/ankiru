@@ -14,10 +14,10 @@
         </p>
 
         <div class="flex flex-wrap items-center justify-center gap-3">
-            <flux:button class="rounded-full! px-6!" href="{{ route('register') }}" variant="primary">
+            <flux:button class="rounded-full! px-6!" href="{{ route('register') }}" variant="primary" wire:navigate>
                 {{ __('welcome.cta_register') }}
             </flux:button>
-            <flux:button class="rounded-full! px-6!" href="{{ route('login') }}" variant="ghost">
+            <flux:button class="rounded-full! px-6!" href="{{ route('login') }}" variant="ghost" wire:navigate>
                 {{ __('welcome.cta_login') }}
             </flux:button>
         </div>

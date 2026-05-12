@@ -3,7 +3,7 @@
 
     <div class="mx-auto max-w-md">
         <x-breadcrumbs>
-            <flux:breadcrumbs.item href="{{ route('login') }}">{{ __('auth.login') }}</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item href="{{ route('login') }}" wire:navigate>{{ __('auth.login') }}</flux:breadcrumbs.item>
             <flux:breadcrumbs.item>{{ __('auth.forgot_password') }}</flux:breadcrumbs.item>
         </x-breadcrumbs>
     </div>
@@ -32,7 +32,7 @@
 
             <p class="mt-4 text-sm text-zinc-600">
                 {{ __('auth.remember_password') }}
-                <a class="font-medium text-zinc-900 underline" href="{{ route('login') }}">{{ __('auth.sign_in') }}</a>
+                <a class="font-medium text-zinc-900 underline" href="{{ route('login') }}" wire:navigate>{{ __('auth.sign_in') }}</a>
             </p>
         </div>
     </main>

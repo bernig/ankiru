@@ -24,13 +24,13 @@
     <footer class="bg-taupe-200 border-taupe-300 border-t p-6">
         <div class="flex flex-col items-center gap-8">
             <div class="flex flex-wrap items-center justify-center gap-2 text-sm text-zinc-700">
-                <a class="hover:text-zinc-900" href="{{ route('about') }}">{{ __('about.title') }}</a>
+                <a class="hover:text-zinc-900" href="{{ route('about') }}" wire:navigate>{{ __('about.title') }}</a>
                 <flux:separator vertical />
-                <a class="hover:text-zinc-900" href="{{ route('contact') }}">{{ __('contact.title') }}</a>
+                <a class="hover:text-zinc-900" href="{{ route('contact') }}" wire:navigate>{{ __('contact.title') }}</a>
                 <flux:separator vertical />
-                <a class="hover:text-zinc-900" href="{{ route('legal.mentions') }}">{{ __('legal.mentions_title') }}</a>
+                <a class="hover:text-zinc-900" href="{{ route('legal.mentions') }}" wire:navigate>{{ __('legal.mentions_title') }}</a>
                 <flux:separator vertical />
-                <a class="hover:text-zinc-900" href="{{ route('legal.privacy') }}">{{ __('legal.privacy_title') }}</a>
+                <a class="hover:text-zinc-900" href="{{ route('legal.privacy') }}" wire:navigate>{{ __('legal.privacy_title') }}</a>
                 <flux:separator vertical />
                 <a class="showHideToggleCookiePreferencesModal cursor-pointer hover:text-zinc-900">{{ __('cookie_consent.manage_preferences') }}</a>
             </div>
@@ -52,26 +52,28 @@
     @auth
         <livewire:open-ai-key-setup />
     @endauth
-    {!! CookieConsent::scripts([
-        'cookie_title' => __('cookie_consent.title'),
-        'cookie_description' => __('cookie_consent.description'),
-        'cookie_accept_btn_text' => __('cookie_consent.accept'),
-        'cookie_reject_btn_text' => __('cookie_consent.reject'),
-        'cookie_preferences_btn_text' => __('cookie_consent.manage_preferences'),
-        'cookie_modal_title' => __('cookie_consent.modal_title'),
-        'cookie_modal_intro' => __('cookie_consent.modal_intro'),
-        'cookie_preferences_save_text' => __('cookie_consent.save'),
-        'policy_links' => [['text' => __('cookie_consent.policy_link'), 'link' => '/legal/confidentialite']],
-        'preferences_modal_enabled' => true,
-        'cookie_categories' => [
-            'necessary' => [
-                'enabled' => true,
-                'locked' => true,
-                'title' => __('cookie_consent.necessary_title'),
-                'description' => __('cookie_consent.necessary_description'),
+    @persist('cookie-consent')
+        {!! CookieConsent::scripts([
+            'cookie_title' => __('cookie_consent.title'),
+            'cookie_description' => __('cookie_consent.description'),
+            'cookie_accept_btn_text' => __('cookie_consent.accept'),
+            'cookie_reject_btn_text' => __('cookie_consent.reject'),
+            'cookie_preferences_btn_text' => __('cookie_consent.manage_preferences'),
+            'cookie_modal_title' => __('cookie_consent.modal_title'),
+            'cookie_modal_intro' => __('cookie_consent.modal_intro'),
+            'cookie_preferences_save_text' => __('cookie_consent.save'),
+            'policy_links' => [['text' => __('cookie_consent.policy_link'), 'link' => '/legal/confidentialite']],
+            'preferences_modal_enabled' => true,
+            'cookie_categories' => [
+                'necessary' => [
+                    'enabled' => true,
+                    'locked' => true,
+                    'title' => __('cookie_consent.necessary_title'),
+                    'description' => __('cookie_consent.necessary_description'),
+                ],
             ],
-        ],
-    ]) !!}
+        ]) !!}
+    @endpersist
     @fluxScripts
 </body>
 

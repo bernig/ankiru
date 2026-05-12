@@ -3,7 +3,7 @@
 
     <div class="mx-auto max-w-md">
         <x-breadcrumbs>
-            <flux:breadcrumbs.item href="{{ route('login') }}">{{ __('auth.login') }}</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item href="{{ route('login') }}" wire:navigate>{{ __('auth.login') }}</flux:breadcrumbs.item>
             <flux:breadcrumbs.item>{{ __('auth.reset_password') }}</flux:breadcrumbs.item>
         </x-breadcrumbs>
     </div>

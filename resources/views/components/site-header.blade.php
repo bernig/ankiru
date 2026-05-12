@@ -8,7 +8,7 @@
 
 <div x-data="{ open: false }">
     <div class="flex items-center justify-between gap-3 pb-3">
-        <a class="group flex items-center gap-3" href="{{ route('csv-editor') }}">
+        <a class="group flex items-center gap-3" href="{{ route('csv-editor') }}" wire:navigate>
             <img class="size-7" src="{{ asset('logo.svg') }}" alt="{{ config('app.name') }}" />
             <flux:heading class="text-zinc-700 group-hover:text-zinc-900" size="xl">{{ config('app.name') }}</flux:heading>
         </a>
@@ -31,10 +31,10 @@
             </flux:dropdown>
 
             @guest
-                <flux:button class="rounded-full!" href="{{ route('login') }}" variant="ghost">
+                <flux:button class="rounded-full!" href="{{ route('login') }}" variant="ghost" wire:navigate>
                     {{ __('auth.login') }}
                 </flux:button>
-                <flux:button class="rounded-full!" href="{{ route('register') }}" variant="primary">
+                <flux:button class="rounded-full!" href="{{ route('register') }}" variant="primary" wire:navigate>
                     {{ __('auth.register') }}
                 </flux:button>
             @endguest
@@ -43,7 +43,7 @@
                 <flux:dropdown position="bottom" align="end">
                     <flux:profile circle :avatar="$avatarUrl" :name="$displayName" />
                     <flux:navmenu>
-                        <flux:navmenu.item href="{{ route('profile') }}" icon="user-circle" icon:variant="outline">
+                        <flux:navmenu.item href="{{ route('profile') }}" icon="user-circle" icon:variant="outline" wire:navigate>
                             {{ __('profile.title') }}
                         </flux:navmenu.item>
                         <flux:navmenu.item href="#" icon="arrow-right-start-on-rectangle" icon:variant="outline" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" variant="danger">
@@ -69,10 +69,10 @@
     <div class="border-t border-zinc-200 pb-3 pt-2 sm:hidden" x-show="open" x-transition:enter="transition duration-150 ease-out" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition duration-100 ease-in" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1">
         <flux:navlist>
             @guest
-                <flux:navlist.item href="{{ route('login') }}" icon="arrow-right-end-on-rectangle">
+                <flux:navlist.item href="{{ route('login') }}" icon="arrow-right-end-on-rectangle" wire:navigate>
                     {{ __('auth.login') }}
                 </flux:navlist.item>
-                <flux:navlist.item href="{{ route('register') }}" icon="user-plus">
+                <flux:navlist.item href="{{ route('register') }}" icon="user-plus" wire:navigate>
                     {{ __('auth.register') }}
                 </flux:navlist.item>
             @endguest
@@ -82,7 +82,7 @@
                     <flux:avatar circle :src="$avatarUrl" size="sm" />
                     <span class="text-sm font-medium text-zinc-700">{{ $displayName }}</span>
                 </div>
-                <flux:navlist.item href="{{ route('profile') }}" icon="user-circle">
+                <flux:navlist.item href="{{ route('profile') }}" icon="user-circle" wire:navigate>
                     {{ __('profile.title') }}
                 </flux:navlist.item>
                 <flux:navlist.item href="#" icon="arrow-right-start-on-rectangle" onclick="event.preventDefault(); document.getElementById('logout-form-mobile').submit();" variant="danger">

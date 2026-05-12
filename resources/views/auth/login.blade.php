@@ -22,7 +22,7 @@
                     <flux:label for="password">{{ __('auth.password_label') }}</flux:label>
                     <flux:input class="mb-0!" id="password" name="password" type="password" required />
                     <div class="w-full text-right">
-                        <a class="text-xs text-zinc-500 underline hover:text-zinc-700" href="{{ route('password.request') }}">{{ __('auth.forgot_password') }}</a>
+                        <a class="text-xs text-zinc-500 underline hover:text-zinc-700" href="{{ route('password.request') }}" wire:navigate>{{ __('auth.forgot_password') }}</a>
                     </div>
                     <flux:error name="password" />
                 </flux:field>
@@ -38,7 +38,7 @@
 
             <p class="mt-4 text-sm text-zinc-600">
                 {{ __('auth.no_account_yet') }}
-                <a class="font-medium text-zinc-900 underline" href="{{ route('register') }}">{{ __('auth.register') }}</a>
+                <a class="font-medium text-zinc-900 underline" href="{{ route('register') }}" wire:navigate>{{ __('auth.register') }}</a>
             </p>
         </div>
     </main>
