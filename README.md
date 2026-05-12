@@ -1,30 +1,29 @@
 # Ankiru
 
-Créez vos cartes Anki russe en quelques clics — gratuitement et en open source.
+Create Russian Anki flashcards in just a few clicks — free and open source.
 
-Traduisez vos phrases en russe avec accents toniques, générez les audios et exportez un deck `.apkg` prêt à importer dans Anki — le tout assisté par l'IA.
+Translate phrases into Russian with stress marks, generate audio, and export a `.apkg` deck ready to import into Anki — all AI-powered.
 
-## Fonctionnalités
+## Features
 
-- **Traduction IA** — traduit automatiquement vos phrases en russe naturel, avec les accents toniques placés sur chaque mot.
-- **Correction des accents** — l'IA vérifie et corrige les accents toniques de textes russes existants pour une prononciation correcte.
-- **Audio synthétisé** — génère un fichier audio haute qualité pour chaque phrase russe, intégré directement dans vos cartes Anki.
-- **Export Anki** — exporte un fichier `.apkg` prêt à importer dans Anki, avec l'audio embarqué dans chaque carte.
+- **AI Translation** — automatically translates your phrases into natural Russian, with stress marks placed on every word.
+- **Stress correction** — AI checks and corrects stress marks on existing Russian text for accurate pronunciation.
+- **Synthesized audio** — generates a high-quality audio file for each Russian phrase, embedded directly in your Anki cards.
+- **Anki export** — exports a `.apkg` file ready to import into Anki, with audio included in each card.
 
-## Stack technique
+## Tech stack
 
 - PHP 8.3 / Laravel 13
 - Livewire 4 + Flux UI 2
 - Tailwind CSS 4
-- OpenAI (traduction, accents toniques, TTS)
-- SQLite (par défaut)
+- OpenAI (translation, stress marks, TTS)
+- SQLite (local) / MySQL (production)
 
-## Prérequis
+## Requirements
 
 - PHP >= 8.3
 - Composer
-- Node.js >= 20
-- Une clé API OpenAI
+- Node.js >= 22
 
 ## Installation
 
@@ -37,26 +36,46 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Configurer le fichier `.env` :
+Configure your `.env`:
 
 ```env
 APP_URL=http://localhost:8000
 ```
 
-> **Clé OpenAI** — chaque utilisateur renseigne sa propre clé OpenAI directement dans l'application après connexion. Il n'y a pas de clé sitewide à configurer.
-
-Créer la base de données et lancer les migrations :
+Create the database and run migrations:
 
 ```bash
 touch database/database.sqlite
 php artisan migrate
 ```
 
-Installer les assets et lancer le serveur de développement :
+Install assets and start the development server:
 
 ```bash
 npm install
 composer run dev
+```
+
+> **OpenAI API key** — each user enters their own OpenAI API key directly in the app after signing in. There is no sitewide key to configure.
+
+## Production
+
+In production, the queue worker and Reverb WebSocket server must run continuously. Use Supervisor to manage them:
+
+```ini
+[program:ankiru-worker]
+command=php /var/www/ankiru.org/artisan queue:work --sleep=3 --tries=3
+directory=/var/www/ankiru.org
+user=deployer
+autostart=true
+autorestart=true
+
+[program:ankiru-reverb]
+command=php /var/www/ankiru.org/artisan reverb:start
+directory=/var/www/ankiru.org
+user=deployer
+autostart=true
+autorestart=true
 ```
 
 ## Tests
@@ -65,6 +84,8 @@ composer run dev
 php artisan test --compact
 ```
 
-## Licence
+## License
 
-MIT
+[MIT](LICENSE) © 2026 [Bernig](https://github.com/bernig)
+
+You are free to use, copy, modify, and distribute this project, provided you retain the copyright notice.
