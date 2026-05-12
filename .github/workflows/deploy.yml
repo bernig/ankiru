@@ -21,7 +21,8 @@ jobs:
             set -e
             cd /var/www/ankiru.org
 
-            git pull origin master
+            git fetch origin master
+            git reset --hard FETCH_HEAD
 
             composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
             composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
