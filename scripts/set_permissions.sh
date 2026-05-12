@@ -16,9 +16,8 @@ fi
 log "Fixing permissions..."
 
 # Set ownership to the web server user and group (adjust 'www-data' as needed)
-sudo chown -R bernig:www-data .
-sudo find storage bootstrap/cache -type d -exec chmod 2775 {} \;
-sudo find storage bootstrap/cache -type f -exec chmod 664 {} \;
-sudo chmod g+s storage bootstrap/cache
+find storage bootstrap/cache -type d -exec chmod 2775 {} \;
+find storage bootstrap/cache -type f -exec chmod 664 {} \;
+chmod g+s storage bootstrap/cache
 
 log "Permissions fixed."
