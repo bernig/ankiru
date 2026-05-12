@@ -37,4 +37,5 @@ jobs:
             php artisan event:cache
 
             php artisan queue:restart
-            sudo supervisorctl restart ankiru-reverb ankiru-worker
+            sudo /usr/bin/supervisorctl restart ankiru-worker
+            sudo /usr/bin/supervisorctl restart ankiru-reverb
