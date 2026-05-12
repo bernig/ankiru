@@ -167,6 +167,23 @@ test('creating a new file always produces a new draft even when one is already a
     expect(CsvDraft::query()->count())->toBe(2);
 });
 
+test('on reload, restores the last accessed draft rather than the most recently created one', function () {
+    $csv1 = UploadedFile::fake()->createWithContent('first.csv', '"Row A","Row B"');
+    $csv2 = UploadedFile::fake()->createWithContent('second.csv', '"Row X","Row Y"');
+
+    $component = Livewire::test(CsvEditor::class)
+        ->set('uploadedCsvFile', $csv1)
+        ->set('uploadedCsvFile', $csv2);
+
+    // second.csv was created last; switch back to first.csv
+    $firstDraftId = CsvDraft::query()->orderBy('id')->first()->id;
+    $component->call('switchToDraft', $firstDraftId);
+
+    // A fresh mount should now restore first.csv, not second.csv
+    Livewire::test(CsvEditor::class)
+        ->assertSet('originalFileName', 'first.csv');
+});
+
 test('confirming a rename with an empty input dismisses the input without saving', function () {
     $csv = UploadedFile::fake()->createWithContent('keep.csv', '"French","Russian"');
 

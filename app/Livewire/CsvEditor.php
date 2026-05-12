@@ -484,6 +484,9 @@ class CsvEditor extends Component
         $this->ttsModalRowIndex = -1;
         $this->searchQuery = '';
         $this->resetPage();
+
+        $draft->update(['last_accessed_at' => now()]);
+
         $this->dispatch('csv-file-switched');
     }
 

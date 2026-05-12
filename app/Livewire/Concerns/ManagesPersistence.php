@@ -34,6 +34,7 @@ trait ManagesPersistence
                     'original_file_name' => $this->originalFileName,
                     'csv_rows' => $this->csvRows,
                     'has_csv_loaded' => $this->hasCsvLoaded,
+                    'last_accessed_at' => now(),
                 ]);
         } else {
             $draft = CsvDraft::query()->create([
@@ -41,6 +42,7 @@ trait ManagesPersistence
                 'original_file_name' => $this->originalFileName,
                 'csv_rows' => $this->csvRows,
                 'has_csv_loaded' => $this->hasCsvLoaded,
+                'last_accessed_at' => now(),
             ]);
 
             $this->activeDraftId = $draft->id;
@@ -63,7 +65,7 @@ trait ManagesPersistence
         /** @var CsvDraft|null $draft */
         $draft = CsvDraft::query()
             ->where('user_id', auth()->id())
-            ->latest()
+            ->orderByRaw('COALESCE(last_accessed_at, created_at) DESC')
             ->first();
 
         if ($draft === null) {

@@ -47,6 +47,7 @@ namespace App\Models{
  * @property string $original_file_name
  * @property array<array-key, mixed>|null $csv_rows
  * @property bool $has_csv_loaded
+ * @property \Carbon\CarbonImmutable|null $last_accessed_at
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \App\Models\User $user
@@ -58,6 +59,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CsvDraft whereCsvRows($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CsvDraft whereHasCsvLoaded($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CsvDraft whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CsvDraft whereLastAccessedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CsvDraft whereOriginalFileName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CsvDraft whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CsvDraft whereUserId($value)
@@ -74,13 +76,13 @@ namespace App\Models{
  * @property string $email
  * @property \Carbon\CarbonImmutable|null $email_verified_at
  * @property string $password
- * @property string|null $remember_token
- * @property \Carbon\CarbonImmutable|null $created_at
- * @property \Carbon\CarbonImmutable|null $updated_at
  * @property string|null $openai_api_key
  * @property string|null $accent_color
  * @property bool $accent_bold
  * @property bool $accent_unicode
+ * @property string|null $remember_token
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ApiUsageLog> $apiUsageLogs
  * @property-read int|null $api_usage_logs_count
  * @property-read \App\Models\CsvDraft|null $csvDraft

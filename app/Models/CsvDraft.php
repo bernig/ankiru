@@ -20,6 +20,7 @@ class CsvDraft extends Model
         'original_file_name',
         'csv_rows',
         'has_csv_loaded',
+        'last_accessed_at',
     ];
 
     public function user(): BelongsTo
@@ -35,6 +36,7 @@ class CsvDraft extends Model
         return [
             'csv_rows' => 'array',
             'has_csv_loaded' => 'boolean',
+            'last_accessed_at' => 'datetime',
         ];
     }
 }
