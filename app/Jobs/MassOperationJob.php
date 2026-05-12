@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\OperationType;
 use App\Events\MassOperationProgressEvent;
 use App\Models\ApiUsageLog;
+use App\Models\User;
 use App\Services\OpenAiTranslationService;
 use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
@@ -12,6 +13,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Laravel\Ai\AiManager;
 use Throwable;
 
 /**
@@ -67,6 +69,12 @@ class MassOperationJob implements ShouldQueue
         OpenAiTranslationService $translationService,
         RussianTextToSpeechService $ttsService,
     ): void {
+        if (Cache::get($this->cacheKey('cancelled'))) {
+            return;
+        }
+
+        $this->applyUserApiKey();
+
         try {
             match ($this->operationType) {
                 OperationType::Stress => $this->handleStressCorrection($accentService, $translationService),
@@ -189,6 +197,32 @@ class MassOperationJob implements ShouldQueue
                 'operation' => 'tts',
                 'characters' => mb_strlen($normalizedText),
             ]);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Setup
+    // -------------------------------------------------------------------------
+
+    /**
+     * Jobs bypass HTTP middleware, so the user's per-account OpenAI key is not
+     * injected automatically. Load it from the database and set the config so
+     * that all AI/TTS service calls in this job use the correct key.
+     */
+    private function applyUserApiKey(): void
+    {
+        if ($this->userId === null) {
+            Log::warning('MassOperationJob: userId is null, cannot apply API key.');
+
+            return;
+        }
+
+        $user = User::find($this->userId);
+        $apiKey = $user?->openai_api_key;
+
+        if ($apiKey) {
+            config(['ai.providers.openai.key' => $apiKey]);
+            app(AiManager::class)->forgetInstance();
         }
     }
 

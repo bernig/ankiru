@@ -59,6 +59,10 @@
                         </flux:description>
                     @endif
                 </flux:field>
+
+                <flux:button wire:click="cancelStressBatch" wire:loading.attr="disabled" wire:target="cancelStressBatch" variant="ghost" size="sm" icon="stop">
+                    {{ __('csv_editor.bulk_cancel') }}
+                </flux:button>
             @else
                 {{-- Previous-run summary (only visible after a batch has completed) --}}
                 @if ($stressBatchStatus === 'done')
@@ -143,6 +147,10 @@
                         </flux:description>
                     @endif
                 </flux:field>
+
+                <flux:button wire:click="cancelTtsBatch" wire:loading.attr="disabled" wire:target="cancelTtsBatch" variant="ghost" size="sm" icon="stop">
+                    {{ __('csv_editor.bulk_cancel') }}
+                </flux:button>
             @else
                 {{-- Previous-run summary (only visible after a batch has completed) --}}
                 @if ($ttsBatchStatus === 'done')

@@ -46,9 +46,14 @@
                         </div>
 
                         @if ($stressBatchStatus === 'running')
-                            <span class="shrink-0 text-xs tabular-nums text-zinc-400">
-                                {{ $stressBatchProgress }}&thinsp;/&thinsp;{{ $stressBatchTotal }}
-                            </span>
+                            <div class="flex shrink-0 items-center gap-2">
+                                <span class="text-xs tabular-nums text-zinc-400">
+                                    {{ $stressBatchProgress }}&thinsp;/&thinsp;{{ $stressBatchTotal }}
+                                </span>
+                                <button class="text-zinc-400 hover:text-red-500" type="button" aria-label="{{ __('csv_editor.bulk_cancel') }}" wire:click="cancelStressBatch">
+                                    <flux:icon.stop class="size-3.5" />
+                                </button>
+                            </div>
                         @else
                             <flux:icon.check-circle class="size-4 shrink-0 text-green-500" />
                         @endif
@@ -87,9 +92,14 @@
                         </div>
 
                         @if ($ttsBatchStatus === 'running')
-                            <span class="shrink-0 text-xs tabular-nums text-zinc-400">
-                                {{ $ttsBatchProgress }}&thinsp;/&thinsp;{{ $ttsBatchTotal }}
-                            </span>
+                            <div class="flex shrink-0 items-center gap-2">
+                                <span class="text-xs tabular-nums text-zinc-400">
+                                    {{ $ttsBatchProgress }}&thinsp;/&thinsp;{{ $ttsBatchTotal }}
+                                </span>
+                                <button class="text-zinc-400 hover:text-red-500" type="button" aria-label="{{ __('csv_editor.bulk_cancel') }}" wire:click="cancelTtsBatch">
+                                    <flux:icon.stop class="size-3.5" />
+                                </button>
+                            </div>
                         @else
                             <flux:icon.check-circle class="size-4 shrink-0 text-green-500" />
                         @endif

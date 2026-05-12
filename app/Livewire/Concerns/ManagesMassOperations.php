@@ -5,6 +5,7 @@ namespace App\Livewire\Concerns;
 use App\Enums\OperationType;
 use App\Services\MassOperationService;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 
 /**
@@ -71,6 +72,21 @@ trait ManagesMassOperations
     public float $estimatedTtsCost = 0.0;
 
     public int $missingAudioRowCount = 0;
+
+    // -------------------------------------------------------------------------
+    // Batch cancellation
+    // -------------------------------------------------------------------------
+    public function cancelStressBatch(): void
+    {
+        $this->cancelBatch(OperationType::Stress);
+        $this->stressBatchStatus = 'done';
+    }
+
+    public function cancelTtsBatch(): void
+    {
+        $this->cancelBatch(OperationType::Tts);
+        $this->ttsBatchStatus = 'done';
+    }
 
     // -------------------------------------------------------------------------
     // Echo listener
@@ -264,6 +280,22 @@ trait ManagesMassOperations
         $sessionId = $this->getMassOpSessionId();
         $stressProgress = $this->massOperationService->getOperationProgress($sessionId, OperationType::Stress);
         $ttsProgress = $this->massOperationService->getOperationProgress($sessionId, OperationType::Tts);
+
+        // Auto-cancel a batch that is marked running but has no remaining jobs in
+        // the queue (e.g. worker was killed mid-run, permission error wiped jobs).
+        // Only relevant with the 'database' driver — other drivers don't expose a
+        // queryable jobs table, so the check would always return false.
+        if (config('queue.default') === 'database') {
+            if ($stressProgress['status'] === 'running' && ! $this->hasActiveJobsInQueue($sessionId, OperationType::Stress)) {
+                $this->cancelBatch(OperationType::Stress);
+                $stressProgress['status'] = 'done';
+            }
+            if ($ttsProgress['status'] === 'running' && ! $this->hasActiveJobsInQueue($sessionId, OperationType::Tts)) {
+                $this->cancelBatch(OperationType::Tts);
+                $ttsProgress['status'] = 'done';
+            }
+        }
+
         if ($stressProgress['status'] !== 'idle') {
             $this->stressBatchStatus = $stressProgress['status'];
             $this->stressBatchTotal = $stressProgress['total'];
@@ -438,5 +470,35 @@ trait ManagesMassOperations
     private function getMassOpSessionId(): string
     {
         return session()->getId();
+    }
+
+    /**
+     * Return true if the queue contains any jobs (pending or reserved) for this
+     * session and operation type. Used to detect orphaned 'running' batches.
+     */
+    private function hasActiveJobsInQueue(string $sessionId, OperationType $operationType): bool
+    {
+        return DB::table('jobs')
+            ->where('payload', 'like', "%{$sessionId}%")
+            ->where('payload', 'like', '%'.$operationType->value.'%')
+            ->exists();
+    }
+
+    /**
+     * Mark a batch as cancelled and delete all pending (unreserved) jobs for it
+     * from the queue. Jobs already reserved by a worker will check the cancelled
+     * flag at the start of handle() and skip processing.
+     */
+    private function cancelBatch(OperationType $operationType): void
+    {
+        $sessionId = $this->getMassOpSessionId();
+        Cache::put("mass_op:{$sessionId}:{$operationType->value}:cancelled", true, ttl: 3600);
+        Cache::put("mass_op:{$sessionId}:{$operationType->value}:status", 'done', ttl: 3600);
+
+        DB::table('jobs')
+            ->whereNull('reserved_at')
+            ->where('payload', 'like', "%{$sessionId}%")
+            ->where('payload', 'like', '%'.$operationType->value.'%')
+            ->delete();
     }
 }

@@ -290,6 +290,7 @@ class MassOperationService
     private function initialiseCacheKeys(string $sessionId, OperationType $operationType, int $total): void
     {
         $prefix = "mass_op:{$sessionId}:{$operationType->value}";
+        Cache::forget("{$prefix}:cancelled");
         Cache::put("{$prefix}:status", 'running', ttl: 3600);
         Cache::put("{$prefix}:total", $total, ttl: 3600);
         Cache::put("{$prefix}:processed", 0, ttl: 3600);

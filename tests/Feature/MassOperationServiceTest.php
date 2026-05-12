@@ -240,3 +240,24 @@ it('initialises TTS report cache keys when dispatching a TTS batch', function ()
     expect((int) Cache::get('mass_op:sess-9:tts:generated'))->toBe(0)
         ->and((int) Cache::get('mass_op:sess-9:tts:actual_chars'))->toBe(0);
 });
+
+it('clears the cancelled flag when a new batch is dispatched', function (): void {
+    Queue::fake();
+    Storage::fake('local');
+
+    Cache::put('mass_op:sess-cancel:tts:cancelled', true, 3600);
+
+    makeService()->dispatchTtsBatch(ttsSampleRows(), 'sess-cancel');
+
+    expect(Cache::has('mass_op:sess-cancel:tts:cancelled'))->toBeFalse();
+});
+
+it('clears the stress cancelled flag when a new stress batch is dispatched', function (): void {
+    Queue::fake();
+
+    Cache::put('mass_op:sess-cancel2:stress:cancelled', true, 3600);
+
+    makeService()->dispatchStressBatch(stressSampleRows(), 'sess-cancel2');
+
+    expect(Cache::has('mass_op:sess-cancel2:stress:cancelled'))->toBeFalse();
+});

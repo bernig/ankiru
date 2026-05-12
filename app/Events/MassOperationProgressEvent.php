@@ -4,7 +4,7 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
@@ -16,7 +16,7 @@ use Illuminate\Foundation\Events\Dispatchable;
  * Listened to in ManagesMassOperations::handleBatchProgressUpdate() via
  * a dynamic Laravel Echo channel listener.
  */
-class MassOperationProgressEvent implements ShouldBroadcast
+class MassOperationProgressEvent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets;
 

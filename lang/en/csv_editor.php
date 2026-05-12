@@ -85,6 +85,7 @@ return [
     'bulk_tts_in_progress' => 'Bulk audio generation in progress',
     'bulk_estimate_tokens' => '~:input input / :output output tokens (≈ $:cost) · :model',
     'bulk_estimate_chars' => '~:chars characters (≈ $:cost) · :model',
+    'bulk_cancel' => 'Stop',
     'bulk_warning_queue' => "Queue driver is set to 'sync'. Bulk jobs will block the request instead of running in the background.",
     'bulk_warning_broadcast' => "Broadcast driver is set to 'log'. Real-time progress updates will not be available.",
 

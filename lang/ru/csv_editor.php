@@ -77,6 +77,7 @@ return [
     'bulk_tts_in_progress' => 'Идет массовая генерация аудио',
     'bulk_estimate_tokens' => '~:input входных / :output выходных токенов (≈ $:cost) · :model',
     'bulk_estimate_chars' => '~:chars символов (≈ $:cost) · :model',
+    'bulk_cancel' => 'Остановить',
     'bulk_warning_queue' => "Драйвер очереди установлен в 'sync'. Массовые задания будут блокировать запрос вместо фонового выполнения.",
     'bulk_warning_broadcast' => "Драйвер трансляции установлен в 'log'. Обновления прогресса в реальном времени будут недоступны.",
 

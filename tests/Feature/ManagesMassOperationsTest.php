@@ -7,6 +7,7 @@ use App\Livewire\CsvEditor;
 use App\Models\User;
 use App\Services\MassOperationService;
 use App\Services\OpenAiTranslationService;
+use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
@@ -436,6 +437,112 @@ it('populates TTS report props when TTS batch completes', function () {
         ->assertSet('ttsBatchStatus', 'done')
         ->assertSet('ttsBatchGeneratedCount', 8)
         ->assertSet('ttsBatchActualChars', 320);
+});
+
+// ---------------------------------------------------------------------------
+// syncProgressFromCache — orphaned running batch auto-cancel
+// ---------------------------------------------------------------------------
+
+it('auto-cancels a running batch when no jobs remain in the queue', function () {
+    config(['queue.default' => 'database']);
+
+    $mockService = Mockery::mock(MassOperationService::class);
+
+    $mockService->shouldReceive('getOperationProgress')
+        ->with(Mockery::any(), OperationType::Tts)
+        ->andReturn(['status' => 'running', 'total' => 16, 'processed' => 7, 'failed' => 0]);
+
+    $mockService->shouldReceive('getOperationProgress')
+        ->with(Mockery::any(), OperationType::Stress)
+        ->andReturn(['status' => 'idle', 'total' => 0, 'processed' => 0, 'failed' => 0]);
+
+    $mockService->shouldReceive('getTtsReport')
+        ->andReturn(['generated' => 7, 'actualChars' => 200]);
+
+    $mockService->shouldReceive('estimateStressBatchCost')->andReturn([
+        'rowCount' => 0, 'inputTokens' => 0, 'outputTokens' => 0, 'estimatedCost' => 0.0,
+    ]);
+    $mockService->shouldReceive('estimateTtsBatchCost')->andReturn([
+        'rowCount' => 0, 'totalChars' => 0, 'estimatedCost' => 0.0,
+    ]);
+
+    app()->instance(MassOperationService::class, $mockService);
+
+    // No jobs in the queue — the batch is orphaned.
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', massOpRows())
+        ->set('hasCsvLoaded', true)
+        ->call('openBulkActionsModal')
+        ->assertSet('ttsBatchStatus', 'done');
+});
+
+// ---------------------------------------------------------------------------
+// cancelStressBatch / cancelTtsBatch
+// ---------------------------------------------------------------------------
+
+it('cancelling a stress batch sets its status to done and removes pending jobs', function () {
+    Queue::fake();
+
+    $rowsNeedingCorrection = [
+        ['Je parle.', 'Я говорю.'],
+        ['Il dit bonjour.', 'Он говорит привет.'],
+    ];
+
+    $lw = Livewire::test(CsvEditor::class)
+        ->set('csvRows', $rowsNeedingCorrection)
+        ->set('hasCsvLoaded', true)
+        ->call('dispatchStressBatch')
+        ->assertSet('stressBatchStatus', 'running');
+
+    $lw->call('cancelStressBatch')
+        ->assertSet('stressBatchStatus', 'done');
+
+    $sessionId = session()->getId();
+    expect(Cache::get("mass_op:{$sessionId}:stress:cancelled"))->toBeTrue();
+    expect(Cache::get("mass_op:{$sessionId}:stress:status"))->toBe('done');
+});
+
+it('cancelling a TTS batch sets its status to done', function () {
+    Queue::fake();
+    Storage::fake('local');
+
+    $rows = [
+        ['Je parle.', 'Я говорю.'],
+    ];
+
+    $lw = Livewire::test(CsvEditor::class)
+        ->set('csvRows', $rows)
+        ->set('hasCsvLoaded', true)
+        ->call('dispatchTtsBatch')
+        ->assertSet('ttsBatchStatus', 'running');
+
+    $lw->call('cancelTtsBatch')
+        ->assertSet('ttsBatchStatus', 'done');
+
+    $sessionId = session()->getId();
+    expect(Cache::get("mass_op:{$sessionId}:tts:cancelled"))->toBeTrue();
+});
+
+it('a cancelled job skips processing', function () {
+    $sessionId = 'test-session-cancel';
+    Cache::put("mass_op:{$sessionId}:tts:cancelled", true, ttl: 60);
+
+    $ttsService = Mockery::mock(RussianTextToSpeechService::class);
+    $ttsService->shouldNotReceive('generateAudio');
+
+    $job = new MassOperationJob(
+        operationType: OperationType::Tts,
+        sessionId: $sessionId,
+        rowIndex: 0,
+        totalRows: 1,
+        sourceText: 'Je parle.',
+        russianText: 'Я говорю.',
+    );
+
+    $accentService = app(RussianAccentService::class);
+    $translationService = app(OpenAiTranslationService::class);
+
+    $job->handle($accentService, app(OpenAiTranslationService::class), $ttsService);
 });
 
 // ---------------------------------------------------------------------------
