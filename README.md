@@ -1,6 +1,6 @@
 # Ankiru
 
-Créez vos cartes Anki russe en quelques clics.
+Créez vos cartes Anki russe en quelques clics — gratuitement et en open source.
 
 Traduisez vos phrases en russe avec accents toniques, générez les audios et exportez un deck `.apkg` prêt à importer dans Anki — le tout assisté par l'IA.
 
