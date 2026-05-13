@@ -78,9 +78,17 @@
     {{-- ── Footer toolbar ── --}}
     <div class="mx-auto mb-0 mt-4 flex w-full flex-col items-center gap-3" x-show="!$store.csvSearch.active">
 
-        <flux:button class="rounded-full! mb-4" wire:click="addRow" icon="plus" variant="primary">
-            {{ __('csv_editor.add_row') }}
-        </flux:button>
+        <div class="mb-4 flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
+            <flux:button class="rounded-full!" wire:click="addRow" icon="plus" variant="primary">
+                {{ __('csv_editor.add_row') }}
+            </flux:button>
+
+            <span class="text-sm text-zinc-400">{{ __('csv_editor.or') }}</span>
+
+            <flux:button class="rounded-full!" icon="sparkles" icon:variant="outline" wire:click="openGenerateRowsModal">
+                {{ __('csv_editor.generate_rows_button') }}
+            </flux:button>
+        </div>
 
         {{-- Flux pagination (shown only when there is more than one page) --}}
         @if ($this->totalPages > 1)

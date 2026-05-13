@@ -42,5 +42,13 @@ return [
     'verification_link_sent' => 'Un nouveau lien de vérification a été envoyé à votre adresse e-mail.',
     'resend_verification' => 'Renvoyer l\'e-mail de vérification',
     'sign_out' => 'Se déconnecter',
+    'optional' => 'Facultatif',
+    'optional_section' => 'Optionnel',
+    'optional_section_description' => 'Ces champs sont facultatifs. Vous pourrez les renseigner ou les modifier à tout moment depuis votre profil.',
+    'openai_api_key' => 'Clé API OpenAI',
+    'openai_api_key_hint' => 'Permet d\'utiliser les fonctions IA (traduction, accents, audio). Votre clé est stockée de façon chiffrée.',
+    'learning_context' => 'Mon contexte d\'apprentissage',
+    'learning_context_placeholder' => "Exemples :\n- Langue maternelle : français\n- Niveau en russe : débutant\n- Je voyage en Russie cet été\n- Je veux apprendre le vocabulaire du travail",
+    'learning_context_hint' => 'Aide l\'IA à générer des phrases adaptées à votre profil.',
 
 ];

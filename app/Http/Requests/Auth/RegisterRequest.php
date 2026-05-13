@@ -35,6 +35,8 @@ class RegisterRequest extends FormRequest
                 Rule::unique(User::class, 'email'),
             ],
             'password' => ['required', 'confirmed', Password::min(8)],
+            'openai_api_key' => ['nullable', 'string', 'min:20'],
+            'learning_context' => ['nullable', 'string', 'max:2000'],
         ];
     }
 }

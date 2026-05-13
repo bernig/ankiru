@@ -80,6 +80,7 @@ namespace App\Models{
  * @property string|null $accent_color
  * @property bool $accent_bold
  * @property bool $accent_unicode
+ * @property string|null $learning_context
  * @property string|null $remember_token
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
@@ -100,6 +101,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmail($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailVerifiedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLearningContext($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereOpenaiApiKey($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)

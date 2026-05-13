@@ -42,5 +42,13 @@ return [
     'verification_link_sent' => 'A new verification link has been sent to your email address.',
     'resend_verification' => 'Resend verification email',
     'sign_out' => 'Sign out',
+    'optional' => 'Optional',
+    'optional_section' => 'Optional',
+    'optional_section_description' => 'These fields are optional. You can fill them in or update them at any time from your profile page.',
+    'openai_api_key' => 'OpenAI API Key',
+    'openai_api_key_hint' => 'Enables AI features (translation, stress marks, audio). Your key is stored encrypted.',
+    'learning_context' => 'My Learning Context',
+    'learning_context_placeholder' => "Examples:\n- Native language: French\n- Russian level: beginner\n- I'm travelling to Russia this summer\n- I want to learn vocabulary for work",
+    'learning_context_hint' => 'Helps the AI generate phrases tailored to your profile.',
 
 ];

@@ -34,6 +34,58 @@ test('user can register and is redirected to email verification notice', functio
     Notification::assertSentTo(User::where('email', 'test@example.com')->first(), VerifyEmail::class);
 });
 
+test('user can register with optional openai api key and learning context', function () {
+    Notification::fake();
+
+    $this->post('/register', [
+        'name' => 'Test User',
+        'email' => 'test@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'openai_api_key' => 'sk-test-cle-api-valide-de-plus-de-20-caracteres',
+        'learning_context' => 'Débutant, voyage en juillet.',
+    ]);
+
+    $user = User::where('email', 'test@example.com')->first();
+    expect($user->openai_api_key)->toBe('sk-test-cle-api-valide-de-plus-de-20-caracteres');
+    expect($user->learning_context)->toBe('Débutant, voyage en juillet.');
+});
+
+test('user can register without optional fields', function () {
+    Notification::fake();
+
+    $this->post('/register', [
+        'name' => 'Test User',
+        'email' => 'test@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    $user = User::where('email', 'test@example.com')->first();
+    expect($user->openai_api_key)->toBeNull();
+    expect($user->learning_context)->toBeNull();
+});
+
+test('registration rejects an openai api key shorter than 20 characters', function () {
+    $this->post('/register', [
+        'name' => 'Test User',
+        'email' => 'test@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'openai_api_key' => 'trop-court',
+    ])->assertSessionHasErrors('openai_api_key');
+});
+
+test('registration rejects a learning context longer than 2000 characters', function () {
+    $this->post('/register', [
+        'name' => 'Test User',
+        'email' => 'test@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'learning_context' => str_repeat('a', 2001),
+    ])->assertSessionHasErrors('learning_context');
+});
+
 test('user can login with valid credentials', function () {
     /** @var User $existingUser */
     $existingUser = User::factory()->create([

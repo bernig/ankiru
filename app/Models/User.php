@@ -27,6 +27,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'accent_color',
         'accent_bold',
         'accent_unicode',
+        'learning_context',
     ];
 
     /**

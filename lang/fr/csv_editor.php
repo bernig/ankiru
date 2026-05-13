@@ -105,6 +105,27 @@ return [
     'accent_unicode_description' => 'Remplace la voyelle accentuée par sa version combinée avec l\'accent aigu.',
     'accent_style_save' => 'Appliquer',
 
+    // Génération de lignes
+    'generate_rows_button' => 'Générer des lignes avec l\'IA',
+    'generate_rows_title' => 'Générer des lignes',
+    'generate_rows_description' => 'L\'IA crée plusieurs paires (texte source + traduction russe) à partir de votre invite et les ajoute au tableau.',
+    'generate_rows_context_label' => 'Contexte personnel',
+    'generate_rows_context_tooltip' => 'Ce contexte est transmis à l\'IA pour personnaliser les phrases générées selon votre profil d\'apprentissage.',
+    'generate_rows_context_placeholder' => 'Ex : Langue maternelle française, niveau débutant, voyage à Moscou prévu en juillet.',
+    'generate_rows_context_hint' => 'Pré-rempli depuis votre <a href=":url" class="underline">profil</a>. Les modifications ici ne sont pas enregistrées.',
+    'generate_rows_count_label' => 'Nombre de lignes à générer',
+    'generate_rows_count_hint' => 'Entre 1 et 50 lignes par génération.',
+    'generate_rows_prompt_label' => 'Invite',
+    'generate_rows_prompt_placeholder' => 'Ex : Phrases pour commander au restaurant…',
+    'generate_rows_submit' => 'Générer',
+    'generate_rows_include_existing' => 'Partager les phrases existantes avec l\'IA pour éviter les doublons',
+    'generate_rows_include_existing_empty' => 'Aucune phrase existante dans ce fichier.',
+    'generate_rows_include_existing_sends_rows' => ':count phrase(s) existante(s) seront transmises (~:tokens tokens supplémentaires).',
+    'generate_rows_include_existing_count_only' => ':count phrases existantes — trop nombreuses pour être incluses en entier. L\'IA sera informée du nombre afin d\'adapter le niveau des phrases proposées.',
+    'generate_rows_cost_hint' => 'Coût estimé : ~:cost · ~:tokens_in/:tokens_out tokens (entrée/sortie, ordre de grandeur).',
+    'generate_rows_success_title' => ':count ligne ajoutée au tableau|:count lignes ajoutées au tableau',
+    'generate_rows_generate_more' => 'Générer d\'autres lignes',
+
     // Messages de validation / erreur
     'error_cannot_read_file' => 'Impossible de lire le fichier importé.',
     'error_csv_empty_or_malformed' => 'Le fichier CSV semble vide ou malformé.',

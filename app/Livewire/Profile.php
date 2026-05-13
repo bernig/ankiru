@@ -26,17 +26,22 @@ class Profile extends Component
 
     public string $openai_api_key = '';
 
+    public string $learning_context = '';
+
     public bool $profileSaved = false;
 
     public bool $passwordSaved = false;
 
     public bool $apiKeySaved = false;
 
+    public bool $learningContextSaved = false;
+
     public function mount(): void
     {
         $user = Auth::user();
         $this->name = $user->name;
         $this->email = $user->email;
+        $this->learning_context = $user->learning_context ?? '';
     }
 
     #[Computed]
@@ -153,6 +158,19 @@ class Profile extends Component
         $this->apiKeySaved = false;
 
         unset($this->hasOpenAiKey);
+    }
+
+    public function saveLearningContext(): void
+    {
+        $this->learningContextSaved = false;
+
+        $validated = $this->validate([
+            'learning_context' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        Auth::user()->update($validated);
+
+        $this->learningContextSaved = true;
     }
 
     public function render(): View

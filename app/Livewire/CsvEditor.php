@@ -4,12 +4,14 @@ namespace App\Livewire;
 
 use App\Livewire\Concerns\ManagesMassOperations;
 use App\Livewire\Concerns\ManagesPersistence;
+use App\Livewire\Concerns\ManagesRowGeneration;
 use App\Livewire\Concerns\ManagesTranslation;
 use App\Livewire\Concerns\ManagesTtsAudio;
 use App\Models\CsvDraft;
 use App\Services\AnkiPackageExporterService;
 use App\Services\MassOperationService;
 use App\Services\OpenAiTranslationService;
+use App\Services\RowGenerationService;
 use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -26,6 +28,7 @@ class CsvEditor extends Component
 {
     use ManagesMassOperations;
     use ManagesPersistence;
+    use ManagesRowGeneration;
     use ManagesTranslation;
     use ManagesTtsAudio;
     use WithFileUploads;
@@ -106,6 +109,8 @@ class CsvEditor extends Component
 
     protected MassOperationService $massOperationService;
 
+    protected RowGenerationService $rowGenerationService;
+
     /**
      * Called by Livewire before every action (mount and subsequent requests).
      */
@@ -115,12 +120,14 @@ class CsvEditor extends Component
         RussianTextToSpeechService $ttsService,
         AnkiPackageExporterService $ankiExporterService,
         MassOperationService $massOperationService,
+        RowGenerationService $rowGenerationService,
     ): void {
         $this->translationService = $translationService;
         $this->accentService = $accentService;
         $this->ttsService = $ttsService;
         $this->ankiExporterService = $ankiExporterService;
         $this->massOperationService = $massOperationService;
+        $this->rowGenerationService = $rowGenerationService;
     }
 
     public function mount(): void
@@ -129,6 +136,7 @@ class CsvEditor extends Component
         $this->accentColor = $user?->accent_color;
         $this->accentBold = (bool) ($user?->accent_bold ?? true);
         $this->accentUnicode = (bool) ($user?->accent_unicode ?? false);
+        $this->generateRowsContext = $user?->learning_context ?? '';
         $this->restoreFromDraft();
     }
 

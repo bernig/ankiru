@@ -105,6 +105,27 @@ return [
     'accent_unicode_description' => 'Replaces the stressed vowel with its combining acute accent version.',
     'accent_style_save' => 'Apply',
 
+    // Row generation
+    'generate_rows_button' => 'Generate rows with AI',
+    'generate_rows_title' => 'Generate rows',
+    'generate_rows_description' => 'The AI creates several pairs (source text + Russian translation) from your prompt and appends them to the table.',
+    'generate_rows_context_label' => 'Personal context',
+    'generate_rows_context_tooltip' => 'This context is sent to the AI to personalise the generated phrases according to your learning profile.',
+    'generate_rows_context_placeholder' => 'E.g. Native French speaker, beginner level, travelling to Moscow in July.',
+    'generate_rows_context_hint' => 'Pre-filled from your <a href=":url" class="underline">profile</a>. Changes here are not saved.',
+    'generate_rows_count_label' => 'Number of rows to generate',
+    'generate_rows_count_hint' => 'Between 1 and 50 rows per generation.',
+    'generate_rows_prompt_label' => 'Prompt',
+    'generate_rows_prompt_placeholder' => 'E.g. Phrases for ordering food at a restaurant…',
+    'generate_rows_submit' => 'Generate',
+    'generate_rows_include_existing' => 'Share existing phrases with the AI to avoid duplicates',
+    'generate_rows_include_existing_empty' => 'No existing phrases in this file.',
+    'generate_rows_include_existing_sends_rows' => ':count existing phrase(s) will be sent (~:tokens additional tokens).',
+    'generate_rows_include_existing_count_only' => ':count existing phrases — too many to include in full. The AI will be told the count so it can pitch phrases at the right level.',
+    'generate_rows_cost_hint' => 'Estimated cost: ~:cost · ~:tokens_in/:tokens_out tokens (input/output, rough estimate).',
+    'generate_rows_success_title' => ':count row added to the table|:count rows added to the table',
+    'generate_rows_generate_more' => 'Generate more rows',
+
     // Validation / error messages
     'error_cannot_read_file' => 'Could not read the uploaded file.',
     'error_csv_empty_or_malformed' => 'The CSV file appears to be empty or malformed.',

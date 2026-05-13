@@ -66,6 +66,30 @@
         </form>
     </flux:card>
 
+    {{-- Contexte d'apprentissage --}}
+    <flux:card class="space-y-6">
+        <div class="space-y-2">
+            <flux:heading size="lg">{{ __('profile.learning_context') }}</flux:heading>
+            <flux:text>{{ __('profile.learning_context_description') }}</flux:text>
+        </div>
+
+        <form class="space-y-4" wire:submit="saveLearningContext">
+            <flux:field>
+                <flux:label>{{ __('profile.learning_context_label') }}</flux:label>
+                <flux:textarea wire:model="learning_context" rows="5" :placeholder="__('profile.learning_context_placeholder')" />
+                <flux:error name="learning_context" />
+            </flux:field>
+
+            <div class="flex items-center gap-4">
+                <flux:button class="rounded-full!" type="submit" icon="check" variant="primary">{{ __('profile.save') }}</flux:button>
+
+                @if ($learningContextSaved)
+                    <flux:text class="text-green-600">{{ __('profile.saved') }}</flux:text>
+                @endif
+            </div>
+        </form>
+    </flux:card>
+
     {{-- Clé API OpenAI --}}
     <flux:card class="space-y-6">
         <div class="space-y-2">

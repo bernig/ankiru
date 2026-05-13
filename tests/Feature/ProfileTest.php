@@ -161,6 +161,50 @@ test('les statistiques n\'incluent pas les logs des autres utilisateurs', functi
     expect($component->instance()->usageStats)->toBeEmpty();
 });
 
+test('le contexte d\'apprentissage est chargé au montage', function () {
+    $user = User::factory()->create(['learning_context' => 'Je suis débutant en russe.']);
+
+    Livewire::actingAs($user)
+        ->test(Profile::class)
+        ->assertSet('learning_context', 'Je suis débutant en russe.');
+});
+
+test('le contexte d\'apprentissage peut être enregistré', function () {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test(Profile::class)
+        ->set('learning_context', 'Niveau B1, voyage prévu en juillet.')
+        ->call('saveLearningContext')
+        ->assertSet('learningContextSaved', true)
+        ->assertHasNoErrors();
+
+    expect($user->fresh()->learning_context)->toBe('Niveau B1, voyage prévu en juillet.');
+});
+
+test('le contexte d\'apprentissage accepte une valeur vide', function () {
+    $user = User::factory()->create(['learning_context' => 'Contexte précédent.']);
+
+    Livewire::actingAs($user)
+        ->test(Profile::class)
+        ->set('learning_context', '')
+        ->call('saveLearningContext')
+        ->assertSet('learningContextSaved', true)
+        ->assertHasNoErrors();
+
+    expect($user->fresh()->learning_context)->toBeEmpty();
+});
+
+test('le contexte d\'apprentissage est limité à 2000 caractères', function () {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test(Profile::class)
+        ->set('learning_context', str_repeat('a', 2001))
+        ->call('saveLearningContext')
+        ->assertHasErrors(['learning_context']);
+});
+
 test('le middleware injecte la clé API de l\'utilisateur dans la config', function () {
     $userKey = 'sk-user-test-cle-api-valide-de-plus-de-20-caracteres';
     $user = User::factory()->create(['openai_api_key' => $userKey]);

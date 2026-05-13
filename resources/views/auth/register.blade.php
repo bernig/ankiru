@@ -21,6 +21,38 @@
                 <flux:input id="password" name="password" type="password" label="{{ __('auth.password_label') }}" required />
                 <flux:input id="password_confirmation" name="password_confirmation" type="password" label="{{ __('auth.password_confirmation') }}" required />
 
+                {{-- Champs optionnels --}}
+                <div class="relative my-2">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-zinc-200"></div>
+                    </div>
+                    <div class="relative flex justify-center">
+                        <span class="bg-white px-3 text-xs font-medium uppercase tracking-wider text-zinc-400">{{ __('auth.optional_section') }}</span>
+                    </div>
+                </div>
+
+                <p class="text-sm text-zinc-500">{{ __('auth.optional_section_description') }}</p>
+
+                <flux:field>
+                    <flux:label class="flex items-center gap-2">
+                        {{ __('auth.openai_api_key') }}
+                        <flux:badge size="sm" color="zinc">{{ __('auth.optional') }}</flux:badge>
+                    </flux:label>
+                    <flux:input id="openai_api_key" name="openai_api_key" type="password" value="{{ old('openai_api_key') }}" viewable placeholder="sk-..." />
+                    <flux:error name="openai_api_key" />
+                    <flux:description>{{ __('auth.openai_api_key_hint') }}</flux:description>
+                </flux:field>
+
+                <flux:field>
+                    <flux:label class="flex items-center gap-2">
+                        {{ __('auth.learning_context') }}
+                        <flux:badge size="sm" color="zinc">{{ __('auth.optional') }}</flux:badge>
+                    </flux:label>
+                    <flux:textarea id="learning_context" name="learning_context" rows="4" :placeholder="__('auth.learning_context_placeholder')">{{ old('learning_context') }}</flux:textarea>
+                    <flux:error name="learning_context" />
+                    <flux:description>{{ __('auth.learning_context_hint') }}</flux:description>
+                </flux:field>
+
                 <flux:button class="mt-4 w-full" type="submit" variant="primary">{{ __('auth.create_account') }}</flux:button>
             </form>
 
