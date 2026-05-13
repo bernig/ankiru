@@ -235,6 +235,7 @@ class RussianAccentService
      * them all to the canonical <b>vowel</b> internal representation:
      *
      *   <font color="…"><b>X</b></font>  →  <b>X</b>   (colour + bold export)
+     *   <b><font color="…">X</font></b>  →  <b>X</b>   (bold-outer / Anki re-export)
      *   <font color="…">X</font>          →  <b>X</b>   (colour-only export)
      *   X + U+0301 (combining acute)      →  <b>X</b>   (unicode export / external)
      *   <b>X</b>                          →  <b>X</b>   (already canonical, untouched)
@@ -244,13 +245,19 @@ class RussianAccentService
      */
     public function normalizeImportedCellValue(string $rawText): string
     {
-        // Strip <font> wrappers. Handle <font><b>X</b></font> first so the
-        // second pass does not double-wrap an already-bold payload.
+        // Strip <font> wrappers. Handle both tag-order variants before the
+        // generic <font> pass so it cannot double-wrap an already-bold payload.
         $text = preg_replace(
             '/<font[^>]*><b>(.*?)<\/b><\/font>/us',
             '<b>$1</b>',
             $rawText,
         ) ?? $rawText;
+
+        $text = preg_replace(
+            '/<b><font[^>]*>(.*?)<\/font><\/b>/us',
+            '<b>$1</b>',
+            $text,
+        ) ?? $text;
 
         $text = preg_replace(
             '/<font[^>]*>(.*?)<\/font>/us',
@@ -259,11 +266,15 @@ class RussianAccentService
         ) ?? $text;
 
         // Convert vowel + U+0301 (combining acute accent) to <b>vowel</b>.
-        return preg_replace(
+        $text = preg_replace(
             '/([аеёиоуыэюяАЕЁИОУЫЭЮЯ])\x{0301}/u',
             '<b>$1</b>',
             $text,
         ) ?? $text;
+
+        // Safety net: collapse any double-nested <b> tags produced by unusual
+        // source formatting (e.g. Anki re-ordering bold/font wrappers).
+        return preg_replace('/<b>(<b>.*?<\/b>)<\/b>/us', '$1', $text) ?? $text;
     }
 
     /**

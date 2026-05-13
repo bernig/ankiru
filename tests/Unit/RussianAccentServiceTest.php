@@ -136,3 +136,28 @@ test('normalizeImportedCellValue handles full sentence with multiple accent form
 
     expect($service->normalizeImportedCellValue($input))->toBe($expected);
 });
+
+test('normalizeImportedCellValue strips bold-outer font-inner wrapper', function () {
+    $service = new RussianAccentService;
+
+    // Anki can re-export colour+bold with the tags in reversed order: <b><font>X</font></b>
+    expect($service->normalizeImportedCellValue('раб<b><font color="#ff0000">о</font></b>тать'))
+        ->toBe('раб<b>о</b>тать');
+});
+
+test('normalizeImportedCellValue collapses double-nested bold tags', function () {
+    $service = new RussianAccentService;
+
+    // Ensure any double-wrapped <b><b>X</b></b> is reduced to <b>X</b>
+    expect($service->normalizeImportedCellValue('Ч<b><b>е</b></b>рез'))
+        ->toBe('Ч<b>е</b>рез');
+});
+
+test('normalizeImportedCellValue collapses double-nested bold in full sentence', function () {
+    $service = new RussianAccentService;
+
+    $input = 'Ч<b><b>е</b></b>рез час у мен<b><b>я</b></b> звон<b><b>о</b></b>к.';
+    $expected = 'Ч<b>е</b>рез час у мен<b>я</b> звон<b>о</b>к.';
+
+    expect($service->normalizeImportedCellValue($input))->toBe($expected);
+});
