@@ -2,6 +2,7 @@
 
 return [
     'title' => 'About',
+    'seo_description' => 'Learn why Ankiru was built: to fix missing stress marks and audio in Russian Anki decks. Discover how it works under the hood.',
     'subtitle' => 'Why this app exists.',
     'paragraph_1' => 'As a French speaker learning Russian, I hit a wall pretty fast: most Anki decks you find online are missing correct stress marks, and getting good audio to nail the pronunciation is a hassle.',
     'paragraph_2' => 'So I built this to solve my own problem. It takes my phrases, uses AI to translate and add stress marks, generates high-quality audio, and bundles everything into an .apkg file I can dump straight into Anki.',

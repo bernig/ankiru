@@ -5,6 +5,7 @@ return [
     // ── Legal notice ──────────────────────────────────────────────────────────
     'mentions_title' => 'Legal Notice',
     'mentions_subtitle' => 'Legal information related to this website.',
+    'mentions_seo_description' => 'Legal notice for Ankiru.org: publisher details, hosting provider information, and intellectual property statement.',
     'mentions_updated' => 'Last updated: May 2026.',
 
     'publisher_title' => 'Website publisher',
@@ -34,6 +35,7 @@ return [
     // ── Privacy policy ────────────────────────────────────────────────────────
     'privacy_title' => 'Privacy Policy',
     'privacy_subtitle' => 'How we collect and use your data.',
+    'privacy_seo_description' => 'Privacy policy for Ankiru.org: what data we collect, how we use it, and how we protect your personal information.',
     'privacy_updated' => 'Last updated: May 2026.',
 
     'controller_title' => 'Data controller',

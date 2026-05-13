@@ -1,4 +1,4 @@
-<x-layout title="{{ __('contact.title') }}" description="{{ __('contact.subheading') }}">
+<x-layout title="{{ __('contact.title') }}" description="{{ __('contact.seo_description') }}">
     <x-site-header />
 
     <div class="mx-auto max-w-2xl">

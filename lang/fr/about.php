@@ -2,6 +2,7 @@
 
 return [
     'title' => 'À propos',
+    'seo_description' => 'Découvrez pourquoi Ankiru a été créé : pour résoudre le problème des accents toniques et de l\'audio manquants dans les decks Anki russes.',
     'subtitle' => 'Pourquoi cette application existe.',
     'paragraph_1' => 'J\'apprends le russe et j\'ai vite bloqué sur un problème : les paquets Anki qu\'on trouve en ligne manquent souvent d\'accents toniques et de bon son pour écouter la bonne prononciation.',
     'paragraph_2' => 'J\'ai donc développé cet outil pour mon propre apprentissage. Le but : prendre mes phrases, laisser l\'IA traduire et placer les accents, puis générer un audio de qualité pour exporter tout ça directement vers Anki.',

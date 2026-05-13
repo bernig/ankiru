@@ -1,4 +1,4 @@
-<x-layout :title="config('app.name')" :description="__('welcome.hero_description')">
+<x-layout :title="config('app.name')" :description="__('welcome.seo_description')">
     <x-site-header />
 
     @php

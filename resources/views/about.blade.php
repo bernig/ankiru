@@ -1,4 +1,4 @@
-<x-layout :title="__('about.title')" :description="__('about.subtitle')">
+<x-layout :title="__('about.title')" :description="__('about.seo_description')">
     <x-site-header />
 
     <div class="mx-auto max-w-2xl space-y-10">

@@ -3,7 +3,8 @@
 return [
     'title' => 'Contact',
     'heading' => 'Contact',
-    'subheading' => 'Nous sommes disponibles pour répondre à vos questions.',
+    'seo_description' => 'Une question ou suggestion sur Ankiru ? Envoyez-nous un message — nous lisons tout et faisons de notre mieux pour répondre rapidement.',
+    'subheading' => 'Nous sommes disponibles pour rpondre  vos questions.',
 
     'name' => 'Nom',
     'name_placeholder' => 'Votre nom',

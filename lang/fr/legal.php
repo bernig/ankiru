@@ -3,8 +3,9 @@
 return [
 
     // ── Mentions légales ──────────────────────────────────────────────────────
-    'mentions_title' => 'Mentions légales',
-    'mentions_subtitle' => 'Informations légales relatives à ce site.',
+    'mentions_title' => 'Mentions lgales',
+    'mentions_subtitle' => 'Informations lgales relatives  ce site.',
+    'mentions_seo_description' => 'Mentions légales d\'Ankiru.org : informations sur l\'éditeur, l\'hébergeur et la propriété intellectuelle du site.',
     'mentions_updated' => 'Dernière mise à jour : mai 2026.',
 
     'publisher_title' => 'Éditeur du site',
@@ -32,8 +33,9 @@ return [
     'liability_content' => 'L\'éditeur s\'efforce de maintenir les informations publiées à jour et exactes. Les fonctionnalités IA dépendent de l\'API OpenAI ; leur disponibilité est soumise aux conditions d\'utilisation de ce tiers. L\'éditeur ne saurait être tenu responsable des interruptions de service ou des résultats produits par les modèles d\'intelligence artificielle.',
 
     // ── Politique de confidentialité ─────────────────────────────────────────
-    'privacy_title' => 'Politique de confidentialité',
-    'privacy_subtitle' => 'Comment nous collectons et utilisons vos données.',
+    'privacy_title' => 'Politique de confidentialit',
+    'privacy_subtitle' => 'Comment nous collectons et utilisons vos donnes.',
+    'privacy_seo_description' => 'Politique de confidentialité d\'Ankiru.org : données collectées, finalité, durée de conservation et droits de vos informations personnelles.',
     'privacy_updated' => 'Dernière mise à jour : mai 2026.',
 
     'controller_title' => 'Responsable du traitement',
