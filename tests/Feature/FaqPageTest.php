@@ -33,5 +33,5 @@ it('displays the FAQ page in english', function () {
     $this->get(route('faq'))
         ->assertOk()
         ->assertSee('FAQ')
-        ->assertSee('Are AI-generated phrases reliable?');
+        ->assertSee('Are the AI-generated phrases reliable?');
 });

@@ -23,7 +23,7 @@
                     'title' => __('faq.section_api_title'),
                     'icon' => 'key',
                     'iconClass' => 'bg-amber-100 text-amber-600',
-                    'items' => [['q' => __('faq.q_why_own_key'), 'a' => __('faq.a_why_own_key')], ['q' => __('faq.q_cost_estimate'), 'a' => __('faq.a_cost_estimate')], ['q' => __('faq.q_key_security'), 'a' => __('faq.a_key_security')]],
+                    'items' => [['q' => __('faq.q_why_own_key'), 'a' => __('faq.a_why_own_key')], ['q' => __('faq.q_cost_estimate'), 'a' => __('faq.a_cost_estimate')], ['q' => __('faq.q_key_security'), 'a' => __('faq.a_key_security')], ['q' => __('faq.q_api_credits'), 'a' => __('faq.a_api_credits')]],
                 ],
                 [
                     'title' => __('faq.section_usage_title'),
