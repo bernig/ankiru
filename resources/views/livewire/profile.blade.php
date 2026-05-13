@@ -96,43 +96,90 @@
             @if ($this->usageStats->isEmpty())
                 <flux:text class="italic text-zinc-400">{{ __('profile.api_usage_empty') }}</flux:text>
             @else
-                <flux:table>
-                    <flux:table.columns>
-                        <flux:table.column>{{ __('profile.stats_operation') }}</flux:table.column>
-                        <flux:table.column class="text-right">{{ __('profile.stats_calls') }}</flux:table.column>
-                        <flux:table.column class="text-right">
-                            <div class="flex items-center justify-end gap-1">
-                                {{ __('profile.stats_tokens_in_out') }}
-                                <flux:tooltip toggleable :content="__('profile.stats_tokens_tooltip')">
-                                    <flux:button class="text-zinc-400!" icon="information-circle" variant="ghost" size="xs" />
-                                </flux:tooltip>
-                            </div>
-                        </flux:table.column>
-                        <flux:table.column class="text-right">{{ __('profile.stats_characters') }}</flux:table.column>
-                        <flux:table.column class="text-right">{{ __('profile.stats_cost') }}</flux:table.column>
-                    </flux:table.columns>
+                {{-- Vue tableau (sm et plus) --}}
+                <div class="hidden sm:block">
+                    <flux:table>
+                        <flux:table.columns>
+                            <flux:table.column>{{ __('profile.stats_operation') }}</flux:table.column>
+                            <flux:table.column class="text-right">{{ __('profile.stats_calls') }}</flux:table.column>
+                            <flux:table.column class="text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    {{ __('profile.stats_tokens_in_out') }}
+                                    <flux:tooltip toggleable :content="__('profile.stats_tokens_tooltip')">
+                                        <flux:button class="text-zinc-400!" icon="information-circle" variant="ghost" size="xs" />
+                                    </flux:tooltip>
+                                </div>
+                            </flux:table.column>
+                            <flux:table.column class="text-right">{{ __('profile.stats_characters') }}</flux:table.column>
+                            <flux:table.column class="text-right">{{ __('profile.stats_cost') }}</flux:table.column>
+                        </flux:table.columns>
 
-                    <flux:table.rows>
-                        @foreach ($this->usageStats as $stat)
-                            <flux:table.row>
-                                <flux:table.cell>{{ __('profile.operation_' . $stat['operation']) }}</flux:table.cell>
-                                <flux:table.cell class="text-right tabular-nums">{{ number_format($stat['calls']) }}</flux:table.cell>
-                                <flux:table.cell class="text-right tabular-nums">{{ $stat['prompt_tokens'] > 0 ? number_format($stat['prompt_tokens']) : '—' }}/{{ $stat['completion_tokens'] > 0 ? number_format($stat['completion_tokens']) : '—' }}</flux:table.cell>
-                                <flux:table.cell class="text-right tabular-nums">{{ $stat['characters'] > 0 ? number_format($stat['characters']) : '—' }}</flux:table.cell>
-                                <flux:table.cell class="text-right tabular-nums">${{ number_format($stat['estimated_cost'], 4) }}</flux:table.cell>
+                        <flux:table.rows>
+                            @foreach ($this->usageStats as $stat)
+                                <flux:table.row>
+                                    <flux:table.cell>{{ __('profile.operation_' . $stat['operation']) }}</flux:table.cell>
+                                    <flux:table.cell class="text-right tabular-nums">{{ number_format($stat['calls']) }}</flux:table.cell>
+                                    <flux:table.cell class="text-right tabular-nums">{{ $stat['prompt_tokens'] > 0 ? number_format($stat['prompt_tokens']) : '—' }}/{{ $stat['completion_tokens'] > 0 ? number_format($stat['completion_tokens']) : '—' }}</flux:table.cell>
+                                    <flux:table.cell class="text-right tabular-nums">{{ $stat['characters'] > 0 ? number_format($stat['characters']) : '—' }}</flux:table.cell>
+                                    <flux:table.cell class="text-right tabular-nums">${{ number_format($stat['estimated_cost'], 4) }}</flux:table.cell>
+                                </flux:table.row>
+                            @endforeach
+
+                            {{-- Ligne total --}}
+                            <flux:table.row class="border-t border-zinc-200 font-semibold">
+                                <flux:table.cell>{{ __('profile.stats_total') }}</flux:table.cell>
+                                <flux:table.cell class="text-right tabular-nums">{{ number_format($this->usageStats->sum('calls')) }}</flux:table.cell>
+                                <flux:table.cell class="text-right tabular-nums">{{ number_format($this->usageStats->sum('prompt_tokens')) }}/{{ number_format($this->usageStats->sum('completion_tokens')) }}</flux:table.cell>
+                                <flux:table.cell class="text-right tabular-nums">{{ number_format($this->usageStats->sum('characters')) }}</flux:table.cell>
+                                <flux:table.cell class="text-right tabular-nums">${{ number_format($this->usageStats->sum('estimated_cost'), 4) }}</flux:table.cell>
                             </flux:table.row>
-                        @endforeach
+                        </flux:table.rows>
+                    </flux:table>
+                </div>
 
-                        {{-- Ligne total --}}
-                        <flux:table.row class="border-t border-zinc-200 font-semibold">
-                            <flux:table.cell>{{ __('profile.stats_total') }}</flux:table.cell>
-                            <flux:table.cell class="text-right tabular-nums">{{ number_format($this->usageStats->sum('calls')) }}</flux:table.cell>
-                            <flux:table.cell class="text-right tabular-nums">{{ number_format($this->usageStats->sum('prompt_tokens')) }}/{{ number_format($this->usageStats->sum('completion_tokens')) }}</flux:table.cell>
-                            <flux:table.cell class="text-right tabular-nums">{{ number_format($this->usageStats->sum('characters')) }}</flux:table.cell>
-                            <flux:table.cell class="text-right tabular-nums">${{ number_format($this->usageStats->sum('estimated_cost'), 4) }}</flux:table.cell>
-                        </flux:table.row>
-                    </flux:table.rows>
-                </flux:table>
+                {{-- Vue blocs (mobile uniquement) --}}
+                <div class="space-y-3 sm:hidden">
+                    @foreach ($this->usageStats as $stat)
+                        <div class="rounded-lg border border-zinc-200 p-4 dark:border-zinc-700">
+                            <div class="mb-3 font-semibold text-zinc-800 dark:text-zinc-100">
+                                {{ __('profile.operation_' . $stat['operation']) }}
+                            </div>
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                                <div class="text-zinc-500 dark:text-zinc-400">{{ __('profile.stats_calls') }}</div>
+                                <div class="text-right font-medium tabular-nums">{{ number_format($stat['calls']) }}</div>
+
+                                <div class="text-zinc-500 dark:text-zinc-400">{{ __('profile.stats_tokens_in_out') }}</div>
+                                <div class="text-right font-medium tabular-nums">{{ $stat['prompt_tokens'] > 0 ? number_format($stat['prompt_tokens']) : '—' }}/{{ $stat['completion_tokens'] > 0 ? number_format($stat['completion_tokens']) : '—' }}</div>
+
+                                <div class="text-zinc-500 dark:text-zinc-400">{{ __('profile.stats_characters') }}</div>
+                                <div class="text-right font-medium tabular-nums">{{ $stat['characters'] > 0 ? number_format($stat['characters']) : '—' }}</div>
+
+                                <div class="text-zinc-500 dark:text-zinc-400">{{ __('profile.stats_cost') }}</div>
+                                <div class="text-right font-medium tabular-nums">${{ number_format($stat['estimated_cost'], 4) }}</div>
+                            </div>
+                        </div>
+                    @endforeach
+
+                    {{-- Bloc total --}}
+                    <div class="rounded-lg border border-zinc-300 bg-zinc-50 p-4 dark:border-zinc-600 dark:bg-zinc-800">
+                        <div class="mb-3 font-semibold text-zinc-800 dark:text-zinc-100">
+                            {{ __('profile.stats_total') }}
+                        </div>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                            <div class="text-zinc-500 dark:text-zinc-400">{{ __('profile.stats_calls') }}</div>
+                            <div class="text-right font-semibold tabular-nums">{{ number_format($this->usageStats->sum('calls')) }}</div>
+
+                            <div class="text-zinc-500 dark:text-zinc-400">{{ __('profile.stats_tokens_in_out') }}</div>
+                            <div class="text-right font-semibold tabular-nums">{{ number_format($this->usageStats->sum('prompt_tokens')) }}/{{ number_format($this->usageStats->sum('completion_tokens')) }}</div>
+
+                            <div class="text-zinc-500 dark:text-zinc-400">{{ __('profile.stats_characters') }}</div>
+                            <div class="text-right font-semibold tabular-nums">{{ number_format($this->usageStats->sum('characters')) }}</div>
+
+                            <div class="text-zinc-500 dark:text-zinc-400">{{ __('profile.stats_cost') }}</div>
+                            <div class="text-right font-semibold tabular-nums">${{ number_format($this->usageStats->sum('estimated_cost'), 4) }}</div>
+                        </div>
+                    </div>
+                </div>
             @endif
         @else
             <form class="space-y-4" wire:submit="saveApiKey">
