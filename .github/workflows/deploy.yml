@@ -21,6 +21,11 @@ jobs:
             set -e
             cd /var/www/ankiru.org
 
+            # Ensure the site is brought back up even if a subsequent step fails
+            trap 'php artisan up' EXIT
+
+            php artisan down --retry=10
+
             git fetch origin master
             git reset --hard FETCH_HEAD
 
@@ -44,3 +49,5 @@ jobs:
             php artisan queue:restart
             sudo /usr/bin/supervisorctl restart ankiru-worker
             php artisan reverb:restart
+
+            php artisan up
