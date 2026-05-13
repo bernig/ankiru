@@ -3,14 +3,19 @@
 namespace App\Livewire;
 
 use App\Mail\ContactFormMail;
+use Exception;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
+use Spatie\Honeypot\Http\Livewire\Concerns\HoneypotData;
+use Spatie\Honeypot\Http\Livewire\Concerns\UsesSpamProtection;
 
 class Contact extends Component
 {
+    use UsesSpamProtection;
+
     #[Validate('required|string|max:100')]
     public string $name = '';
 
@@ -25,8 +30,20 @@ class Contact extends Component
 
     public bool $sent = false;
 
+    public HoneypotData $extraFields;
+
+    public function mount(): void
+    {
+        $this->extraFields = new HoneypotData;
+    }
+
+    /**
+     * @throws Exception
+     */
     public function submit(): void
     {
+        $this->protectAgainstSpam();
+
         $key = 'contact-form:'.request()->ip();
 
         if (RateLimiter::tooManyAttempts($key, maxAttempts: 3)) {

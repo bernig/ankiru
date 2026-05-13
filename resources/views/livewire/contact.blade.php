@@ -12,6 +12,8 @@
         @enderror
 
         <form class="space-y-4" wire:submit="submit">
+            <x-honeypot livewire-model="extraFields" />
+
             <div class="grid gap-4 sm:grid-cols-2">
                 <flux:field>
                     <flux:label>{{ __('contact.name') }}</flux:label>

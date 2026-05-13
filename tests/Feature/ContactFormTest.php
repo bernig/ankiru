@@ -10,6 +10,10 @@ use Livewire\Livewire;
 beforeEach(function (): void {
     Mail::fake();
     RateLimiter::clear('contact-form:127.0.0.1');
+
+    // Disabling the honeypot for tests
+    // @see https://github.com/spatie/laravel-honeypot#disabling-in-testing
+    config()->set('honeypot.enabled', false);
 });
 
 test('contact page renders the livewire component', function (): void {
