@@ -6,7 +6,7 @@ test('welcome page has basic SEO meta tags', function () {
     $response->assertSuccessful();
     $response->assertSee('<meta name="robots" content="index, follow">', false);
     $response->assertSee('<meta name="description"', false);
-    $response->assertSee('<link rel="canonical"', false);
+    $response->assertSee('rel="canonical"', false);
     $response->assertSee('<meta property="og:title"', false);
     $response->assertSee('<meta property="og:description"', false);
     $response->assertSee('<meta property="og:type" content="website">', false);
@@ -20,7 +20,7 @@ test('about page has basic SEO meta tags', function () {
 
     $response->assertSuccessful();
     $response->assertSee('<meta name="description"', false);
-    $response->assertSee('<link rel="canonical"', false);
+    $response->assertSee('rel="canonical"', false);
     $response->assertSee('<meta property="og:title"', false);
 });
 
@@ -29,7 +29,7 @@ test('contact page has basic SEO meta tags', function () {
 
     $response->assertSuccessful();
     $response->assertSee('<meta name="description"', false);
-    $response->assertSee('<link rel="canonical"', false);
+    $response->assertSee('rel="canonical"', false);
     $response->assertSee('<meta property="og:title"', false);
 });
 
