@@ -73,9 +73,7 @@ trait ManagesTtsAudio
     {
         $this->ttsError = '';
 
-        if (! auth()->user()?->openai_api_key) {
-            $this->dispatch('open-openai-key-setup');
-
+        if ($this->apiKeyMissing()) {
             return;
         }
 

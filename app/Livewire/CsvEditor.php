@@ -392,17 +392,7 @@ class CsvEditor extends Component
 
         $downloadFileName = $this->buildBaseFileName().'_'.now()->format('Ymd_His').'.apkg';
 
-        return response()->streamDownload(function () use ($apkgPath): void {
-            readfile($apkgPath);
-
-            if (! @unlink($apkgPath)) {
-                Log::warning('Failed to delete temporary .apkg file after streaming.', [
-                    'path' => $apkgPath,
-                ]);
-            }
-        }, $downloadFileName, [
-            'Content-Type' => 'application/octet-stream',
-        ]);
+        return $this->streamApkgFileDownload($apkgPath, $downloadFileName);
     }
 
     /**
@@ -429,17 +419,7 @@ class CsvEditor extends Component
         $apkgPath = $this->ankiExporterService->exportCollection($decks, $parentName);
         $downloadFileName = $parentName.'_'.now()->format('Ymd_His').'.apkg';
 
-        return response()->streamDownload(function () use ($apkgPath): void {
-            readfile($apkgPath);
-
-            if (! @unlink($apkgPath)) {
-                Log::warning('Failed to delete temporary combined .apkg file after streaming.', [
-                    'path' => $apkgPath,
-                ]);
-            }
-        }, $downloadFileName, [
-            'Content-Type' => 'application/octet-stream',
-        ]);
+        return $this->streamApkgFileDownload($apkgPath, $downloadFileName);
     }
 
     /**
@@ -457,10 +437,7 @@ class CsvEditor extends Component
             ->first();
 
         if ($next !== null) {
-            $this->activeDraftId = $next->id;
-            $this->csvRows = $next->csv_rows ?? [];
-            $this->originalFileName = $next->original_file_name;
-            $this->hasCsvLoaded = $next->has_csv_loaded;
+            $this->loadDraftIntoState($next);
         } else {
             $this->csvRows = [];
             $this->originalFileName = '';
@@ -470,13 +447,7 @@ class CsvEditor extends Component
             $this->activeDraftId = 0;
         }
 
-        $this->isRenamingFile = false;
-        $this->renameInput = '';
-        $this->ttsModalRowIndex = -1;
-        $this->searchQuery = '';
-        $this->filterAccentNeeded = false;
-        $this->filterNoAudio = false;
-        $this->resetPage();
+        $this->resetFiltersAndPagination();
         $this->dispatch('csv-file-switched');
     }
 
@@ -495,17 +466,8 @@ class CsvEditor extends Component
             return;
         }
 
-        $this->activeDraftId = $draft->id;
-        $this->csvRows = $draft->csv_rows ?? [];
-        $this->originalFileName = $draft->original_file_name;
-        $this->hasCsvLoaded = $draft->has_csv_loaded;
-        $this->isRenamingFile = false;
-        $this->renameInput = '';
-        $this->ttsModalRowIndex = -1;
-        $this->searchQuery = '';
-        $this->filterAccentNeeded = false;
-        $this->filterNoAudio = false;
-        $this->resetPage();
+        $this->loadDraftIntoState($draft);
+        $this->resetFiltersAndPagination();
 
         $draft->update(['last_accessed_at' => now()]);
 
@@ -521,11 +483,7 @@ class CsvEditor extends Component
         $this->originalFileName = __('csv_editor.new_file_default_name').'.csv';
         $this->hasCsvLoaded = true;
         $this->activeDraftId = 0;
-        $this->ttsModalRowIndex = -1;
-        $this->searchQuery = '';
-        $this->filterAccentNeeded = false;
-        $this->filterNoAudio = false;
-        $this->resetPage();
+        $this->resetFiltersAndPagination();
         $this->dispatch('csv-file-switched');
 
         $this->autoSaveDraft();
@@ -622,6 +580,54 @@ class CsvEditor extends Component
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
+
+    /**
+     * Returns true and opens the API key setup modal when the user has no
+     * OpenAI key configured. Callers should return immediately when true.
+     */
+    private function apiKeyMissing(): bool
+    {
+        if (auth()->user()?->openai_api_key) {
+            return false;
+        }
+
+        $this->dispatch('open-openai-key-setup');
+
+        return true;
+    }
+
+    /**
+     * Reset UI-only state that must be cleared whenever a different file is
+     * opened (filters, search, rename input, TTS modal, pagination).
+     */
+    private function resetFiltersAndPagination(): void
+    {
+        $this->isRenamingFile = false;
+        $this->renameInput = '';
+        $this->ttsModalRowIndex = -1;
+        $this->searchQuery = '';
+        $this->filterAccentNeeded = false;
+        $this->filterNoAudio = false;
+        $this->resetPage();
+    }
+
+    /**
+     * Stream an .apkg file to the browser then delete the temporary file.
+     */
+    private function streamApkgFileDownload(string $apkgPath, string $downloadFileName): StreamedResponse
+    {
+        return response()->streamDownload(function () use ($apkgPath): void {
+            readfile($apkgPath);
+
+            if (! @unlink($apkgPath)) {
+                Log::warning('Failed to delete temporary .apkg file after streaming.', [
+                    'path' => $apkgPath,
+                ]);
+            }
+        }, $downloadFileName, [
+            'Content-Type' => 'application/octet-stream',
+        ]);
+    }
 
     /**
      * Parse raw CSV content into a 2D array using fgetcsv so that RFC 4180

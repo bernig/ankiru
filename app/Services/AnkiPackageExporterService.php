@@ -210,40 +210,7 @@ class AnkiPackageExporterService
         $schemaModTime = $now * 1000;
 
         $conf = $this->buildConf(self::DECK_ID);
-
-        $models = json_encode([
-            (string) self::MODEL_ID => [
-                'id' => self::MODEL_ID,
-                'name' => $deckName,
-                'type' => 0,
-                'mod' => $now,
-                'usn' => -1,
-                'sortf' => 0,
-                'did' => self::DECK_ID,
-                'tmpls' => [
-                    [
-                        'name' => 'Card 1',
-                        'ord' => 0,
-                        'qfmt' => '{{Front}}',
-                        'afmt' => '{{FrontSide}}<hr id=answer>{{Back}}',
-                        'bqfmt' => '',
-                        'bafmt' => '',
-                        'did' => null,
-                        'bfont' => '',
-                        'bsize' => 0,
-                    ],
-                ],
-                'flds' => [
-                    ['name' => 'Front', 'ord' => 0, 'sticky' => false, 'rtl' => false, 'font' => 'Arial', 'size' => 20, 'media' => []],
-                    ['name' => 'Back',  'ord' => 1, 'sticky' => false, 'rtl' => false, 'font' => 'Arial', 'size' => 20, 'media' => []],
-                ],
-                'css' => '.card { font-family: arial; font-size: 20px; text-align: center; color: black; background-color: white; }',
-                'latexPre' => "\\documentclass[12pt]{article}\n\\special{papersize=3in,5in}\n\\usepackage[utf8]{inputenc}\n\\usepackage{amssymb,amsmath}\n\\pagestyle{empty}\n\\setlength{\\parindent}{0in}\n\\begin{document}\n",
-                'latexPost' => '\\end{document}',
-                'latexsvg' => false,
-                'req' => [[0, 'any', [0]]],
-            ],
-        ]);
+        $models = $this->buildModelJson($deckName, self::DECK_ID, $now);
 
         $decks = json_encode([
             '1' => $this->buildDefaultDeckData($now),
@@ -262,65 +229,20 @@ class AnkiPackageExporterService
      * Note IDs are epoch-millisecond integers incremented per card so they are
      * unique without requiring any external state.
      *
-     * Fields are joined with ASCII unit-separator (0x1f) as required by Anki.
-     *
      * @param  array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}>  $cards
      */
     private function insertNotesAndCards(PDO $pdo, array $cards): void
     {
         $now = time();
-        // Start from the current millisecond, incrementing by 2 per card so note and
-        // card IDs are interleaved without collisions.
         $baseNoteId = (int) (microtime(true) * 1000);
 
-        $noteStatement = $pdo->prepare(
-            'INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-        );
-        $cardStatement = $pdo->prepare(
-            'INSERT INTO cards VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-        );
+        $noteStatement = $pdo->prepare('INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $cardStatement = $pdo->prepare('INSERT INTO cards VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 
         foreach ($cards as $position => $card) {
             $noteId = $baseNoteId + ($position * 2);
             $cardId = $baseNoteId + ($position * 2) + 1;
-
-            // Anki separates field values inside a note with the ASCII unit-separator (0x1f).
-            $joinedFields = $card['front'].chr(0x1F).$card['back'];
-
-            $noteStatement->execute([
-                $noteId,
-                substr(md5((string) $noteId), 0, 10),  // guid: short unique stable string
-                self::MODEL_ID,
-                $now,
-                -1,    // usn: -1 means "pending sync"
-                '',    // tags: empty
-                $joinedFields,
-                $card['front'],  // sfld: sort field (front/first field)
-                $this->computeFieldChecksum($card['front']),
-                0,     // flags
-                '',    // data
-            ]);
-
-            $cardStatement->execute([
-                $cardId,
-                $noteId,
-                self::DECK_ID,
-                0,          // ord: template index (0 = first template)
-                $now,
-                -1,         // usn
-                0,          // type: 0 = new card
-                0,          // queue: 0 = new card queue
-                $position,  // due: position in new-card queue (natural import order)
-                0,          // ivl: interval (set by Anki on first review)
-                0,          // factor: ease factor (set by Anki on graduation)
-                0,          // reps
-                0,          // lapses
-                0,          // left
-                0,          // odue
-                0,          // odid
-                0,          // flags
-                '',         // data
-            ]);
+            $this->insertSingleNoteAndCard($noteStatement, $cardStatement, $card, self::DECK_ID, $noteId, $cardId, $position, $now);
         }
     }
 
@@ -355,40 +277,7 @@ class AnkiPackageExporterService
         $parentDeckId = self::DECK_ID;
 
         $conf = $this->buildConf($parentDeckId);
-
-        $models = json_encode([
-            (string) self::MODEL_ID => [
-                'id' => self::MODEL_ID,
-                'name' => 'Basic',
-                'type' => 0,
-                'mod' => $now,
-                'usn' => -1,
-                'sortf' => 0,
-                'did' => $parentDeckId,
-                'tmpls' => [
-                    [
-                        'name' => 'Card 1',
-                        'ord' => 0,
-                        'qfmt' => '{{Front}}',
-                        'afmt' => '{{FrontSide}}<hr id=answer>{{Back}}',
-                        'bqfmt' => '',
-                        'bafmt' => '',
-                        'did' => null,
-                        'bfont' => '',
-                        'bsize' => 0,
-                    ],
-                ],
-                'flds' => [
-                    ['name' => 'Front', 'ord' => 0, 'sticky' => false, 'rtl' => false, 'font' => 'Arial', 'size' => 20, 'media' => []],
-                    ['name' => 'Back',  'ord' => 1, 'sticky' => false, 'rtl' => false, 'font' => 'Arial', 'size' => 20, 'media' => []],
-                ],
-                'css' => '.card { font-family: arial; font-size: 20px; text-align: center; color: black; background-color: white; }',
-                'latexPre' => "\\documentclass[12pt]{article}\n\\special{papersize=3in,5in}\n\\usepackage[utf8]{inputenc}\n\\usepackage{amssymb,amsmath}\n\\pagestyle{empty}\n\\setlength{\\parindent}{0in}\n\\begin{document}\n",
-                'latexPost' => '\\end{document}',
-                'latexsvg' => false,
-                'req' => [[0, 'any', [0]]],
-            ],
-        ]);
+        $models = $this->buildModelJson('Basic', $parentDeckId, $now);
 
         // Parent deck — no cards live here directly, only in sub-decks.
         $decksJson = [
@@ -422,54 +311,14 @@ class AnkiPackageExporterService
         $baseNoteId = (int) (microtime(true) * 1000);
         $position = 0;
 
-        $noteStatement = $pdo->prepare(
-            'INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-        );
-        $cardStatement = $pdo->prepare(
-            'INSERT INTO cards VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-        );
+        $noteStatement = $pdo->prepare('INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $cardStatement = $pdo->prepare('INSERT INTO cards VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 
         foreach ($deckConfigs as $deckConfig) {
             foreach ($deckConfig['cards'] as $card) {
                 $noteId = $baseNoteId + ($position * 2);
                 $cardId = $baseNoteId + ($position * 2) + 1;
-                $joinedFields = $card['front'].chr(0x1F).$card['back'];
-
-                $noteStatement->execute([
-                    $noteId,
-                    substr(md5((string) $noteId), 0, 10),
-                    self::MODEL_ID,
-                    $now,
-                    -1,
-                    '',
-                    $joinedFields,
-                    $card['front'],
-                    $this->computeFieldChecksum($card['front']),
-                    0,
-                    '',
-                ]);
-
-                $cardStatement->execute([
-                    $cardId,
-                    $noteId,
-                    $deckConfig['id'],
-                    0,
-                    $now,
-                    -1,
-                    0,
-                    0,
-                    $position,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    '',
-                ]);
-
+                $this->insertSingleNoteAndCard($noteStatement, $cardStatement, $card, $deckConfig['id'], $noteId, $cardId, $position, $now);
                 $position++;
             }
         }
@@ -548,6 +397,101 @@ class AnkiPackageExporterService
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
+
+    /**
+     * Build the `models` JSON for the collection, defining the Basic note type.
+     * The name and target deck differ between single-deck and multi-deck exports.
+     */
+    private function buildModelJson(string $modelName, int $deckId, int $now): string
+    {
+        return json_encode([
+            (string) self::MODEL_ID => [
+                'id' => self::MODEL_ID,
+                'name' => $modelName,
+                'type' => 0,
+                'mod' => $now,
+                'usn' => -1,
+                'sortf' => 0,
+                'did' => $deckId,
+                'tmpls' => [
+                    [
+                        'name' => 'Card 1',
+                        'ord' => 0,
+                        'qfmt' => '{{Front}}',
+                        'afmt' => '{{FrontSide}}<hr id=answer>{{Back}}',
+                        'bqfmt' => '',
+                        'bafmt' => '',
+                        'did' => null,
+                        'bfont' => '',
+                        'bsize' => 0,
+                    ],
+                ],
+                'flds' => [
+                    ['name' => 'Front', 'ord' => 0, 'sticky' => false, 'rtl' => false, 'font' => 'Arial', 'size' => 20, 'media' => []],
+                    ['name' => 'Back', 'ord' => 1, 'sticky' => false, 'rtl' => false, 'font' => 'Arial', 'size' => 20, 'media' => []],
+                ],
+                'css' => '.card { font-family: arial; font-size: 20px; text-align: center; color: black; background-color: white; }',
+                'latexPre' => "\\documentclass[12pt]{article}\n\\special{papersize=3in,5in}\n\\usepackage[utf8]{inputenc}\n\\usepackage{amssymb,amsmath}\n\\pagestyle{empty}\n\\setlength{\\parindent}{0in}\n\\begin{document}\n",
+                'latexPost' => '\\end{document}',
+                'latexsvg' => false,
+                'req' => [[0, 'any', [0]]],
+            ],
+        ]);
+    }
+
+    /**
+     * Execute the INSERT statements for a single note and its associated card.
+     * Fields are joined with ASCII unit-separator (0x1f) as required by Anki.
+     *
+     * @param  array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}  $card
+     */
+    private function insertSingleNoteAndCard(
+        \PDOStatement $noteStatement,
+        \PDOStatement $cardStatement,
+        array $card,
+        int $deckId,
+        int $noteId,
+        int $cardId,
+        int $position,
+        int $now,
+    ): void {
+        $joinedFields = $card['front'].chr(0x1F).$card['back'];
+
+        $noteStatement->execute([
+            $noteId,
+            substr(md5((string) $noteId), 0, 10),  // guid: short unique stable string
+            self::MODEL_ID,
+            $now,
+            -1,    // usn: -1 means "pending sync"
+            '',    // tags: empty
+            $joinedFields,
+            $card['front'],  // sfld: sort field (front/first field)
+            $this->computeFieldChecksum($card['front']),
+            0,     // flags
+            '',    // data
+        ]);
+
+        $cardStatement->execute([
+            $cardId,
+            $noteId,
+            $deckId,
+            0,          // ord: template index (0 = first template)
+            $now,
+            -1,         // usn
+            0,          // type: 0 = new card
+            0,          // queue: 0 = new card queue
+            $position,  // due: position in new-card queue (natural import order)
+            0,          // ivl: interval (set by Anki on first review)
+            0,          // factor: ease factor (set by Anki on graduation)
+            0,          // reps
+            0,          // lapses
+            0,          // left
+            0,          // odue
+            0,          // odid
+            0,          // flags
+            '',         // data
+        ]);
+    }
 
     /**
      * Build the `conf` JSON string (collection-level scheduler settings).

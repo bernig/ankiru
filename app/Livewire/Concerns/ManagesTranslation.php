@@ -37,9 +37,7 @@ trait ManagesTranslation
     {
         $this->translationError = '';
 
-        if (! auth()->user()?->openai_api_key) {
-            $this->dispatch('open-openai-key-setup');
-
+        if ($this->apiKeyMissing()) {
             return;
         }
 
@@ -86,9 +84,7 @@ trait ManagesTranslation
     {
         $this->translationError = '';
 
-        if (! auth()->user()?->openai_api_key) {
-            $this->dispatch('open-openai-key-setup');
-
+        if ($this->apiKeyMissing()) {
             return;
         }
 

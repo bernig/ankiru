@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use Mockery\MockInterface;
 
 beforeEach(function (): void {
     /** @var User $authenticatedUser */
@@ -38,6 +39,21 @@ function massOpRows(): array
         ['Je travaille depuis chez moi.', 'Я раб<b>о</b>таю из д<b>о</b>ма.'],
         ['Je suis développeur web.', 'Я веб-разраб<b>о</b>тчик.'],
     ];
+}
+
+/**
+ * Stub the two cost-estimate methods on a MassOperationService mock so they
+ * return zero values. Used in tests that trigger estimate refreshes as a side
+ * effect but do not assert on the estimate values themselves.
+ */
+function stubMassServiceEstimates(MockInterface $mockService): void
+{
+    $mockService->shouldReceive('estimateStressBatchCost')->andReturn([
+        'rowCount' => 0, 'inputTokens' => 0, 'outputTokens' => 0, 'estimatedCost' => 0.0,
+    ]);
+    $mockService->shouldReceive('estimateTtsBatchCost')->andReturn([
+        'rowCount' => 0, 'totalChars' => 0, 'estimatedCost' => 0.0,
+    ]);
 }
 
 // ---------------------------------------------------------------------------
@@ -80,12 +96,7 @@ it('syncs in-flight stress progress from cache when modal is opened', function (
         ->with(Mockery::any(), OperationType::Tts)
         ->andReturn(['status' => 'idle', 'total' => 0, 'processed' => 0, 'failed' => 0]);
 
-    $mockService->shouldReceive('estimateStressBatchCost')->andReturn([
-        'rowCount' => 0, 'inputTokens' => 0, 'outputTokens' => 0, 'estimatedCost' => 0.0,
-    ]);
-    $mockService->shouldReceive('estimateTtsBatchCost')->andReturn([
-        'rowCount' => 0, 'totalChars' => 0, 'estimatedCost' => 0.0,
-    ]);
+    stubMassServiceEstimates($mockService);
 
     app()->instance(MassOperationService::class, $mockService);
 
@@ -118,12 +129,7 @@ it('refreshes running batch progress from cache when a websocket update is misse
     $mockService->shouldReceive('getStressReport')
         ->andReturn(['corrected' => 1, 'promptTokens' => 24, 'completionTokens' => 8]);
 
-    $mockService->shouldReceive('estimateStressBatchCost')->andReturn([
-        'rowCount' => 0, 'inputTokens' => 0, 'outputTokens' => 0, 'estimatedCost' => 0.0,
-    ]);
-    $mockService->shouldReceive('estimateTtsBatchCost')->andReturn([
-        'rowCount' => 0, 'totalChars' => 0, 'estimatedCost' => 0.0,
-    ]);
+    stubMassServiceEstimates($mockService);
 
     app()->instance(MassOperationService::class, $mockService);
 
@@ -253,12 +259,7 @@ it('immediately applies stress batch completion when the sync queue driver runs 
     $mockService->shouldReceive('getStressReport')
         ->andReturn(['corrected' => 2, 'promptTokens' => 50, 'completionTokens' => 30]);
 
-    $mockService->shouldReceive('estimateStressBatchCost')->andReturn([
-        'rowCount' => 0, 'inputTokens' => 0, 'outputTokens' => 0, 'estimatedCost' => 0.0,
-    ]);
-    $mockService->shouldReceive('estimateTtsBatchCost')->andReturn([
-        'rowCount' => 0, 'totalChars' => 0, 'estimatedCost' => 0.0,
-    ]);
+    stubMassServiceEstimates($mockService);
 
     app()->instance(MassOperationService::class, $mockService);
 
@@ -359,12 +360,7 @@ it('merges pending stress corrections when the modal is opened after a missed do
     $mockService->shouldReceive('getStressReport')
         ->andReturn(['corrected' => 2, 'promptTokens' => 30, 'completionTokens' => 20]);
 
-    $mockService->shouldReceive('estimateStressBatchCost')->andReturn([
-        'rowCount' => 0, 'inputTokens' => 0, 'outputTokens' => 0, 'estimatedCost' => 0.0,
-    ]);
-    $mockService->shouldReceive('estimateTtsBatchCost')->andReturn([
-        'rowCount' => 0, 'totalChars' => 0, 'estimatedCost' => 0.0,
-    ]);
+    stubMassServiceEstimates($mockService);
 
     app()->instance(MassOperationService::class, $mockService);
 
@@ -455,12 +451,7 @@ it('populates TTS report props when TTS batch completes', function () {
         ->once()
         ->andReturn(['generated' => 8, 'actualChars' => 320]);
 
-    $mockService->shouldReceive('estimateStressBatchCost')->andReturn([
-        'rowCount' => 0, 'inputTokens' => 0, 'outputTokens' => 0, 'estimatedCost' => 0.0,
-    ]);
-    $mockService->shouldReceive('estimateTtsBatchCost')->andReturn([
-        'rowCount' => 0, 'totalChars' => 0, 'estimatedCost' => 0.0,
-    ]);
+    stubMassServiceEstimates($mockService);
     $mockService->shouldReceive('getOperationProgress')->andReturn([
         'status' => 'idle', 'total' => 0, 'processed' => 0, 'failed' => 0,
     ]);
@@ -503,12 +494,7 @@ it('auto-cancels a running batch when no jobs remain in the queue', function () 
     $mockService->shouldReceive('getTtsReport')
         ->andReturn(['generated' => 7, 'actualChars' => 200]);
 
-    $mockService->shouldReceive('estimateStressBatchCost')->andReturn([
-        'rowCount' => 0, 'inputTokens' => 0, 'outputTokens' => 0, 'estimatedCost' => 0.0,
-    ]);
-    $mockService->shouldReceive('estimateTtsBatchCost')->andReturn([
-        'rowCount' => 0, 'totalChars' => 0, 'estimatedCost' => 0.0,
-    ]);
+    stubMassServiceEstimates($mockService);
 
     app()->instance(MassOperationService::class, $mockService);
 

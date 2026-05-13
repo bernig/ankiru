@@ -72,13 +72,18 @@ trait ManagesPersistence
             return;
         }
 
-        /** @var array<int, array<int, string>> $rows */
-        $rows = $draft->csv_rows ?? [];
+        $this->loadDraftIntoState($draft);
+    }
 
-        $this->csvRows = $rows;
+    /**
+     * Populate the editor's core state properties from a draft model.
+     */
+    private function loadDraftIntoState(CsvDraft $draft): void
+    {
+        $this->activeDraftId = $draft->id;
+        $this->csvRows = $draft->csv_rows ?? [];
         $this->originalFileName = $draft->original_file_name;
         $this->hasCsvLoaded = $draft->has_csv_loaded;
-        $this->activeDraftId = $draft->id;
     }
 
     /**
