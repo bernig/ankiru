@@ -33,9 +33,9 @@ function stressSampleRows(): array
     return [
         0 => ['Je travaille.', 'Я работаю.'],           // needs stress (работаю has 4 vowels)
         1 => ['Je suis ici.',  'Я здесь.'],              // no stress needed (здесь is 1 vowel, я is 1 vowel)
-        2 => ['Je mange.',     'Я <b>е</b>м.'],          // already accented / single vowel — no correction
+        2 => ['Je mange.',     'Я <b>е</b>м.'],          // already accented / single vowel, no correction
         3 => ['Source.',       'Хор<b>о</b>шо.'],        // already accented
-        4 => ['Empty.',        ''],                      // empty russian — skip
+        4 => ['Empty.',        ''],                      // empty russian: skip
     ];
 }
 /**
@@ -114,8 +114,8 @@ it('returns zero chars and cost when all TTS audio exists', function (): void {
 });
 it('estimates TTS characters for known missing rows', function (): void {
     Storage::fake('local');
-    // "Я работаю." normalised = "Я работаю." — 10 chars
-    // "Хорошо."   normalised = "Хорошо."    —  7 chars
+    // "Я работаю." normalised = "Я работаю." - 10 chars
+    // "Хорошо."   normalised = "Хорошо."    -  7 chars
     $rows = [['A', 'Я работаю.'], ['B', 'Хорошо.']];
     $result = makeService()->estimateTtsBatchCost($rows);
     expect($result['rowCount'])->toBe(2)

@@ -358,7 +358,7 @@ class CsvEditor extends Component
     {
         unset($this->csvRows[$rowIndex]);
         $this->csvRows = array_values($this->csvRows);
-        // Close the audio modal — indices have shifted, references would be stale.
+        // Close the audio modal, since indices have shifted and references would be stale.
         $this->ttsModalRowIndex = -1;
         $this->autoSaveDraft();
         // Clamp the current page in case the last page was emptied by this deletion.
@@ -658,7 +658,7 @@ class CsvEditor extends Component
             $rows = [];
 
             while (($row = fgetcsv($handle)) !== false) {
-                // fgetcsv returns [null] for completely blank lines — skip them.
+                // fgetcsv returns [null] for completely blank lines: skip them.
                 if ($row === [null]) {
                     continue;
                 }
@@ -707,7 +707,7 @@ class CsvEditor extends Component
      * Possible outputs for a stressed vowel X:
      *   color + bold  → <font color="#HEX"><b>X</b></font>
      *   color only    → <font color="#HEX">X</font>
-     *   bold only     → <b>X</b>  (unchanged — no color tag added)
+     *   bold only     → <b>X</b>  (unchanged, no color tag added)
      *
      * When multiple options are active they are combined:
      *   unicode + color + bold → <font color="#HEX"><b>X́</b></font>
@@ -724,7 +724,7 @@ class CsvEditor extends Component
             ? htmlspecialchars($this->accentColor, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
             : null;
 
-        // Nothing to do — keep the raw <b> tags as the accent position marker.
+        // Nothing to do, keep the raw <b> tags as the accent position marker.
         if (! $unicode && ! $bold && ! $color) {
             return $cellValue;
         }
@@ -733,7 +733,7 @@ class CsvEditor extends Component
             $vowel = $m[1];
 
             // 1. Optionally append the combining acute accent (U+0301).
-            //    ё/Ё are inherently stressed — no additional mark needed.
+            //    ё/Ё are inherently stressed, no additional mark needed.
             $content = ($unicode && $vowel !== 'ё' && $vowel !== 'Ё')
                 ? $vowel."\u{0301}"
                 : $vowel;

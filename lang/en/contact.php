@@ -3,7 +3,7 @@
 return [
     'title' => 'Contact',
     'heading' => 'Contact',
-    'seo_description' => 'Have a question or suggestion about Ankiru? Send us a message — we read every submission and do our best to reply promptly.',
+    'seo_description' => 'Have a question or suggestion about Ankiru? Send us a message: we read every submission and do our best to reply promptly.',
     'subheading' => 'We are available to answer your questions.',
 
     'name' => 'Name',

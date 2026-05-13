@@ -43,7 +43,7 @@ return [
 
     'collected_data_title' => 'Data collected',
     'collected_data_intro' => 'The following data is collected when using the site:',
-    'collected_data_account' => 'Account: name, email address, and password (hashed with bcrypt — never stored in plain text).',
+    'collected_data_account' => 'Account: name, email address, and password (hashed with bcrypt, never stored in plain text).',
     'collected_data_apikey' => 'OpenAI API key: provided voluntarily, stored encrypted in the database, used exclusively for your own requests.',
     'collected_data_drafts' => 'CSV drafts: the text content you enter or import, kept so you can resume your work.',
     'collected_data_logs' => 'API usage logs: token and character counters per operation. The content of your requests is never stored.',

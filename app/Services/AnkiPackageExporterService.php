@@ -265,7 +265,7 @@ class AnkiPackageExporterService
     /**
      * Insert the `col` row for a collection containing multiple decks grouped under a parent.
      *
-     * Sub-deck names are stored as "Parent::Child" — Anki's convention for deck hierarchies.
+     * Sub-deck names are stored as "Parent::Child", Anki's convention for deck hierarchies.
      * The parent deck uses DECK_ID; sub-decks use DECK_ID + 1, + 2, …
      *
      * @param  array<int, array{id: int, name: string, cards: array}>  $deckConfigs
@@ -279,7 +279,7 @@ class AnkiPackageExporterService
         $conf = $this->buildConf($parentDeckId);
         $models = $this->buildModelJson('Basic', $parentDeckId, $now);
 
-        // Parent deck — no cards live here directly, only in sub-decks.
+        // Parent deck - no cards live here directly, only in sub-decks.
         $decksJson = [
             '1' => $this->buildDefaultDeckData($now),
             (string) $parentDeckId => $this->buildDeckData($parentDeckId, $parentDeckName, $now),

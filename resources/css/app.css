@@ -44,7 +44,7 @@
 
 /* ── Russian accent mode vowel spans ── */
 
-/* Unstressed Russian vowel — clickable in accent mode */
+/* Unstressed Russian vowel - clickable in accent mode */
 .rv-vowel {
     color: #666;
     cursor: pointer;
@@ -58,7 +58,7 @@
     text-decoration: underline;
 }
 
-/* Stressed (accented) Russian vowel — already wrapped in <b> */
+/* Stressed (accented) Russian vowel - already wrapped in <b> */
 .rv-vowel-accented {
     color: var(--rv-accent-color, inherit);
     font-weight: var(--rv-accent-bold, bold);

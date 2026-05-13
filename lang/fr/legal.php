@@ -43,7 +43,7 @@ return [
 
     'collected_data_title' => 'Données collectées',
     'collected_data_intro' => 'Les données suivantes sont collectées lors de l\'utilisation du site :',
-    'collected_data_account' => 'Compte : nom, adresse e-mail et mot de passe (haché avec bcrypt — jamais stocké en clair).',
+    'collected_data_account' => 'Compte : nom, adresse e-mail et mot de passe (haché avec bcrypt, jamais stocké en clair).',
     'collected_data_apikey' => 'Clé API OpenAI : fournie volontairement, stockée chiffrée en base de données, utilisée exclusivement pour vos propres requêtes.',
     'collected_data_drafts' => 'Brouillons CSV : le contenu textuel que vous saisissez ou importez, conservé pour vous permettre de reprendre votre travail.',
     'collected_data_logs' => 'Journaux d\'utilisation API : compteurs de tokens et de caractères par opération. Le contenu de vos requêtes n\'est jamais enregistré.',

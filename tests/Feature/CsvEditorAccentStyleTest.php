@@ -152,7 +152,7 @@ test('csv export does not add combining accent to ё in unicode mode', function 
 
     $content = base64_decode($test->effects['download']['content']);
 
-    // ё should stay as-is — no combining accent added
+    // ё should stay as-is: no combining accent added
     expect($content)->toContain('вёл')
         ->and($content)->not->toContain('<b>');
 });

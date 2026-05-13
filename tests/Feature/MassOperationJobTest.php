@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 
 /**
- * Shared test session ID — scopes all cache keys within a single test run.
+ * Shared test session ID, scopes all cache keys within a single test run.
  */
 function massOpSessionId(): string
 {
@@ -168,7 +168,7 @@ it('skips correction when the row no longer needs stress marks', function (): vo
 
     // Processed counter still increments even when skipped.
     expect((int) Cache::get(massOpCacheKey('stress', 'processed')))->toBe(1);
-    // Corrected counter stays at zero — no API call was made.
+    // Corrected counter stays at zero: no API call was made.
     expect((int) Cache::get(massOpCacheKey('stress', 'corrected')))->toBe(0);
 });
 
@@ -216,7 +216,7 @@ it('records a failure and keeps the batch running when a stress API call throws'
         ->shouldReceive('correctRussianStressMarksWithUsage')
         ->andThrow(new RuntimeException('API timeout'));
 
-    // Should NOT throw — exception must be caught inside handle()
+    // Should NOT throw: exception must be caught inside handle()
     (new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 2, 'source', 'russian'))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
@@ -225,7 +225,7 @@ it('records a failure and keeps the batch running when a stress API call throws'
 
     expect((int) Cache::get(massOpCacheKey('stress', 'failed')))->toBe(1);
     expect((int) Cache::get(massOpCacheKey('stress', 'processed')))->toBe(1);
-    // Batch is NOT done yet — second row hasn't run.
+    // Batch is NOT done yet: second row hasn't run.
     expect(Cache::get(massOpCacheKey('stress', 'status')))->toBe('running');
 });
 
@@ -332,7 +332,7 @@ it('records a failure and keeps the batch running when a TTS API call throws', f
     $ttsMock->shouldReceive('normalizeForSpeech')->andReturn('russian');
     $ttsMock->shouldReceive('generateAudio')->andThrow(new RuntimeException('TTS API error'));
 
-    // Should NOT throw — exception must be caught inside handle()
+    // Should NOT throw: exception must be caught inside handle()
     (new MassOperationJob(OperationType::Tts, massOpSessionId(), 0, 2, '', 'russian'))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
@@ -341,7 +341,7 @@ it('records a failure and keeps the batch running when a TTS API call throws', f
 
     expect((int) Cache::get(massOpCacheKey('tts', 'failed')))->toBe(1);
     expect((int) Cache::get(massOpCacheKey('tts', 'processed')))->toBe(1);
-    // Batch is NOT done yet — second row hasn't run.
+    // Batch is NOT done yet: second row hasn't run.
     expect(Cache::get(massOpCacheKey('tts', 'status')))->toBe('running');
 });
 
@@ -349,8 +349,8 @@ it('increments generated count and accumulates actual chars after a successful T
     Event::fake([MassOperationProgressEvent::class]);
     seedBatchCache('tts', 2);
 
-    $russianA = 'Я раб<b>о</b>таю.'; // normalises to "Я работаю." — 10 chars
-    $russianB = 'Хор<b>о</b>шо.';    // normalises to "Хорошо."    —  7 chars
+    $russianA = 'Я раб<b>о</b>таю.'; // normalises to "Я работаю." - 10 chars
+    $russianB = 'Хор<b>о</b>шо.';    // normalises to "Хорошо."    -  7 chars
 
     $this->mock(RussianTextToSpeechService::class)
         ->shouldReceive('normalizeForSpeech')

@@ -3,7 +3,7 @@
     {{-- ── Filter toggles + active chips ── --}}
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-zinc-100 pb-3 dark:border-zinc-700/50">
 
-        {{-- Toggle buttons — always visible --}}
+        {{-- Toggle buttons - always visible --}}
         <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-400 dark:text-zinc-500">
             <button class="{{ $filterAccentNeeded ? 'bg-amber-50 ring-1 ring-amber-300 text-amber-700 dark:bg-amber-900/30 dark:ring-amber-700 dark:text-amber-300' : '' }} flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 transition-colors hover:bg-amber-50 dark:hover:bg-amber-900/20" title="{{ __('csv_editor.filter_click_to_activate') }}" wire:click="$toggle('filterAccentNeeded')">
                 <span class="inline-block size-3 shrink-0 rounded-sm bg-amber-200 dark:bg-amber-900/50"></span>

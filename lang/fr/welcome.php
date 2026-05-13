@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'seo_description' => 'Transformez vos phrases russes en cartes Anki avec accents toniques, traductions et audio. Gratuit — il suffit d\'avoir votre clé API OpenAI.',
+    'seo_description' => 'Transformez vos phrases russes en cartes Anki avec accents toniques, traductions et audio. Gratuit : il suffit d\'avoir votre clé API OpenAI.',
     'hero_badge' => 'Pour ceux qui créent leurs propres paquets Anki en russe',
     'hero_title' => 'Partez de vos propres phrases et transformez-les en parfaites cartes Anki pour le russe',
     'hero_description' => 'Anki est bien plus efficace quand on apprend avec ses propres phrases. Cette application vous aide à en faire des cartes de qualité : texte russe, accents toniques, audio, le tout prêt à être exporté et révisé.',
@@ -14,7 +14,7 @@ return [
     'goals_description' => 'L\'idée n\'est pas de tout automatiser à l\'aveugle. L\'application se charge simplement des tâches répétitives pour que vous n\'ayez plus qu\'à choisir vos phrases et vérifier le résultat.',
 
     'goal_input_title' => 'Partez de phrases qui vous sont utiles',
-    'goal_input_description' => 'Utilisez les phrases de vos cours, de vos lectures ou de vos discussions — ou demandez à l\'IA d\'en générer sur le thème de votre choix.',
+    'goal_input_description' => 'Utilisez les phrases de vos cours, de vos lectures ou de vos discussions, ou demandez à l\'IA d\'en générer sur le thème de votre choix.',
 
     'goal_pronunciation_title' => 'Ajoutez l\'audio et les accents toniques',
     'goal_pronunciation_description' => 'La bonne prononciation audio et les accents toniques marqués visuellement rendent les cartes beaucoup plus faciles à mémoriser.',

@@ -21,12 +21,12 @@
             </flux:text>
 
             <div class="flex items-center gap-3">
-                {{-- "Details" link — re-opens the Bulk Actions modal --}}
+                {{-- "Details" link - re-opens the Bulk Actions modal --}}
                 <button class="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300" type="button" x-on:click="$flux.modal('bulk-actions').show()">
                     {{ __('csv_editor.bulk_widget_details') }}
                 </button>
 
-                {{-- Dismiss button — only available when nothing is running --}}
+                {{-- Dismiss button - only available when nothing is running --}}
                 <button class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300" type="button" aria-label="Dismiss" x-show="$wire.stressBatchStatus !== 'running' && $wire.ttsBatchStatus !== 'running'" x-on:click="dismissed = true">
                     <flux:icon.x-mark class="size-3.5" />
                 </button>

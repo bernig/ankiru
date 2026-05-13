@@ -58,7 +58,7 @@ trait ManagesMassOperations
     /** Exact character count sent to the TTS API during the batch. */
     public int $ttsBatchActualChars = 0;
 
-    // Estimates — only populated after openBulkActionsModal() is called.
+    // Estimates - only populated after openBulkActionsModal() is called.
     public int $estimatedStressInputTokens = 0;
 
     public int $estimatedStressOutputTokens = 0;
@@ -140,7 +140,7 @@ trait ManagesMassOperations
 
         // Step 1: Deterministically fix bare ё in every row right now, before
         // any async job is dispatched.  This covers the common case where ё is
-        // the only missing accent and no AI call is needed at all — the fix is
+        // the only missing accent and no AI call is needed at all; the fix is
         // immediate regardless of the queue driver or WebSocket availability.
         $this->applyYoNormalizationToAllRows();
 
@@ -160,8 +160,8 @@ trait ManagesMassOperations
 
             // With a synchronous queue driver all jobs execute inline inside
             // dispatchStressBatch() above, before returning here.  The 'done'
-            // WebSocket broadcast is sent during that call — before the browser
-            // is connected to the Echo channel — so it is never received as an
+            // WebSocket broadcast is sent during that call, before the browser
+            // is connected to the Echo channel, so it is never received as an
             // Echo event.  Read the cache immediately to catch this case.
             $this->applyStressBatchCompletionIfAlreadyDone($sessionId);
         }
@@ -300,7 +300,7 @@ trait ManagesMassOperations
 
         // Auto-cancel a batch that is marked running but has no remaining jobs in
         // the queue (e.g. worker was killed mid-run, permission error wiped jobs).
-        // Only relevant with the 'database' driver — other drivers don't expose a
+        // Only relevant with the 'database' driver; other drivers don't expose a
         // queryable jobs table, so the check would always return false.
         if (config('queue.default') === 'database') {
             if ($stressProgress['status'] === 'running' && ! $this->hasActiveJobsInQueue($sessionId, OperationType::Stress)) {
@@ -424,7 +424,7 @@ trait ManagesMassOperations
      * $csvRows in place and persisting when at least one row changed.
      *
      * Called synchronously at the start of dispatchStressBatch() so that rows
-     * whose only problem is a bare ё are corrected immediately — without having
+     * whose only problem is a bare ё are corrected immediately, without having
      * to wait for an async queue worker or a WebSocket broadcast.
      */
     private function applyYoNormalizationToAllRows(): void

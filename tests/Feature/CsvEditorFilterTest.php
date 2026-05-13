@@ -93,8 +93,8 @@ test('filterNoAudio excludes rows with empty russian text', function (): void {
     Storage::fake('local');
 
     $rows = [
-        ['Row A', ''],           // empty russian — not included in "no audio" filter
-        ['Row B', 'Я читаю.'],   // has russian text, no audio — should appear
+        ['Row A', ''],           // empty russian: not included in "no audio" filter
+        ['Row B', 'Я читаю.'],   // has russian text, no audio: should appear
     ];
 
     Livewire::test(CsvEditor::class)

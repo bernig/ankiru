@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     @php
-        $pageTitle = isset($title) ? $title . ' — ' . config('app.name') : config('app.name');
+        $pageTitle = isset($title) ? $title . ' - ' . config('app.name') : config('app.name');
         $pageDescription = $description ?? null;
         $canonicalUrl = $canonical ?? url()->current();
         $ogImage = $ogImage ?? asset('android-chrome-512x512.png');

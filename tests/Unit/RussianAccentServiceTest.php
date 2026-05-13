@@ -32,7 +32,7 @@ test('normalizeYoAccent does not add a duplicate tag when ё is already tagged',
 test('normalizeYoAccent replaces a wrong accent with the ё tag', function () {
     $service = new RussianAccentService;
 
-    // AI incorrectly stressed и — normalizer must move the tag to ё.
+    // AI incorrectly stressed и; normalizer must move the tag to ё.
     expect($service->normalizeYoAccent('<b>и</b>дёт'))->toBe('ид<b>ё</b>т');
 });
 

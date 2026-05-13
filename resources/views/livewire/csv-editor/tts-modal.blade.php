@@ -46,7 +46,7 @@
             </flux:callout>
         @endif
 
-        {{-- Action buttons — inside default slot since flux:modal has no footer slot --}}
+        {{-- Action buttons - inside default slot since flux:modal has no footer slot --}}
         <div class="flex items-center gap-2">
             <flux:spacer />
 

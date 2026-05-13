@@ -30,7 +30,7 @@ class MassOperationJob implements ShouldQueue
 {
     use Queueable;
 
-    /** No retries — failed rows are silently skipped; the user can re-run. */
+    /** No retries: failed rows are silently skipped; the user can re-run. */
     public int $tries = 1;
 
     /** 60 seconds is ample for a single AI or TTS API call. */
@@ -38,7 +38,7 @@ class MassOperationJob implements ShouldQueue
 
     /**
      * @param  OperationType  $operationType  The type of bulk operation to perform.
-     * @param  string  $sessionId  Browser session ID — scopes cache keys and broadcast channel.
+     * @param  string  $sessionId  Browser session ID, scopes cache keys and broadcast channel.
      * @param  int  $rowIndex  Original CSV row index (0-based).
      * @param  int  $totalRows  Total jobs dispatched for this batch (used to detect completion).
      * @param  string  $sourceText  Column 0 snapshot (French source phrase).

@@ -65,7 +65,7 @@ class Profile extends Component
 
         $cacheKey = 'user_usage_stats:'.Auth::id();
 
-        // Cache::remember() returns whatever was serialised — if the entry was
+        // Cache::remember() returns whatever was serialised; if the entry was
         // stored as a Collection object (earlier format) and PHP can no longer
         // deserialise it, we'd get __PHP_Incomplete_Class. Reading with get()
         // first lets us evict any stale entry before falling through to recompute.

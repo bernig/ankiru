@@ -85,7 +85,7 @@ test('corrects stress marks and sends french context with the russian text', fun
 });
 
 test('skips the AI call and fixes bare ё directly when normalisation alone suffices', function () {
-    // "Пойдём" has two vowels (о + ё) but only ё is bare — normalizeYoAccent
+    // "Пойдём" has two vowels (о + ё) but only ё is bare; normalizeYoAccent
     // can fix that without AI; the AI must never be called.
     RussianStressCorrectorAgent::fake(function () {
         throw new RuntimeException('AI should not have been called.');

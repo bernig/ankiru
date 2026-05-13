@@ -44,7 +44,7 @@ window.csvAccentMode = (function () {
     /** Unicode combining acute accent (U+0301), appended to the stressed vowel in unicode mode. */
     const COMBINING_ACUTE = '́';
 
-    /** ё and Ё are inherently stressed — never add a combining accent on top of them. */
+    /** ё and Ё are inherently stressed: never add a combining accent on top of them. */
     const YO_CHARS = new Set(['ё', 'Ё']);
 
     /** When true, stressed vowels include the U+0301 combining acute accent in their text content. */
@@ -53,7 +53,7 @@ window.csvAccentMode = (function () {
     /**
      * When false (all three of color/bold/unicode are off), accented vowels in
      * multi-syllable words are rendered as plain <span data-vowel-pos> with no
-     * CSS class — invisible but still clickable so the stored position is kept.
+     * CSS class - invisible but still clickable so the stored position is kept.
      * Single-syllable accented vowels become bare characters.
      */
     let anyStyleActive = true;
@@ -170,7 +170,7 @@ window.csvAccentMode = (function () {
 
     function _computeBuildHtml(rawText) {
         if (!rawText || rawText.trim() === '') {
-            return '<span style="color:#a1a1aa">—</span>';
+            return '<span style="color:#a1a1aa">-</span>';
         }
 
         const segments = parseSegments(rawText);
@@ -212,7 +212,7 @@ window.csvAccentMode = (function () {
                         }
                     }
                 } else if (seg.bold) {
-                    // Non-vowel inside <b> (edge case) — preserve bold rendering.
+                    // Non-vowel inside <b> (edge case) - preserve bold rendering.
                     result += `<b>${ch}</b>`;
                 } else {
                     result += ch;
@@ -234,7 +234,7 @@ window.csvAccentMode = (function () {
      * @param {object}           wire      Alpine $wire proxy for this component.
      * @param {'cell'|'header'}  type
      * @param {number}           primary   rowIndex (cell) or columnIndex (header).
-     * @param {number|undefined} secondary columnIndex (cell only — omit for header).
+     * @param {number|undefined} secondary columnIndex (cell only - omit for header).
      */
     function handleClick(event, wire, type, primary, secondary) {
         const target = event.target.closest('[data-vowel-pos]');
@@ -361,7 +361,7 @@ window.csvAccentMode = (function () {
  * the correct style is set on the very first paint without a round-trip.
  * Also called directly from the style modal's save handler for instant feedback.
  *
- * @param {string|null} color   Hex color string or null (no color — bold only).
+ * @param {string|null} color   Hex color string or null (no color - bold only).
  * @param {boolean}     bold    Whether stressed vowels should be bold.
  * @param {boolean}     unicode unicode Whether stressed vowels should include the U+0301 combining acute in their text content.
  */

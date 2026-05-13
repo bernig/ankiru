@@ -22,7 +22,7 @@ class MassOperationProgressEvent implements ShouldBroadcastNow
 
     /**
      * @param  string  $operationType  'stress' or 'tts'
-     * @param  string  $sessionId  Browser session ID — scopes the channel.
+     * @param  string  $sessionId  Browser session ID, scopes the channel.
      * @param  string  $status  'running' or 'done'
      * @param  int  $processedCount  Rows completed so far (successes + failures).
      * @param  int  $totalCount  Total rows dispatched for this batch.

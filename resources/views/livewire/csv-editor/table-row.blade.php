@@ -1,8 +1,8 @@
 {{--
     Variables available via @@include scope:
-      $rowIndex    (int)   — absolute index in $csvRows
-      $row         (array) — ['source text', 'russian text']
-      $rowHasAudio (bool)  — whether a cached TTS file exists for this row
+      $rowIndex    (int)   - absolute index in $csvRows
+      $row         (array) - ['source text', 'russian text']
+      $rowHasAudio (bool)  - whether a cached TTS file exists for this row
 --}}
 <flux:table.row class="hover:bg-accent/2 max-sm:shadow-xs max-sm:border-taupe-200 group max-sm:mb-3 max-sm:block max-sm:overflow-hidden max-sm:rounded-lg max-sm:border max-sm:bg-white max-sm:p-2 max-sm:dark:bg-zinc-700" wire:key="row-{{ $rowIndex }}" x-data="{ rowIndex: {{ $rowIndex }}, rowHasAudio: {{ $rowHasAudio ? 'true' : 'false' }} }" x-on:tts-audio-generated.window="if ($event.detail.rowIndex === rowIndex) { rowHasAudio = true; }" x-on:tts-audio-deleted.window="if ($event.detail.rowIndex === rowIndex) { rowHasAudio = false; }" x-on:csv-row-added.window="if ($event.detail.rowIndex === rowIndex) { $store.csvEditing.rowIndex = rowIndex; $store.csvEditing.columnIndex = 0; $nextTick(() => $refs.input_0?.focus()) }" x-bind:class="(function() {
     var notEditing = $store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1;
@@ -16,12 +16,12 @@
     <flux:table.cell class="py-2! max-sm:border-t-0! px-2! w-1/2 whitespace-normal first:ps-2 last:pe-2 max-sm:block max-sm:w-full max-sm:pb-0">
         <div class="cursor-default" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 0" x-html="$wire.csvRows[rowIndex][0] !== undefined && $wire.csvRows[rowIndex][0] !== ''
                      ? $wire.csvRows[rowIndex][0]
-                     : '—'"></div>
+                     : '-'"></div>
 
-        <input class="border-accent w-full rounded border bg-white p-1.5 outline-none transition-colors" x-show="$store.csvEditing.rowIndex === rowIndex && $store.csvEditing.columnIndex === 0" x-ref="input_0" :value="$wire.csvRows[rowIndex][0]" @blur="$wire.updateCell(rowIndex, 0, $event.target.value); $store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @keydown.enter="$el.blur()" @keydown.escape="$store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @click.stop placeholder="—" />
+        <input class="border-accent w-full rounded border bg-white p-1.5 outline-none transition-colors" x-show="$store.csvEditing.rowIndex === rowIndex && $store.csvEditing.columnIndex === 0" x-ref="input_0" :value="$wire.csvRows[rowIndex][0]" @blur="$wire.updateCell(rowIndex, 0, $event.target.value); $store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @keydown.enter="$el.blur()" @keydown.escape="$store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @click.stop placeholder="-" />
     </flux:table.cell>
 
-    {{-- ── Pencil column: edit source text (hidden on mobile — modal handles editing) ── --}}
+    {{-- ── Pencil column: edit source text (hidden on mobile, modal handles editing) ── --}}
     <flux:table.cell class="py-2! whitespace-nowrap px-2 first:ps-2 last:pe-2 max-sm:hidden">
         <div class="flex items-center whitespace-nowrap rounded-full border border-zinc-200 bg-white opacity-0 transition-opacity group-hover:opacity-100 [@media(hover:none)]:opacity-100" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 0">
             <button class="cursor-pointer rounded text-zinc-400 hover:text-blue-500" title="{{ __('csv_editor.edit_source_text') }}" @click.stop="$store.csvEditing.rowIndex = rowIndex; $store.csvEditing.columnIndex = 0; $nextTick(() => $refs.input_0?.focus())">
@@ -34,7 +34,7 @@
     <flux:table.cell class="py-2! max-sm:border-t-0! px-2! w-1/2 whitespace-normal first:ps-2 last:pe-2 max-sm:block max-sm:w-full max-sm:pb-0 max-sm:pt-1">
         <div class="cursor-default" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1" x-html="window.csvAccentMode.buildHtml($wire.csvRows[rowIndex]?.[1] ?? '')" @click="window.csvAccentMode.invalidateCache($wire.csvRows[rowIndex]?.[1] ?? ''); window.csvAccentMode.handleClick($event, $wire, 'cell', rowIndex, 1)"></div>
 
-        <input class="border-accent w-full rounded border bg-white p-1.5 outline-none transition-colors" x-show="$store.csvEditing.rowIndex === rowIndex && $store.csvEditing.columnIndex === 1" x-ref="input_1" :value="$wire.csvRows[rowIndex][1]" @blur="window.csvAccentMode.invalidateCache($wire.csvRows[rowIndex]?.[1] ?? ''); $wire.updateCell(rowIndex, 1, $event.target.value); $store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @keydown.enter="$el.blur()" @keydown.escape="$store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @click.stop placeholder="—" />
+        <input class="border-accent w-full rounded border bg-white p-1.5 outline-none transition-colors" x-show="$store.csvEditing.rowIndex === rowIndex && $store.csvEditing.columnIndex === 1" x-ref="input_1" :value="$wire.csvRows[rowIndex][1]" @blur="window.csvAccentMode.invalidateCache($wire.csvRows[rowIndex]?.[1] ?? ''); $wire.updateCell(rowIndex, 1, $event.target.value); $store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @keydown.enter="$el.blur()" @keydown.escape="$store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @click.stop placeholder="-" />
     </flux:table.cell>
 
     {{-- ── Row actions ── --}}

@@ -44,7 +44,7 @@ test('row needs stress correction is unaffected when only the left column is edi
         ->set('hasCsvLoaded', true)
         ->call('updateCell', 0, 0, 'Je rentre chez moi.');
 
-    // Russian column was not touched — still needs an accent.
+    // Russian column was not touched: still needs an accent.
     expect($component->instance()->rowNeedsStressCorrection(0))->toBeTrue();
 });
 
@@ -112,7 +112,7 @@ test('row needs stress correction resets correctly after a row is deleted and in
         ->set('hasCsvLoaded', true)
         ->call('deleteRow', 0);
 
-    // After deleting row 0, the former row 1 becomes row 0 — it has an accent.
+    // After deleting row 0, the former row 1 becomes row 0: it has an accent.
     expect($component->instance()->rowNeedsStressCorrection(0))->toBeFalse();
 });
 
@@ -173,7 +173,7 @@ test('moves the accent from one vowel to another within the same word', function
 });
 
 test('does not alter text when a non-vowel character position is clicked', function () {
-    // Position 2 = 'б' (a consonant) — text must remain unchanged.
+    // Position 2 = 'б' (a consonant): text must remain unchanged.
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille.', 'работаю']])
         ->set('hasCsvLoaded', true)
@@ -193,7 +193,7 @@ test('preserves accent marks on other words when accenting a vowel in one word',
 });
 
 test('single-syllable words are never flagged as needing a stress mark', function () {
-    // "я из" — "я" (1 vowel) and "из" (1 vowel) are both single-syllable; neither needs an accent.
+    // "я из": "я" (1 vowel) and "из" (1 vowel) are both single-syllable; neither needs an accent.
     $component = Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Phrase.', 'я из']])
         ->set('hasCsvLoaded', true);
@@ -202,7 +202,7 @@ test('single-syllable words are never flagged as needing a stress mark', functio
 });
 
 test('single-syllable words mixed with multi-syllable words only flag the multi-syllable word', function () {
-    // "он работает" — "он" (1 vowel, single-syllable) should not affect the flag;
+    // "он работает": "он" (1 vowel, single-syllable) should not affect the flag;
     // "работает" (4 vowels, no accent) should trigger the flag.
     $component = Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Phrase.', 'он работает']])
@@ -212,7 +212,7 @@ test('single-syllable words mixed with multi-syllable words only flag the multi-
 });
 
 test('two-vowel word without a stress mark is flagged as needing correction', function () {
-    // "яма" has 2 vowels and no accent — the ≥2-vowel rule means it should be flagged.
+    // "яма" has 2 vowels and no accent; the ≥2-vowel rule means it should be flagged.
     $component = Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Phrase.', 'яма']])
         ->set('hasCsvLoaded', true);

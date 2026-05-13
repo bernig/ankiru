@@ -49,7 +49,7 @@ class OpenAiTranslationService
      * Strategy:
      *   1. Deterministically tag any bare ё first (always correct, no AI needed).
      *   2. If the text no longer needs correction after that, return immediately
-     *      with zero token usage — saving an unnecessary API call.
+     *      with zero token usage, saving an unnecessary API call.
      *   3. Otherwise pass the pre-normalised text to the AI, then apply
      *      normalisation again on the result as a safety net.
      *
@@ -67,10 +67,10 @@ class OpenAiTranslationService
             'source_context' => Str::limit($sourceContextText, 120),
         ]);
 
-        // Step 1 — fix bare ё without touching the AI.
+        // Step 1: fix bare ё without touching the AI.
         $preNormalized = $this->accentService->normalizeYoAccent($russianText);
 
-        // Step 2 — if normalization alone resolved all issues, skip the AI call.
+        // Step 2: if normalization alone resolved all issues, skip the AI call.
         if (! $this->accentService->textNeedsStressCorrection($preNormalized)) {
             Log::debug('Stress correction resolved by ё normalisation; AI call skipped.', [
                 'output' => Str::limit($preNormalized, 120),
@@ -83,7 +83,7 @@ class OpenAiTranslationService
             ];
         }
 
-        // Step 3 — remaining issues need AI; pass the pre-normalised text so the
+        // Step 3: remaining issues need AI; pass the pre-normalised text so the
         // model starts with ё already correctly tagged.
         $input = <<<TEXT
 Source text for meaning/context only:

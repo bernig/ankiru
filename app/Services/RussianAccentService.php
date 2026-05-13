@@ -87,7 +87,7 @@ class RussianAccentService
                     }
                 }
             } else {
-                // Non-Cyrillic character: word boundary — evaluate the completed word.
+                // Non-Cyrillic character: word boundary, evaluate the completed word.
                 if ($flushWord()) {
                     return true;
                 }
@@ -152,7 +152,7 @@ class RussianAccentService
             // Only fix words that qualify for a stress mark and contain ё.
             if ($vowelCount >= 2 && $yoAbsolutePosition !== -1) {
                 // moveAccentToPosition strips bold from the whole word then places
-                // it only on the target vowel — exactly what we need here.
+                // it only on the target vowel, exactly what we need here.
                 $currentRawText = $this->moveAccentToPosition($currentRawText, $yoAbsolutePosition);
             }
 
@@ -240,7 +240,7 @@ class RussianAccentService
      *   X + U+0301 (combining acute)      →  <b>X</b>   (unicode export / external)
      *   <b>X</b>                          →  <b>X</b>   (already canonical, untouched)
      *
-     * Safe to call on non-Russian text — the patterns are specific enough that
+     * Safe to call on non-Russian text; the patterns are specific enough that
      * they will not transform ordinary Latin or punctuation content.
      */
     public function normalizeImportedCellValue(string $rawText): string

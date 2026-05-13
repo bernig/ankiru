@@ -1,5 +1,5 @@
 @php
-    // HTML-entity-encoded mailto link — renders correctly in browsers,
+    // HTML-entity-encoded mailto link, renders correctly in browsers,
     // opaque to most e-mail harvesting bots.
     $obfuscatedEmail = '<a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#110;&#117;&#64;&#98;&#101;&#114;&#110;&#105;&#103;&#46;&#102;&#114;" class="underline decoration-zinc-300 hover:text-zinc-900">&#109;&#97;&#110;&#117;&#64;&#98;&#101;&#114;&#110;&#105;&#103;&#46;&#102;&#114;</a>';
 @endphp

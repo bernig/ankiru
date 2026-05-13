@@ -231,7 +231,7 @@ it('does not dispatch TTS jobs when batch is already running', function () {
 });
 
 // ---------------------------------------------------------------------------
-// Sync-queue completion — stress
+// Sync-queue completion: stress
 // ---------------------------------------------------------------------------
 
 it('immediately applies stress batch completion when the sync queue driver runs jobs inline', function () {
@@ -282,15 +282,15 @@ it('bulk-corrects bare ё without calling the AI (real services, sync queue)', f
     Storage::fake('local');
     config(['queue.default' => 'sync']); // run jobs inline so merge happens in-request
 
-    // The AI must NEVER be called — ё normalization is sufficient for these rows.
+    // The AI must NEVER be called: ё normalization is sufficient for these rows.
     RussianStressCorrectorAgent::fake(function () {
         throw new RuntimeException('AI should not have been called for a bare-ё-only fix.');
     });
 
     $rows = [
-        // "Пойдём" has bare ё — the only issue in this sentence.
+        // "Пойдём" has bare ё: the only issue in this sentence.
         ['Rentrons.', 'Пойдём дом<b>о</b>й.'],
-        // "идёт" has bare ё — similar case with the original user example.
+        // "идёт" has bare ё: similar case with the original user example.
         ['Quel bus va au centre ?', 'Как<b>о</b>й авт<b>о</b>бус идёт в ц<b>е</b>нтр?'],
     ];
 
@@ -307,10 +307,10 @@ it('bulk-corrects bare ё without calling the AI (real services, sync queue)', f
 
 it('pre-normalises ё immediately when batch is dispatched with an async queue driver', function () {
     Storage::fake('local');
-    Queue::fake(); // jobs are pushed but NOT executed — simulates the async database driver
+    Queue::fake(); // jobs are pushed but NOT executed: simulates the async database driver
 
     $rows = [
-        // "Пойдём" has bare ё — normalization must happen in-request, not in the job.
+        // "Пойдём" has bare ё: normalization must happen in-request, not in the job.
         ['Rentrons.', 'Пойдём дом<b>о</b>й.'],
         // Row with no ё issue remains unchanged.
         ['Je parle.', 'Я говорю.'],
@@ -330,7 +330,7 @@ it('pre-normalises ё immediately when batch is dispatched with an async queue d
 });
 
 // ---------------------------------------------------------------------------
-// Sync-queue completion — openBulkActionsModal catches missed 'done' event
+// Sync-queue completion: openBulkActionsModal catches missed 'done' event
 // ---------------------------------------------------------------------------
 
 it('merges pending stress corrections when the modal is opened after a missed done event', function () {
@@ -475,7 +475,7 @@ it('populates TTS report props when TTS batch completes', function () {
 });
 
 // ---------------------------------------------------------------------------
-// syncProgressFromCache — orphaned running batch auto-cancel
+// syncProgressFromCache: orphaned running batch auto-cancel
 // ---------------------------------------------------------------------------
 
 it('auto-cancels a running batch when no jobs remain in the queue', function () {
@@ -498,7 +498,7 @@ it('auto-cancels a running batch when no jobs remain in the queue', function () 
 
     app()->instance(MassOperationService::class, $mockService);
 
-    // No jobs in the queue — the batch is orphaned.
+    // No jobs in the queue: the batch is orphaned.
     Livewire::test(CsvEditor::class)
         ->set('csvRows', massOpRows())
         ->set('hasCsvLoaded', true)
@@ -647,7 +647,7 @@ it('blocks generateTtsAudio while a TTS batch is running', function () {
 });
 
 // ---------------------------------------------------------------------------
-// Phase 8 — rendered HTML reflects disabled state
+// Phase 8: rendered HTML reflects disabled state
 // ---------------------------------------------------------------------------
 
 it('renders the stress-correction button as disabled when a stress batch is running', function () {

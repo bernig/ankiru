@@ -5,7 +5,7 @@
     $accentUnicode), which are loaded from the database on mount and persisted
     by saveAccentStyle().
 
-    All combinations are valid — including "none" (no color, no bold, no unicode),
+    All combinations are valid, including "none" (no color, no bold, no unicode),
     in which case accented vowels are rendered as plain <span data-vowel-pos>
     elements: invisible but still clickable so the stored accent position is kept.
 --}}

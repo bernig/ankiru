@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 
 Route::get('contact', fn () => view('contact'))->name('contact');
 Route::get('about', fn () => view('about'))->name('about');
+Route::get('faq', fn () => view('faq'))->name('faq');
 Route::get('legal/mentions-legales', fn () => view('legal.mentions-legales'))->name('legal.mentions');
 Route::get('legal/confidentialite', fn () => view('legal.confidentialite'))->name('legal.privacy');
 

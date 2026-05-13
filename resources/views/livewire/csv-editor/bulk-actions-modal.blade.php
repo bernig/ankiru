@@ -2,14 +2,14 @@
     Bulk Actions modal.
 
     Two independent sections:
-      A) Stress-mark correction  — one MassOperationJob per qualifying row via GPT
-      B) TTS audio generation    — one MassOperationJob per row missing an MP3
+      A) Stress-mark correction: one MassOperationJob per qualifying row via GPT
+      B) TTS audio generation:   one MassOperationJob per row missing an MP3
 
     Progress updates arrive primarily via Laravel Echo (Reverb), with a small
     Livewire polling fallback to cover missed events during deploy/reconnect windows.
 
     Section layout (when not running):
-      1. Previous-run summary  — shown only when status === 'done'
+      1. Previous-run summary - shown only when status === 'done'
       2. Current estimates + precise run button, or an all-done checkmark
 --}}
 <flux:modal class="md:w-xl" name="bulk-actions" :dismissible="$stressBatchStatus !== 'running' && $ttsBatchStatus !== 'running'">
@@ -80,7 +80,7 @@
                     {{-- Previous-run summary (only visible after a batch has completed) --}}
                     @if ($stressBatchStatus === 'done')
                         <div class="rounded-md bg-zinc-50 px-3 py-2 text-xs text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-400">
-                            <span class="font-medium">{{ __('csv_editor.bulk_last_run') }} —</span>
+                            <span class="font-medium">{{ __('csv_editor.bulk_last_run') }} :</span>
 
                             @if ($stressBatchCorrectedCount > 0)
                                 {{ __('csv_editor.bulk_report_corrected', ['count' => number_format($stressBatchCorrectedCount)]) }}
@@ -181,7 +181,7 @@
                     {{-- Previous-run summary (only visible after a batch has completed) --}}
                     @if ($ttsBatchStatus === 'done')
                         <div class="rounded-md bg-zinc-50 px-3 py-2 text-xs text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-400">
-                            <span class="font-medium">{{ __('csv_editor.bulk_last_run') }} —</span>
+                            <span class="font-medium">{{ __('csv_editor.bulk_last_run') }} :</span>
 
                             @if ($ttsBatchGeneratedCount > 0)
                                 {{ __('csv_editor.bulk_report_generated', ['count' => number_format($ttsBatchGeneratedCount)]) }}

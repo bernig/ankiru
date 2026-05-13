@@ -143,8 +143,8 @@
                                 <flux:table.row>
                                     <flux:table.cell>{{ __('profile.operation_' . $stat['operation']) }}</flux:table.cell>
                                     <flux:table.cell class="text-right tabular-nums">{{ number_format($stat['calls']) }}</flux:table.cell>
-                                    <flux:table.cell class="text-right tabular-nums">{{ $stat['prompt_tokens'] > 0 ? number_format($stat['prompt_tokens']) : '—' }}/{{ $stat['completion_tokens'] > 0 ? number_format($stat['completion_tokens']) : '—' }}</flux:table.cell>
-                                    <flux:table.cell class="text-right tabular-nums">{{ $stat['characters'] > 0 ? number_format($stat['characters']) : '—' }}</flux:table.cell>
+                                    <flux:table.cell class="text-right tabular-nums">{{ $stat['prompt_tokens'] > 0 ? number_format($stat['prompt_tokens']) : '-' }}/{{ $stat['completion_tokens'] > 0 ? number_format($stat['completion_tokens']) : '-' }}</flux:table.cell>
+                                    <flux:table.cell class="text-right tabular-nums">{{ $stat['characters'] > 0 ? number_format($stat['characters']) : '-' }}</flux:table.cell>
                                     <flux:table.cell class="text-right tabular-nums">${{ number_format($stat['estimated_cost'], 4) }}</flux:table.cell>
                                 </flux:table.row>
                             @endforeach
@@ -173,10 +173,10 @@
                                 <div class="text-right font-medium tabular-nums">{{ number_format($stat['calls']) }}</div>
 
                                 <div class="text-zinc-500 dark:text-zinc-400">{{ __('profile.stats_tokens_in_out') }}</div>
-                                <div class="text-right font-medium tabular-nums">{{ $stat['prompt_tokens'] > 0 ? number_format($stat['prompt_tokens']) : '—' }}/{{ $stat['completion_tokens'] > 0 ? number_format($stat['completion_tokens']) : '—' }}</div>
+                                <div class="text-right font-medium tabular-nums">{{ $stat['prompt_tokens'] > 0 ? number_format($stat['prompt_tokens']) : '-' }}/{{ $stat['completion_tokens'] > 0 ? number_format($stat['completion_tokens']) : '-' }}</div>
 
                                 <div class="text-zinc-500 dark:text-zinc-400">{{ __('profile.stats_characters') }}</div>
-                                <div class="text-right font-medium tabular-nums">{{ $stat['characters'] > 0 ? number_format($stat['characters']) : '—' }}</div>
+                                <div class="text-right font-medium tabular-nums">{{ $stat['characters'] > 0 ? number_format($stat['characters']) : '-' }}</div>
 
                                 <div class="text-zinc-500 dark:text-zinc-400">{{ __('profile.stats_cost') }}</div>
                                 <div class="text-right font-medium tabular-nums">${{ number_format($stat['estimated_cost'], 4) }}</div>

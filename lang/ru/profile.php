@@ -19,7 +19,7 @@ return [
     'stats_operation' => 'Операция',
     'stats_calls' => 'Вызовы',
     'stats_tokens_in_out' => 'Токены (вход/выход)',
-    'stats_tokens_tooltip' => 'Токены — единица измерения ИИ. ~750 слов ≈ 1 000 токенов.',
+    'stats_tokens_tooltip' => 'Токены - единица измерения ИИ. ~750 слов ≈ 1 000 токенов.',
     'stats_characters' => 'Символы',
     'stats_cost' => 'Примерная стоимость',
     'stats_total' => 'Итого',
