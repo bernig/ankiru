@@ -42,27 +42,29 @@ class RussianAccentService
             return $needsAccent;
         };
 
+        // Pre-split once so each character access is O(1) instead of O(i).
+        $chars = mb_str_split($rawText);
+        $length = count($chars);
         $i = 0;
-        $length = mb_strlen($rawText);
 
         while ($i < $length) {
-            $remaining = mb_substr($rawText, $i);
+            $char = $chars[$i];
 
-            if (str_starts_with($remaining, '<b>')) {
-                $inBold = true;
-                $i += 3;
+            if ($char === '<') {
+                if ($i + 2 < $length && $chars[$i + 1] === 'b' && $chars[$i + 2] === '>') {
+                    $inBold = true;
+                    $i += 3;
 
-                continue;
+                    continue;
+                }
+
+                if ($i + 3 < $length && $chars[$i + 1] === '/' && $chars[$i + 2] === 'b' && $chars[$i + 3] === '>') {
+                    $inBold = false;
+                    $i += 4;
+
+                    continue;
+                }
             }
-
-            if (str_starts_with($remaining, '</b>')) {
-                $inBold = false;
-                $i += 4;
-
-                continue;
-            }
-
-            $char = mb_substr($rawText, $i, 1);
 
             if ($this->isCyrillicChar($char)) {
                 $inCyrillicWord = true;
@@ -100,15 +102,15 @@ class RussianAccentService
     public function normalizeYoAccent(string $rawText): string
     {
         $plainText = str_replace(['<b>', '</b>'], '', $rawText);
-        $plainLength = mb_strlen($plainText);
+        // Pre-split once so each character access is O(1) instead of O(i).
+        $plainChars = mb_str_split($plainText);
+        $plainLength = count($plainChars);
 
         $currentRawText = $rawText;
         $i = 0;
 
         while ($i < $plainLength) {
-            $char = mb_substr($plainText, $i, 1);
-
-            if (! $this->isCyrillicChar($char)) {
+            if (! $this->isCyrillicChar($plainChars[$i])) {
                 $i++;
 
                 continue;
@@ -117,7 +119,7 @@ class RussianAccentService
             // Scan forward to find the full extent of this Cyrillic word.
             $wordStart = $i;
             $wordEnd = $i;
-            while ($wordEnd < $plainLength && $this->isCyrillicChar(mb_substr($plainText, $wordEnd, 1))) {
+            while ($wordEnd < $plainLength && $this->isCyrillicChar($plainChars[$wordEnd])) {
                 $wordEnd++;
             }
 
@@ -126,7 +128,7 @@ class RussianAccentService
             $yoAbsolutePosition = -1;
 
             for ($j = $wordStart; $j < $wordEnd; $j++) {
-                $wordChar = mb_substr($plainText, $j, 1);
+                $wordChar = $plainChars[$j];
 
                 if (mb_strpos(self::RUSSIAN_VOWELS, $wordChar) !== false) {
                     $vowelCount++;
@@ -162,27 +164,27 @@ class RussianAccentService
     {
         // Strip tags to build the plain text used for validation and word detection.
         $plainText = str_replace(['<b>', '</b>'], '', $rawText);
-        $plainLength = mb_strlen($plainText);
+        // Pre-split once so each character access is O(1) instead of O(i).
+        $plainChars = mb_str_split($plainText);
+        $plainLength = count($plainChars);
 
         if ($charPosition < 0 || $charPosition >= $plainLength) {
             return $rawText;
         }
 
-        $targetChar = mb_substr($plainText, $charPosition, 1);
-
         // Reject non-vowel positions silently.
-        if (mb_strpos(self::RUSSIAN_VOWELS, $targetChar) === false) {
+        if (mb_strpos(self::RUSSIAN_VOWELS, $plainChars[$charPosition]) === false) {
             return $rawText;
         }
 
         // Find the Cyrillic word [wordStart, wordEnd) that contains charPosition.
         $wordStart = $charPosition;
-        while ($wordStart > 0 && $this->isCyrillicChar(mb_substr($plainText, $wordStart - 1, 1))) {
+        while ($wordStart > 0 && $this->isCyrillicChar($plainChars[$wordStart - 1])) {
             $wordStart--;
         }
 
         $wordEnd = $charPosition + 1;
-        while ($wordEnd < $plainLength && $this->isCyrillicChar(mb_substr($plainText, $wordEnd, 1))) {
+        while ($wordEnd < $plainLength && $this->isCyrillicChar($plainChars[$wordEnd])) {
             $wordEnd++;
         }
 
@@ -194,10 +196,12 @@ class RussianAccentService
         $plainPos = 0;
 
         foreach ($this->parseRawTextSegments($rawText) as ['text' => $segText, 'bold' => $segBold]) {
-            $segLength = mb_strlen($segText);
+            // Pre-split each segment for O(1) character access.
+            $segChars = mb_str_split($segText);
+            $segLength = count($segChars);
 
             for ($j = 0; $j < $segLength; $j++) {
-                $ch = mb_substr($segText, $j, 1);
+                $ch = $segChars[$j];
                 $pos = $plainPos + $j;
 
                 if ($pos === $charPosition) {
@@ -279,9 +283,15 @@ class RussianAccentService
 
     /**
      * Return true when the given single character is a Cyrillic letter.
+     *
+     * Uses Unicode code-point range checks instead of a regex to avoid
+     * preg_match overhead inside tight character-scanning loops.
+     * Ranges: А–Я = U+0410–U+042F, а–я = U+0430–U+044F, Ё = U+0401, ё = U+0451.
      */
     private function isCyrillicChar(string $char): bool
     {
-        return preg_match('/[а-яёА-ЯЁ]/u', $char) === 1;
+        $cp = mb_ord($char, 'UTF-8');
+
+        return ($cp >= 0x0410 && $cp <= 0x044F) || $cp === 0x0401 || $cp === 0x0451;
     }
 }

@@ -304,7 +304,7 @@ test('tts generation is blocked and an error is set after exceeding the rate lim
     Storage::fake('local');
     Audio::fake()->preventStrayAudio();
 
-    $rateLimitKey = 'tts-generation:'.session()->getId();
+    $rateLimitKey = 'tts-generation:'.auth()->id();
     RateLimiter::clear($rateLimitKey);
     for ($i = 0; $i < 10; $i++) {
         RateLimiter::hit($rateLimitKey, 60);

@@ -91,7 +91,7 @@ trait ManagesTtsAudio
             return;
         }
 
-        $rateLimitKey = 'tts-generation:'.session()->getId();
+        $rateLimitKey = 'tts-generation:'.(Auth::id() ?? session()->getId());
 
         if (RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
             $this->ttsError = __('csv_editor.error_rate_limit');
