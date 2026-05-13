@@ -22,6 +22,7 @@
 
             <form class="space-y-4" action="{{ route('password.email') }}" method="POST">
                 @csrf
+                <x-honeypot />
 
                 <flux:input id="email" name="email" type="email" value="{{ old('email') }}" label="{{ __('auth.email') }}" required />
 
