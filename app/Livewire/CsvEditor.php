@@ -228,7 +228,7 @@ class CsvEditor extends Component
     #[Computed]
     public function paginatedRows(): LengthAwarePaginator
     {
-        $rows = $this->filteredRows();
+        $rows = $this->filteredRows;
         $currentPage = $this->getPage();
         $offset = ($currentPage - 1) * $this->perPage;
         $slicedItems = collect(array_slice($rows, $offset, $this->perPage, true));
@@ -248,7 +248,7 @@ class CsvEditor extends Component
     #[Computed]
     public function totalPages(): int
     {
-        return max(1, (int) ceil(count($this->filteredRows()) / $this->perPage));
+        return max(1, (int) ceil(count($this->filteredRows) / $this->perPage));
     }
 
     public function updatedSearchQuery(): void
@@ -552,6 +552,28 @@ class CsvEditor extends Component
         return view('livewire.csv-editor');
     }
 
+    /**
+     * Return the subset of csvRows matching the current search query,
+     * preserving original array keys so row-index-based actions keep working.
+     *
+     * @return array<int, array<int, string>>
+     */
+    #[Computed]
+    public function filteredRows(): array
+    {
+        $normalizedQuery = $this->normalizeForSearch(trim($this->searchQuery));
+
+        if ($normalizedQuery === '') {
+            return $this->csvRows;
+        }
+
+        return array_filter(
+            $this->csvRows,
+            fn (array $row): bool => str_contains($this->normalizeForSearch($row[0] ?? ''), $normalizedQuery)
+                || str_contains($this->normalizeForSearch($row[1] ?? ''), $normalizedQuery)
+        );
+    }
+
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
@@ -686,24 +708,31 @@ class CsvEditor extends Component
      * Build the card data array expected by AnkiPackageExporterService
      * from the given CSV rows, attaching cached MP3 references where available.
      *
+     * Audio existence is checked in a single filesystem scan via audioFilesExistBatch()
+     * instead of one Storage::exists() call per row.
+     *
      * @param  array<int, array<int, string>>  $csvRows
      * @return array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}>
      */
     private function buildAnkiCardsFromCsvRows(array $csvRows): array
     {
+        $russianTexts = array_values(array_filter(
+            array_map(fn (array $row): string => $row[1] ?? '', $csvRows),
+            fn (string $text): bool => trim($text) !== '',
+        ));
+
+        $audioExistence = $this->ttsService->audioFilesExistBatch($russianTexts);
+
         $cards = [];
 
         foreach ($csvRows as $row) {
             $sourceText = $row[0] ?? '';
             $rawRussianText = $row[1] ?? '';
-
-            // Keep stress tags in the field value so Anki can render them as bold.
             $backFieldValue = trim($rawRussianText);
             $mp3StoragePath = null;
             $mp3FileName = null;
 
-            // Append the Anki sound reference when a cached MP3 exists for this phrase.
-            if (! empty(trim($rawRussianText)) && $this->ttsService->audioFileExists($rawRussianText)) {
+            if ($backFieldValue !== '' && ($audioExistence[$rawRussianText] ?? false)) {
                 $filenameHash = $this->ttsService->buildFilenameHash($rawRussianText);
                 $mp3FileName = "{$filenameHash}.mp3";
                 $mp3StoragePath = "tts/{$mp3FileName}";
@@ -719,27 +748,6 @@ class CsvEditor extends Component
         }
 
         return $cards;
-    }
-
-    /**
-     * Return the subset of csvRows matching the current search query,
-     * preserving original array keys so row-index-based actions keep working.
-     *
-     * @return array<int, array<int, string>>
-     */
-    private function filteredRows(): array
-    {
-        $normalizedQuery = $this->normalizeForSearch(trim($this->searchQuery));
-
-        if ($normalizedQuery === '') {
-            return $this->csvRows;
-        }
-
-        return array_filter(
-            $this->csvRows,
-            fn (array $row): bool => str_contains($this->normalizeForSearch($row[0] ?? ''), $normalizedQuery)
-                || str_contains($this->normalizeForSearch($row[1] ?? ''), $normalizedQuery)
-        );
     }
 
     /**

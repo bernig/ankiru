@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\ApiUsageLog;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
@@ -46,6 +47,7 @@ class Profile extends Component
 
     /**
      * Aggregated usage stats per operation, with estimated cost in USD.
+     * Cached for 1 hour; automatically invalidated when a new ApiUsageLog is created.
      *
      * @return Collection<int, array{operation: string, calls: int, prompt_tokens: int, completion_tokens: int, characters: int, estimated_cost: float}>
      */
@@ -56,29 +58,35 @@ class Profile extends Component
         $outputPricePerMillion = (float) config('services.openai.gpt_5_4_output_price_per_million', 15.00);
         $ttsPricePerMillion = (float) config('services.openai.tts_price_per_million_chars', 30.00);
 
-        $rows = ApiUsageLog::query()
-            ->where('user_id', Auth::id())
-            ->selectRaw('operation, COUNT(*) as calls, COALESCE(SUM(prompt_tokens), 0) as prompt_tokens, COALESCE(SUM(completion_tokens), 0) as completion_tokens, COALESCE(SUM(characters), 0) as characters')
-            ->groupBy('operation')
-            ->orderBy('operation')
-            ->get();
+        return Cache::remember(
+            'user_usage_stats:'.Auth::id(),
+            ttl: 3600,
+            callback: function () use ($inputPricePerMillion, $outputPricePerMillion, $ttsPricePerMillion): Collection {
+                $rows = ApiUsageLog::query()
+                    ->where('user_id', Auth::id())
+                    ->selectRaw('operation, COUNT(*) as calls, COALESCE(SUM(prompt_tokens), 0) as prompt_tokens, COALESCE(SUM(completion_tokens), 0) as completion_tokens, COALESCE(SUM(characters), 0) as characters')
+                    ->groupBy('operation')
+                    ->orderBy('operation')
+                    ->get();
 
-        return $rows->map(function (ApiUsageLog $row) use ($inputPricePerMillion, $outputPricePerMillion, $ttsPricePerMillion) {
-            $cost = match ($row->operation) {
-                'tts' => $row->characters / 1_000_000 * $ttsPricePerMillion,
-                default => $row->prompt_tokens / 1_000_000 * $inputPricePerMillion
-                    + $row->completion_tokens / 1_000_000 * $outputPricePerMillion,
-            };
+                return $rows->map(function (ApiUsageLog $row) use ($inputPricePerMillion, $outputPricePerMillion, $ttsPricePerMillion): array {
+                    $cost = match ($row->operation) {
+                        'tts' => $row->characters / 1_000_000 * $ttsPricePerMillion,
+                        default => $row->prompt_tokens / 1_000_000 * $inputPricePerMillion
+                            + $row->completion_tokens / 1_000_000 * $outputPricePerMillion,
+                    };
 
-            return [
-                'operation' => $row->operation,
-                'calls' => (int) $row->calls,
-                'prompt_tokens' => (int) $row->prompt_tokens,
-                'completion_tokens' => (int) $row->completion_tokens,
-                'characters' => (int) $row->characters,
-                'estimated_cost' => $cost,
-            ];
-        });
+                    return [
+                        'operation' => $row->operation,
+                        'calls' => (int) $row->calls,
+                        'prompt_tokens' => (int) $row->prompt_tokens,
+                        'completion_tokens' => (int) $row->completion_tokens,
+                        'characters' => (int) $row->characters,
+                        'estimated_cost' => $cost,
+                    ];
+                });
+            },
+        );
     }
 
     public function updateProfile(): void

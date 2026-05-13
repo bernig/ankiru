@@ -118,7 +118,8 @@ test('translation is blocked and an error is set after exceeding the rate limit'
     SourceToRussianTranslatorAgent::fake()->preventStrayPrompts();
 
     // Exhaust the 30-attempt limit without triggering real agent calls.
-    $rateLimitKey = 'ai-translation:'.session()->getId();
+    // Rate limit key is now scoped to user ID for authenticated users.
+    $rateLimitKey = 'ai-translation:'.auth()->id();
     RateLimiter::clear($rateLimitKey);
     for ($i = 0; $i < 30; $i++) {
         RateLimiter::hit($rateLimitKey, 60);

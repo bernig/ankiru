@@ -6,6 +6,7 @@ use Database\Factories\ApiUsageLogFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 
 class ApiUsageLog extends Model
 {
@@ -19,6 +20,13 @@ class ApiUsageLog extends Model
         'completion_tokens',
         'characters',
     ];
+
+    protected static function booted(): void
+    {
+        static::created(function (ApiUsageLog $log): void {
+            Cache::forget("user_usage_stats:{$log->user_id}");
+        });
+    }
 
     public function user(): BelongsTo
     {

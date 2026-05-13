@@ -61,12 +61,12 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->ip());
         });
 
-        RateLimiter::for('ai-translation', function () {
-            return Limit::perMinute(30)->by(session()->getId());
+        RateLimiter::for('ai-translation', function (Request $request) {
+            return Limit::perMinute(30)->by($request->user()?->id ?? session()->getId());
         });
 
-        RateLimiter::for('tts-generation', function () {
-            return Limit::perMinute(10)->by(session()->getId());
+        RateLimiter::for('tts-generation', function (Request $request) {
+            return Limit::perMinute(10)->by($request->user()?->id ?? session()->getId());
         });
     }
 }

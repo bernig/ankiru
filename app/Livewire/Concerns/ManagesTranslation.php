@@ -145,12 +145,12 @@ trait ManagesTranslation
     }
 
     /**
-     * Returns true and sets $translationError when the per-session AI rate limit
+     * Returns true and sets $translationError when the per-user AI rate limit
      * is exceeded, false (and records a hit) when the request may proceed.
      */
     private function checkAiRateLimitExceeded(): bool
     {
-        $rateLimitKey = 'ai-translation:'.session()->getId();
+        $rateLimitKey = 'ai-translation:'.(Auth::id() ?? session()->getId());
 
         if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
             $this->translationError = __('csv_editor.error_rate_limit');
