@@ -37,8 +37,8 @@
         </flux:skeleton.group>
     </div>
 
-    {{-- Real table hidden while loading --}}
-    <div wire:loading.remove wire:target="gotoPage,previousPage,nextPage,setPage,perPage,filterAccentNeeded,filterNoAudio,searchQuery,switchToDraft">
+    {{-- Real table: hidden before Alpine initializes and during loading --}}
+    <div x-cloak wire:loading.remove wire:target="gotoPage,previousPage,nextPage,setPage,perPage,filterAccentNeeded,filterNoAudio,searchQuery,switchToDraft">
         <flux:table class="max-sm:block max-sm:min-w-0" container:class="w-full">
             @if ($this->paginatedRows->isNotEmpty())
                 <flux:table.columns class="max-sm:hidden" sticky>

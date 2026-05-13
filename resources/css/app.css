@@ -39,6 +39,9 @@
     }
 }
 
+/* Hide elements marked with x-cloak until Alpine initializes */
+[x-cloak] { display: none !important; }
+
 /* ── Russian accent mode vowel spans ── */
 
 /* Unstressed Russian vowel — clickable in accent mode */
