@@ -8,7 +8,17 @@ namespace App\Services;
  */
 class RussianAccentService
 {
-    private const string RUSSIAN_VOWELS = 'аеёиоуыэюяАЕЁИОУЫЭЮЯ';
+    /**
+     * Hash-keyed set of all Russian vowels for O(1) membership checks inside
+     * tight character-scanning loops. Equivalent to the string 'аеёиоуыэюяАЕЁИОУЫЭЮЯ'
+     * but avoids the O(n) linear scan of mb_strpos on every character.
+     */
+    private const array RUSSIAN_VOWEL_SET = [
+        'а' => true, 'е' => true, 'ё' => true, 'и' => true, 'о' => true,
+        'у' => true, 'ы' => true, 'э' => true, 'ю' => true, 'я' => true,
+        'А' => true, 'Е' => true, 'Ё' => true, 'И' => true, 'О' => true,
+        'У' => true, 'Ы' => true, 'Э' => true, 'Ю' => true, 'Я' => true,
+    ];
 
     /**
      * Return true when the given Russian text contains at least one Cyrillic word
@@ -69,7 +79,7 @@ class RussianAccentService
             if ($this->isCyrillicChar($char)) {
                 $inCyrillicWord = true;
 
-                if (mb_strpos(self::RUSSIAN_VOWELS, $char) !== false) {
+                if (isset(self::RUSSIAN_VOWEL_SET[$char])) {
                     $wordTotalVowels++;
 
                     if ($inBold) {
@@ -130,7 +140,7 @@ class RussianAccentService
             for ($j = $wordStart; $j < $wordEnd; $j++) {
                 $wordChar = $plainChars[$j];
 
-                if (mb_strpos(self::RUSSIAN_VOWELS, $wordChar) !== false) {
+                if (isset(self::RUSSIAN_VOWEL_SET[$wordChar])) {
                     $vowelCount++;
                 }
 
@@ -173,7 +183,7 @@ class RussianAccentService
         }
 
         // Reject non-vowel positions silently.
-        if (mb_strpos(self::RUSSIAN_VOWELS, $plainChars[$charPosition]) === false) {
+        if (! isset(self::RUSSIAN_VOWEL_SET[$plainChars[$charPosition]])) {
             return $rawText;
         }
 

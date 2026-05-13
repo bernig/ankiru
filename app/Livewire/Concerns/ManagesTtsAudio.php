@@ -104,9 +104,7 @@ trait ManagesTtsAudio
         $this->ttsGeneratingRowIndex = $rowIndex;
 
         try {
-            $isNewGeneration = ! $this->ttsService->audioFileExists($rawRussianText);
-
-            $this->ttsService->generateAudio($rawRussianText);
+            $isNewGeneration = $this->ttsService->generateAudio($rawRussianText);
 
             if ($isNewGeneration) {
                 ApiUsageLog::create([

@@ -181,9 +181,7 @@ class MassOperationJob implements ShouldQueue
             return;
         }
 
-        $isNewGeneration = ! $ttsService->audioFileExists($this->russianText);
-
-        $ttsService->generateAudio($this->russianText);
+        $isNewGeneration = $ttsService->generateAudio($this->russianText);
 
         // Accumulate the exact character count sent to the TTS API.
         Cache::increment($this->cacheKey('actual_chars'), mb_strlen($normalizedText));

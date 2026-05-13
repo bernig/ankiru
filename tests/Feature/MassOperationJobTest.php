@@ -267,8 +267,7 @@ it('calls generateAudio with the russian text for a TTS job', function (): void 
 
     $ttsMock = $this->mock(RussianTextToSpeechService::class);
     $ttsMock->shouldReceive('normalizeForSpeech')->with($russianText)->andReturn($normalizedText);
-    $ttsMock->shouldReceive('audioFileExists')->andReturn(false);
-    $ttsMock->shouldReceive('generateAudio')->with($russianText)->once();
+    $ttsMock->shouldReceive('generateAudio')->with($russianText)->once()->andReturn(true);
 
     (new MassOperationJob(OperationType::Tts, massOpSessionId(), 0, 1, '', $russianText))->handle(
         app(RussianAccentService::class),
@@ -302,8 +301,7 @@ it('sets status to done when the last TTS row is processed', function (): void {
 
     $ttsMock = $this->mock(RussianTextToSpeechService::class);
     $ttsMock->shouldReceive('normalizeForSpeech')->andReturn('russian');
-    $ttsMock->shouldReceive('audioFileExists')->andReturn(false);
-    $ttsMock->shouldReceive('generateAudio')->once();
+    $ttsMock->shouldReceive('generateAudio')->once()->andReturn(true);
 
     (new MassOperationJob(OperationType::Tts, massOpSessionId(), 0, 1, '', 'russian'))->handle(
         app(RussianAccentService::class),
@@ -332,7 +330,6 @@ it('records a failure and keeps the batch running when a TTS API call throws', f
 
     $ttsMock = $this->mock(RussianTextToSpeechService::class);
     $ttsMock->shouldReceive('normalizeForSpeech')->andReturn('russian');
-    $ttsMock->shouldReceive('audioFileExists')->andReturn(false);
     $ttsMock->shouldReceive('generateAudio')->andThrow(new RuntimeException('TTS API error'));
 
     // Should NOT throw — exception must be caught inside handle()
@@ -358,9 +355,8 @@ it('increments generated count and accumulates actual chars after a successful T
     $this->mock(RussianTextToSpeechService::class)
         ->shouldReceive('normalizeForSpeech')
         ->andReturnUsing(fn (string $text) => trim(str_replace(['<b>', '</b>'], '', $text)))
-        ->shouldReceive('audioFileExists')
-        ->andReturn(false)
         ->shouldReceive('generateAudio')
+        ->andReturn(true)
         ->twice();
 
     (new MassOperationJob(OperationType::Tts, massOpSessionId(), 0, 2, '', $russianA))->handle(

@@ -42,7 +42,7 @@ class Profile extends Component
     #[Computed]
     public function hasOpenAiKey(): bool
     {
-        return (bool) Auth::user()->fresh()->openai_api_key;
+        return (bool) Auth::user()->openai_api_key;
     }
 
     /**

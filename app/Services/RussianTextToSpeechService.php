@@ -55,21 +55,21 @@ class RussianTextToSpeechService
 
     /**
      * Generate (or retrieve from cache) an MP3 audio file for the given Russian
-     * phrase. Returns the storage-relative path to the MP3 file.
+     * phrase. Returns true when a new file was generated, false when the cached
+     * file was reused. Callers that need the storage path should call
+     * buildFilenameHash() directly.
      *
      * @throws RuntimeException|FailoverableException
      */
-    public function generateAudio(string $rawRussianPhrase): string
+    public function generateAudio(string $rawRussianPhrase): bool
     {
         $normalizedText = $this->normalizeForSpeech($rawRussianPhrase);
-        $storagePath = $this->buildStoragePath($normalizedText);
+        $storagePath = $this->buildStoragePath($rawRussianPhrase);
 
-        // Return the cached file immediately if it already exists.
         if (Storage::disk('local')->exists($storagePath)) {
-            return $storagePath;
+            return false;
         }
 
-        // Generate audio via the Laravel AI SDK and store the raw MP3 bytes.
         $ttsVoice = config('services.openai.tts_voice', 'echo');
 
         $audio = Audio::of($normalizedText)
@@ -78,7 +78,7 @@ class RussianTextToSpeechService
 
         Storage::disk('local')->put($storagePath, (string) $audio);
 
-        return $storagePath;
+        return true;
     }
 
     /**

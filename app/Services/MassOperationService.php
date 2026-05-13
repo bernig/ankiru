@@ -182,18 +182,25 @@ class MassOperationService
     // -------------------------------------------------------------------------
     /**
      * Read the current progress counters from cache for the given operation.
+     * Uses Cache::many() to fetch all four keys in a single round-trip.
      *
      * @return array{status: string, total: int, processed: int, failed: int}
      */
     public function getOperationProgress(string $sessionId, OperationType $operationType): array
     {
         $prefix = "mass_op:{$sessionId}:{$operationType->value}";
+        $values = Cache::many([
+            "{$prefix}:status",
+            "{$prefix}:total",
+            "{$prefix}:processed",
+            "{$prefix}:failed",
+        ]);
 
         return [
-            'status' => (string) Cache::get("{$prefix}:status", 'idle'),
-            'total' => (int) Cache::get("{$prefix}:total", 0),
-            'processed' => (int) Cache::get("{$prefix}:processed", 0),
-            'failed' => (int) Cache::get("{$prefix}:failed", 0),
+            'status' => (string) ($values["{$prefix}:status"] ?? 'idle'),
+            'total' => (int) ($values["{$prefix}:total"] ?? 0),
+            'processed' => (int) ($values["{$prefix}:processed"] ?? 0),
+            'failed' => (int) ($values["{$prefix}:failed"] ?? 0),
         ];
     }
 

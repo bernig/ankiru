@@ -85,7 +85,8 @@ namespace App\Models{
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ApiUsageLog> $apiUsageLogs
  * @property-read int|null $api_usage_logs_count
- * @property-read \App\Models\CsvDraft|null $csvDraft
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CsvDraft> $csvDrafts
+ * @property-read int|null $csv_drafts_count
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
  * @property-read int|null $notifications_count
  * @method static \Database\Factories\UserFactory factory($count = null, $state = [])

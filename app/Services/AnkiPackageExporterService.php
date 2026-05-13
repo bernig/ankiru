@@ -106,12 +106,13 @@ class AnkiPackageExporterService
      */
     private function buildCollectionDatabase(string $dbPath, array $cards, string $deckName): void
     {
-        $pdo = new PDO('sqlite:'.$dbPath);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+        $pdo = $this->createCollectionPdo($dbPath);
         $this->createSchema($pdo);
+
+        $pdo->beginTransaction();
         $this->insertCollectionRow($pdo, $deckName);
         $this->insertNotesAndCards($pdo, $cards);
+        $pdo->commit();
     }
 
     /**
@@ -330,12 +331,13 @@ class AnkiPackageExporterService
      */
     private function buildMultiDeckDatabase(string $dbPath, array $deckConfigs, string $parentDeckName): void
     {
-        $pdo = new PDO('sqlite:'.$dbPath);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+        $pdo = $this->createCollectionPdo($dbPath);
         $this->createSchema($pdo);
+
+        $pdo->beginTransaction();
         $this->insertCollectionRowMultiple($pdo, $deckConfigs, $parentDeckName);
         $this->insertNotesAndCardsMultiple($pdo, $deckConfigs);
+        $pdo->commit();
     }
 
     /**
@@ -616,6 +618,22 @@ class AnkiPackageExporterService
             'newToday' => [0, 0], 'revToday' => [0, 0], 'lrnToday' => [0, 0],
             'timeToday' => [0, 0], 'dyn' => 0, 'extendNew' => 10, 'conf' => 1, 'mod' => $now,
         ];
+    }
+
+    /**
+     * Open a PDO connection to the given SQLite file with pragmas optimised for
+     * bulk writes to a temporary file: synchronous=OFF skips fsyncs on commit,
+     * journal_mode=MEMORY keeps the rollback journal in RAM instead of on disk.
+     * Both are safe here because the file is a short-lived temp artefact.
+     */
+    private function createCollectionPdo(string $dbPath): PDO
+    {
+        $pdo = new PDO('sqlite:'.$dbPath);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->exec('PRAGMA synchronous = OFF');
+        $pdo->exec('PRAGMA journal_mode = MEMORY');
+
+        return $pdo;
     }
 
     /**

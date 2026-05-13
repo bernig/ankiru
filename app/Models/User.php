@@ -6,7 +6,6 @@ use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -43,9 +42,9 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(ApiUsageLog::class);
     }
 
-    public function csvDraft(): HasOne
+    public function csvDrafts(): HasMany
     {
-        return $this->hasOne(CsvDraft::class);
+        return $this->hasMany(CsvDraft::class);
     }
 
     public function avatarUrl(): string
