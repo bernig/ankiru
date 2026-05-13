@@ -1,4 +1,4 @@
-<x-layout :title="__('legal.mentions_title')">
+<x-layout :title="__('legal.mentions_title')" :description="__('legal.mentions_subtitle')">
     <x-site-header />
 
     <div class="mx-auto max-w-2xl py-8">
