@@ -11,6 +11,9 @@ return [
     'how_title' => 'Comment ça fonctionne sous le capot ?',
     'how_intro' => 'Aucune magie. Toutes les fonctions intelligentes de l\'application tapent directement dans l\'API d\'OpenAI.',
 
+    'how_generation_title' => 'Génération de phrases',
+    'how_generation_body' => 'Décrivez un thème et précisez combien de paires vous voulez. L\'IA génère des phrases dans votre langue maternelle avec leur traduction russe et les accents toniques, en tenant compte des cartes déjà présentes pour éviter les doublons.',
+
     'how_translation_title' => 'Traduction & accents',
     'how_translation_body' => 'Le modèle (GPT) traduit vos phrases, trouve le contexte, et place automatiquement les accents toniques sur les mots russes. Vous pouvez aussi lui faire corriger des phrases russes que vous auriez écrites vous-même.',
 

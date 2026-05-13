@@ -14,7 +14,7 @@ return [
     'goals_description' => 'The goal isn\'t blind automation. The app handles the repetitive tasks so you can focus on selecting the right phrases and reviewing the results.',
 
     'goal_input_title' => 'Start with phrases that matter',
-    'goal_input_description' => 'Use sentences from your classes, reading, or conversations instead of memorizing pre-made generic decks.',
+    'goal_input_description' => 'Use sentences from your classes, reading, or conversations — or ask the AI to generate new ones on any topic you choose.',
 
     'goal_pronunciation_title' => 'Add audio and stress marks',
     'goal_pronunciation_description' => 'Proper audio pronunciation and visual stress marks make your cards much easier to memorize.',
@@ -25,8 +25,8 @@ return [
     'workflow_title' => 'A smooth creation process',
     'workflow_description' => 'You stay in control of the content, while the app shortens the path between your raw notes and your final deck.',
 
-    'workflow_step_1_title' => 'Gather your phrases',
-    'workflow_step_1_description' => 'Paste the sentences you want to remember, whether they\'re from a textbook, your tutor, or your own notes.',
+    'workflow_step_1_title' => 'Gather or generate your phrases',
+    'workflow_step_1_description' => 'Paste the sentences you want to remember, or describe a topic and let the AI generate source + Russian pairs directly for you.',
 
     'workflow_step_2_title' => 'Generate translations and audio',
     'workflow_step_2_description' => 'The AI takes care of translating, placing stress marks, and generating audio. You just tweak the nuances if needed.',
@@ -36,6 +36,9 @@ return [
 
     'features_title' => 'What saves you time',
     'features_description' => 'These features automate the most tedious parts of building Anki decks.',
+
+    'feature_generation_title' => 'Phrase generation',
+    'feature_generation_description' => 'Describe a topic, pick how many pairs you need, and the AI generates phrases in your language with their Russian translation and stress marks.',
 
     'feature_translation_title' => 'Translation drafts',
     'feature_translation_description' => 'Quickly generate a first Russian draft for your phrases, ready to be polished with your own words.',

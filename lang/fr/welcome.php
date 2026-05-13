@@ -14,7 +14,7 @@ return [
     'goals_description' => 'L\'idée n\'est pas de tout automatiser à l\'aveugle. L\'application se charge simplement des tâches répétitives pour que vous n\'ayez plus qu\'à choisir vos phrases et vérifier le résultat.',
 
     'goal_input_title' => 'Partez de phrases qui vous sont utiles',
-    'goal_input_description' => 'Utilisez les phrases de vos cours, de vos lectures ou de vos discussions plutôt que d\'ingurgiter des paquets génériques tout faits.',
+    'goal_input_description' => 'Utilisez les phrases de vos cours, de vos lectures ou de vos discussions — ou demandez à l\'IA d\'en générer sur le thème de votre choix.',
 
     'goal_pronunciation_title' => 'Ajoutez l\'audio et les accents toniques',
     'goal_pronunciation_description' => 'La bonne prononciation audio et les accents toniques marqués visuellement rendent les cartes beaucoup plus faciles à mémoriser.',
@@ -25,8 +25,8 @@ return [
     'workflow_title' => 'Un processus de création fluide',
     'workflow_description' => 'Vous gardez le contrôle sur le contenu, l\'application se charge de raccourcir le chemin entre vos notes et votre paquet final.',
 
-    'workflow_step_1_title' => 'Rassemblez vos phrases',
-    'workflow_step_1_description' => 'Collez les phrases que vous souhaitez retenir, qu\'elles viennent d\'un manuel, de votre prof ou de vos propres notes.',
+    'workflow_step_1_title' => 'Rassemblez ou générez vos phrases',
+    'workflow_step_1_description' => 'Collez les phrases que vous souhaitez retenir, ou décrivez un thème et laissez l\'IA créer directement des paires source + russe à votre place.',
 
     'workflow_step_2_title' => 'Générez la traduction et l\'audio',
     'workflow_step_2_description' => 'L\'IA se charge de la traduction, des accents toniques et de l\'audio. Vous n\'avez plus qu\'à ajuster les nuances si besoin.',
@@ -36,6 +36,9 @@ return [
 
     'features_title' => 'Ce qui fait gagner du temps',
     'features_description' => 'Ces fonctionnalités automatisent les parties les plus fastidieuses de la création de paquets Anki.',
+
+    'feature_generation_title' => 'Génération de phrases',
+    'feature_generation_description' => 'Décrivez un thème, choisissez le nombre de paires, et l\'IA génère des phrases dans votre langue avec leur traduction russe et les accents toniques.',
 
     'feature_translation_title' => 'Brouillons de traductions',
     'feature_translation_description' => 'Générez rapidement une première version russe pour vos phrases, à retoucher avec vos propres mots.',

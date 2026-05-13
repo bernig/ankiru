@@ -11,6 +11,9 @@ return [
     'how_title' => 'How does it work under the hood?',
     'how_intro' => 'There\'s no magic here. All the smart features talk directly to OpenAI\'s API.',
 
+    'how_generation_title' => 'Phrase generation',
+    'how_generation_body' => 'Describe a topic and say how many pairs you want. The AI generates phrases in your native language with their Russian translation and stress marks, taking your existing cards into account to avoid duplicates.',
+
     'how_translation_title' => 'Translation & stress marks',
     'how_translation_body' => 'The model (GPT) translates your phrases into natural Russian and figures out where the stress marks belong. It can also fix stress marks on Russian text you type in yourself.',
 

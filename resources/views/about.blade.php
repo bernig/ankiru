@@ -28,6 +28,16 @@
 
             <div class="space-y-4">
                 <div class="flex gap-4">
+                    <div class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-purple-100">
+                        <flux:icon.sparkles class="size-4 text-purple-600" />
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-zinc-800">{{ __('about.how_generation_title') }}</p>
+                        <p class="mt-0.5 text-sm text-zinc-500">{{ __('about.how_generation_body') }}</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
                     <div class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-violet-100">
                         <flux:icon.language class="size-4 text-violet-600" />
                     </div>

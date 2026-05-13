@@ -43,6 +43,12 @@
 
         $featureCards = [
             [
+                'icon' => 'sparkles',
+                'iconClass' => 'bg-purple-100 text-purple-600',
+                'title' => __('welcome.feature_generation_title'),
+                'description' => __('welcome.feature_generation_description'),
+            ],
+            [
                 'icon' => 'language',
                 'iconClass' => 'bg-violet-100 text-violet-600',
                 'title' => __('welcome.feature_translation_title'),
