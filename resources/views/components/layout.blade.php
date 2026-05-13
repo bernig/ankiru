@@ -4,7 +4,42 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ?? config('app.name') }}</title>
+
+    @php
+        $pageTitle = isset($title) ? $title . ' — ' . config('app.name') : config('app.name');
+        $pageDescription = $description ?? null;
+        $canonicalUrl = $canonical ?? url()->current();
+        $ogImage = $ogImage ?? asset('android-chrome-512x512.png');
+    @endphp
+
+    <title>{{ $pageTitle }}</title>
+
+    {{-- Basic SEO --}}
+    <meta name="robots" content="index, follow">
+    @if ($pageDescription)
+        <meta name="description" content="{{ $pageDescription }}">
+    @endif
+    <link rel="canonical" href="{{ $canonicalUrl }}">
+
+    {{-- Open Graph --}}
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ config('app.name') }}">
+    <meta property="og:title" content="{{ $pageTitle }}">
+    @if ($pageDescription)
+        <meta property="og:description" content="{{ $pageDescription }}">
+    @endif
+    <meta property="og:url" content="{{ $canonicalUrl }}">
+    <meta property="og:image" content="{{ $ogImage }}">
+    <meta property="og:locale" content="{{ str_replace('-', '_', app()->getLocale()) }}">
+
+    {{-- Twitter Card --}}
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ $pageTitle }}">
+    @if ($pageDescription)
+        <meta name="twitter:description" content="{{ $pageDescription }}">
+    @endif
+    <meta name="twitter:image" content="{{ $ogImage }}">
+
     <link href="/favicon.ico" rel="icon" sizes="any">
     <link type="image/svg+xml" href="/favicon.svg" rel="icon">
     <link href="/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180">
@@ -23,6 +58,13 @@
 
     <footer class="bg-taupe-200 border-taupe-300 border-t p-6">
         <div class="flex flex-col items-center gap-8">
+            <flux:callout class="border-taupe-300 bg-taupe-150 flex w-full max-w-lg items-center" icon="light-bulb" icon:variant="outline" inline>
+                <flux:callout.text>{{ __('contact.footer_suggest') }}
+                    <flux:callout.link href="{{ route('contact') }}" wire:navigate>
+                        {{ __('contact.footer_suggest_cta') }}
+                    </flux:callout.link>
+                </flux:callout.text>
+            </flux:callout>
             <div class="flex flex-wrap items-center justify-center gap-2 text-sm text-zinc-700">
                 <a class="hover:text-zinc-900" href="{{ route('about') }}" wire:navigate>{{ __('about.title') }}</a>
                 <flux:separator vertical />
