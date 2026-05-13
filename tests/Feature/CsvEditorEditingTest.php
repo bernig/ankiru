@@ -69,6 +69,19 @@ test('navigates to the last page when an added row creates a second page', funct
         ->assertSet('paginators.page', 2);
 });
 
+test('clears all filters when adding a row so the new row is visible', function () {
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', sampleRows())
+        ->set('hasCsvLoaded', true)
+        ->set('searchQuery', 'French')
+        ->set('filterAccentNeeded', true)
+        ->set('filterNoAudio', true)
+        ->call('addRow')
+        ->assertSet('searchQuery', '')
+        ->assertSet('filterAccentNeeded', false)
+        ->assertSet('filterNoAudio', false);
+});
+
 test('deletes a row by its index and re-indexes remaining rows', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', sampleRows())

@@ -334,6 +334,10 @@ class CsvEditor extends Component
         $this->csvRows[] = array_fill(0, $columnCount, '');
         $newRowIndex = array_key_last($this->csvRows);
         $this->autoSaveDraft();
+        // Clear all filters so the new (empty) row is visible and totalPages is accurate.
+        $this->searchQuery = '';
+        $this->filterAccentNeeded = false;
+        $this->filterNoAudio = false;
         // Land on the last page so the new row is immediately visible.
         $this->setPage($this->totalPages);
         $this->dispatch('csv-row-added', rowIndex: $newRowIndex);
