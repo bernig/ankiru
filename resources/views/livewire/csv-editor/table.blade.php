@@ -56,7 +56,7 @@
                     @include('livewire.csv-editor.table-row')
                 @empty
                     <flux:table.row class="max-sm:block">
-                        <flux:table.cell class="text-center" class="max-sm:block max-sm:w-full max-sm:text-center" colspan="4">
+                        <flux:table.cell class="text-center" class="text-center max-sm:block max-sm:w-full" colspan="4">
                             {{ $searchQuery !== '' || $filterAccentNeeded || $filterNoAudio ? __('csv_editor.no_search_results') : __('csv_editor.no_rows_yet') }}
                         </flux:table.cell>
                     </flux:table.row>
