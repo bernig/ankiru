@@ -17,6 +17,7 @@ class SiteHeader extends Component
 
         return view('components.site-header', [
             'displayName' => $authenticatedUser?->name ?: ($authenticatedUser?->email ?: 'User'),
+            'email' => $authenticatedUser?->email ?? null,
             'avatarUrl' => $authenticatedUser?->avatarUrl() ?? null,
         ]);
     }

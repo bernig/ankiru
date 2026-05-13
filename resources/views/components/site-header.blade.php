@@ -6,7 +6,7 @@
     ];
 @endphp
 
-<div x-data="{ open: false }">
+<div>
     <div class="flex items-center justify-between gap-3 pb-3">
         <a class="group flex items-center gap-3" href="{{ route('csv-editor') }}" wire:navigate>
             <img class="size-7" src="{{ asset('logo.svg') }}" alt="{{ config('app.name') }}" />
@@ -59,15 +59,16 @@
         </div>
 
         {{-- Mobile hamburger --}}
-        <flux:button class="sm:hidden" square variant="ghost" @click="open = !open">
-            <flux:icon name="bars-3" x-show="!open" />
-            <flux:icon name="x-mark" x-show="open" />
-        </flux:button>
+        <flux:modal.trigger class="sm:hidden" name="mobile-menu">
+            <flux:button square variant="ghost">
+                <flux:icon name="bars-3" />
+            </flux:button>
+        </flux:modal.trigger>
     </div>
 
-    {{-- Mobile menu --}}
-    <div class="border-t border-zinc-200 pb-3 pt-2 sm:hidden" x-show="open" x-transition:enter="transition duration-150 ease-out" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition duration-100 ease-in" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1">
-        <flux:navlist>
+    {{-- Mobile flyout menu --}}
+    <flux:modal name="mobile-menu" flyout>
+        <flux:navlist class="space-y-6">
             @guest
                 <flux:navlist.item href="{{ route('login') }}" icon="arrow-right-end-on-rectangle" wire:navigate>
                     {{ __('auth.login') }}
@@ -79,8 +80,11 @@
 
             @auth
                 <div class="mb-2 flex items-center gap-3 px-2 py-1">
-                    <flux:avatar circle :src="$avatarUrl" size="sm" />
-                    <span class="text-sm font-medium text-zinc-700">{{ $displayName }}</span>
+                    <flux:avatar name="{{ $displayName }}" circle :src="$avatarUrl" size="sm" />
+                    <div class="flex flex-col">
+                        <flux:heading>{{ $displayName }}</flux:heading>
+                        <flux:text>{{ $email }}</flux:text>
+                    </div>
                 </div>
                 <flux:navlist.item href="{{ route('profile') }}" icon="user-circle" icon:variant="outline" wire:navigate>
                     {{ __('profile.title') }}
@@ -110,7 +114,7 @@
                 </flux:navmenu>
             </flux:dropdown>
         </flux:navlist>
-    </div>
+    </flux:modal>
 
     <flux:separator />
 </div>
