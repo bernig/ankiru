@@ -82,10 +82,10 @@
                     <flux:avatar circle :src="$avatarUrl" size="sm" />
                     <span class="text-sm font-medium text-zinc-700">{{ $displayName }}</span>
                 </div>
-                <flux:navlist.item href="{{ route('profile') }}" icon="user-circle" wire:navigate>
+                <flux:navlist.item href="{{ route('profile') }}" icon="user-circle" icon:variant="outline" wire:navigate>
                     {{ __('profile.title') }}
                 </flux:navlist.item>
-                <flux:navlist.item href="#" icon="arrow-right-start-on-rectangle" onclick="event.preventDefault(); document.getElementById('logout-form-mobile').submit();" variant="danger">
+                <flux:navlist.item href="#" icon="arrow-right-start-on-rectangle" onclick="event.preventDefault(); document.getElementById('logout-form-mobile').submit();" variant="danger" icon:variant="outline">
                     {{ __('csv_editor.logout') }}
                 </flux:navlist.item>
                 <form class="hidden" id="logout-form-mobile" action="{{ route('logout') }}" method="POST">

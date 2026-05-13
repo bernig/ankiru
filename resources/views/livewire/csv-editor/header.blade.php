@@ -2,7 +2,7 @@
     <x-site-header />
 
     @if ($hasCsvLoaded)
-        <div class="flex flex-col items-center justify-start gap-2 sm:flex-row">
+        <div class="flex flex-col justify-start gap-2 sm:flex-row sm:items-center">
             <div class="flex gap-2">
                 {{-- File selector / rename input --}}
                 @if ($isRenamingFile)
@@ -15,7 +15,7 @@
                     </div>
                 @else
                     <flux:dropdown>
-                        <flux:button class="rounded-full!" icon:trailing="chevron-down" variant="ghost" size="sm">
+                        <flux:button class="rounded-full!" icon:trailing="chevron-down" variant="ghost">
                             {{ pathinfo($originalFileName, PATHINFO_FILENAME) }}
                         </flux:button>
 
@@ -59,30 +59,51 @@
                 <input class="sr-only" type="file" x-ref="addFileInput" wire:model="uploadedCsvFile" accept=".csv,text/csv" />
 
                 {{-- Search icon / input --}}
-                <div class="flex items-center" x-data>
-                    <flux:button class="rounded-full!" title="{{ __('csv_editor.search_placeholder') }}" size="sm" icon="magnifying-glass" variant="subtle" x-show="!$store.csvSearch.active" @click="$store.csvSearch.active = true; $nextTick(() => $refs.csvSearchInput?.focus())" />
+                <div class="hidden items-center sm:flex" x-data>
+                    <flux:button class="rounded-full!" title="{{ __('csv_editor.search_placeholder') }}" icon="magnifying-glass" variant="subtle" x-show="!$store.csvSearch.active" @click="$store.csvSearch.active = true; $nextTick(() => $refs.csvSearchInput?.focus())" />
 
                     <div x-show="$store.csvSearch.active">
-                        <flux:input class="w-48" type="search" size="sm" x-ref="csvSearchInput" wire:model.live.debounce.300ms="searchQuery" placeholder="{{ __('csv_editor.search_placeholder') }}" @keydown.escape="$wire.set('searchQuery', ''); $store.csvSearch.active = false">
+                        <flux:input class="w-48" type="search" x-ref="csvSearchInput" wire:model.live.debounce.300ms="searchQuery" placeholder="{{ __('csv_editor.search_placeholder') }}" @keydown.escape="$wire.set('searchQuery', ''); $store.csvSearch.active = false">
                             <x-slot name="iconTrailing">
-                                <flux:button class="-mr-1" size="xs" icon="x-mark" @click="$wire.set('searchQuery', ''); $store.csvSearch.active = false" variant="ghost" />
+                                <flux:button class="-mr-1" size="sm" icon="x-mark" @click="$wire.set('searchQuery', ''); $store.csvSearch.active = false" variant="ghost" />
                             </x-slot>
                         </flux:input>
                     </div>
                 </div>
             </div>
 
-            <flux:spacer />
+            <flux:spacer class="hidden sm:flex" />
 
-            <div class="flex justify-center gap-2 md:justify-end">
+            <div class="flex gap-2">
+
+                {{-- Search icon / input --}}
+                <div class="flex w-full flex-1 items-center justify-end sm:hidden" x-data>
+                    <flux:button class="rounded-full!" title="{{ __('csv_editor.search_placeholder') }}" icon="magnifying-glass" x-show="!$store.csvSearch.active" @click="$store.csvSearch.active = true; $nextTick(() => $refs.csvSearchInput?.focus())" />
+
+                    <div class="flex-1" x-show="$store.csvSearch.active">
+                        <flux:input class="w-fullzz" type="search" x-ref="csvSearchInput" wire:model.live.debounce.300ms="searchQuery" placeholder="{{ __('csv_editor.search_placeholder') }}" @keydown.escape="$wire.set('searchQuery', ''); $store.csvSearch.active = false">
+                            <x-slot name="iconTrailing">
+                                <flux:button class="-mr-1" size="sm" icon="x-mark" @click="$wire.set('searchQuery', ''); $store.csvSearch.active = false" variant="ghost" />
+                            </x-slot>
+                        </flux:input>
+                    </div>
+                </div>
+
                 <flux:modal.trigger name="bulk-actions">
-                    <flux:button class="rounded-full!" icon:variant="outline" icon="sparkles" variant="ghost" wire:click="openBulkActionsModal">
-                        {{ __('csv_editor.bulk_actions') }}
+                    <flux:button class="rounded-full! size-10 sm:hidden" wire:click="openBulkActionsModal">
+                        <flux:icon.sparkles class="size-4" icon:variant="outline" />
+                    </flux:button>
+
+                    <flux:button class="hidden! sm:block! rounded-full!" variant="ghost" wire:click="openBulkActionsModal">
+                        <span class="flex items-center gap-2">
+                            <flux:icon.sparkles class="size-4" icon:variant="outline" />
+                            <span class="hidden sm:inline">{{ __('csv_editor.bulk_actions') }}</span>
+                        </span>
                     </flux:button>
                 </flux:modal.trigger>
 
                 <flux:dropdown position="bottom" align="end">
-                    <flux:button class="rounded-full!" variant="primary" wire:loading.attr="disabled" wire:target="downloadAnkiPackage,downloadColpkg">
+                    <flux:button class="rounded-full! size-10 sm:size-auto sm:h-10" variant="primary" wire:loading.attr="disabled" wire:target="downloadAnkiPackage,downloadColpkg">
                         <flux:icon.arrow-down-tray class="size-4" wire:loading.remove wire:target="downloadCsv,downloadAnkiPackage,downloadColpkg" />
                         <flux:icon.loading class="size-4" wire:loading wire:target="downloadCsv,downloadAnkiPackage,downloadColpkg" variant="outline" />
                         <span class="hidden sm:inline">{{ __('csv_editor.export') }}</span>

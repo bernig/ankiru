@@ -2,8 +2,8 @@
     <flux:table class="max-sm:block max-sm:min-w-0" container:class="w-full">
         @if ($this->paginatedRows->isNotEmpty())
             <flux:table.columns class="max-sm:hidden" sticky>
-                <flux:table.column class="py-2! px-2 first:ps-2 last:pe-2" colspan="2">{{ __('csv_editor.source_column') }}</flux:table.column>
-                <flux:table.column class="py-2! px-2 first:ps-2 last:pe-2" colspan="2">{{ __('csv_editor.russian_column') }}</flux:table.column>
+                <flux:table.column class="p-2! first:ps-2 last:pe-2" colspan="2">{{ __('csv_editor.source_column') }}</flux:table.column>
+                <flux:table.column class="p-2! first:ps-2 last:pe-2" colspan="2">{{ __('csv_editor.russian_column') }}</flux:table.column>
             </flux:table.columns>
         @endif
 
@@ -82,17 +82,18 @@
 
     {{-- ── Mobile row-edit modal ── --}}
     {{-- One shared modal driven by $store.mobileEdit.rowIndex, only visible on small screens. --}}
-    <flux:modal class="sm:max-w-lg!" name="mobile-edit">
+    <flux:modal name="mobile-edit" flyout position="left">
         <div class="flex flex-col gap-5">
-
             <flux:field>
                 <flux:label>{{ __('csv_editor.source_column') }}</flux:label>
-                <textarea class="block w-full resize-none rounded-lg border border-zinc-200 bg-white p-3 text-sm text-zinc-700 placeholder-zinc-400 outline-none transition-colors focus:border-zinc-400 dark:border-white/10 dark:bg-white/10 dark:text-zinc-300" rows="3" :value="$store.mobileEdit.rowIndex >= 0 ? ($wire.csvRows[$store.mobileEdit.rowIndex]?.[0] ?? '') : ''" x-on:blur="if ($store.mobileEdit.rowIndex >= 0) $wire.updateCell($store.mobileEdit.rowIndex, 0, $event.target.value)"></textarea>
+                <textarea class="block w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm text-zinc-700 placeholder-zinc-400 outline-none transition-colors focus:border-zinc-400 dark:border-white/10 dark:bg-white/10 dark:text-zinc-300" rows="3" :value="$store.mobileEdit.rowIndex >= 0 ? ($wire.csvRows[$store.mobileEdit.rowIndex]?.[0] ?? '') : ''" x-on:blur="if ($store.mobileEdit.rowIndex >= 0) $wire.updateCell($store.mobileEdit.rowIndex, 0, $event.target.value)">
+                </textarea>
             </flux:field>
 
             <flux:field>
                 <flux:label>{{ __('csv_editor.russian_column') }}</flux:label>
-                <textarea class="block w-full resize-none rounded-lg border border-zinc-200 bg-white p-3 text-sm text-zinc-700 placeholder-zinc-400 outline-none transition-colors focus:border-zinc-400 dark:border-white/10 dark:bg-white/10 dark:text-zinc-300" rows="3" :value="$store.mobileEdit.rowIndex >= 0 ? ($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '') : ''" x-on:blur="if ($store.mobileEdit.rowIndex >= 0) $wire.updateCell($store.mobileEdit.rowIndex, 1, $event.target.value)"></textarea>
+                <textarea class="block w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm text-zinc-700 placeholder-zinc-400 outline-none transition-colors focus:border-zinc-400 dark:border-white/10 dark:bg-white/10 dark:text-zinc-300" rows="3" :value="$store.mobileEdit.rowIndex >= 0 ? ($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '') : ''" x-on:blur="if ($store.mobileEdit.rowIndex >= 0) $wire.updateCell($store.mobileEdit.rowIndex, 1, $event.target.value)">
+                </textarea>
             </flux:field>
 
             <flux:button.group class="justify-end">

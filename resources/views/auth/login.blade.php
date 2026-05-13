@@ -31,7 +31,7 @@
                     <flux:checkbox name="remember" type="checkbox" value="1" label="{{ __('auth.remember_me') }}" />
                 </flux:field>
 
-                <flux:button class="mt-4 w-full" type="submit" variant="primary">
+                <flux:button class="w-full" type="submit" variant="primary">
                     {{ __('auth.sign_in') }}
                 </flux:button>
             </form>
