@@ -68,6 +68,8 @@
             <div class="flex flex-wrap items-center justify-center gap-2 text-sm text-zinc-700">
                 <a class="hover:text-zinc-900" href="{{ route('about') }}" wire:navigate>{{ __('about.title') }}</a>
                 <flux:separator vertical />
+                <a class="hover:text-zinc-900" href="{{ route('faq') }}" wire:navigate>{{ __('faq.title') }}</a>
+                <flux:separator vertical />
                 <a class="hover:text-zinc-900" href="{{ route('contact') }}" wire:navigate>{{ __('contact.title') }}</a>
                 <flux:separator vertical />
                 <a class="hover:text-zinc-900" href="{{ route('legal.mentions') }}" wire:navigate>{{ __('legal.mentions_title') }}</a>
