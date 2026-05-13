@@ -24559,11 +24559,12 @@ namespace Illuminate\Support {
          * @param string|null $model
          * @param int|bool|null $cache
          * @param int|null $timeout
+         * @param \Closure|array $providerOptions
          * @static
          */
-        public static function toEmbeddings($provider = null, $dimensions = null, $model = null, $cache = null, $timeout = null)
+        public static function toEmbeddings($provider = null, $dimensions = null, $model = null, $cache = null, $timeout = null, $providerOptions = [])
         {
-            return \Illuminate\Support\Stringable::toEmbeddings($provider, $dimensions, $model, $cache, $timeout);
+            return \Illuminate\Support\Stringable::toEmbeddings($provider, $dimensions, $model, $cache, $timeout, $providerOptions);
         }
 
         /**

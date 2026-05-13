@@ -150,28 +150,21 @@ test('deleting tts audio for a row with no cached file does nothing gracefully',
     expect(Storage::disk('local')->allFiles('tts'))->toBeEmpty();
 });
 
-test('tts audio exists for row returns true when cached file is present', function () {
+test('audio file exists in storage when cached file is present', function () {
     Storage::fake('local');
 
-    $rawRussianText = 'Я раб<b>о</b>таю.';
     $filenameHash = hash('sha256', 'Я работаю.');
     Storage::disk('local')->put("tts/{$filenameHash}.mp3", 'fake-mp3-binary');
 
-    $component = Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille.', $rawRussianText]])
-        ->set('hasCsvLoaded', true);
-
-    expect($component->instance()->ttsAudioExistsForRow(0))->toBeTrue();
+    expect(Storage::disk('local')->exists("tts/{$filenameHash}.mp3"))->toBeTrue();
 });
 
-test('tts audio exists for row returns false when no cached file exists', function () {
+test('audio file is absent from storage when never generated', function () {
     Storage::fake('local');
 
-    $component = Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille.', 'Я работаю.']])
-        ->set('hasCsvLoaded', true);
+    $filenameHash = hash('sha256', 'Я работаю.');
 
-    expect($component->instance()->ttsAudioExistsForRow(0))->toBeFalse();
+    expect(Storage::disk('local')->exists("tts/{$filenameHash}.mp3"))->toBeFalse();
 });
 
 test('tts service delete audio removes the cached file and returns true', function () {

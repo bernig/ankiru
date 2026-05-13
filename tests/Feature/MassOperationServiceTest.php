@@ -59,10 +59,10 @@ it('counts zero stress rows for a fully-accented CSV', function (): void {
         ['Source', 'Хор<b>о</b>шо.'],
         ['Source', 'Я здесь.'],
     ];
-    expect(makeService()->countRowsMissingStress($rows))->toBe(0);
+    expect(makeService()->estimateStressBatchCost($rows)['rowCount'])->toBe(0);
 });
 it('counts only rows that genuinely need stress correction', function (): void {
-    expect(makeService()->countRowsMissingStress(stressSampleRows()))->toBe(1);
+    expect(makeService()->estimateStressBatchCost(stressSampleRows())['rowCount'])->toBe(1);
 });
 it('returns zero tokens and cost when no rows need stress correction', function (): void {
     $rows = [['Source', 'Хор<b>о</b>шо.']];
@@ -92,7 +92,7 @@ it('counts zero TTS rows when all phrases already have audio', function (): void
     // Seed a fake audio file so existence check passes.
     $hash = (new RussianTextToSpeechService)->buildFilenameHash('Привет.');
     Storage::disk('local')->put("tts/{$hash}.mp3", 'fake-audio');
-    expect($service->countRowsMissingAudio($rows))->toBe(0);
+    expect($service->estimateTtsBatchCost($rows)['rowCount'])->toBe(0);
 });
 it('counts rows missing audio correctly', function (): void {
     Storage::fake('local');
@@ -100,7 +100,7 @@ it('counts rows missing audio correctly', function (): void {
     // Seed audio only for "Привет." (row 2).
     $hash = (new RussianTextToSpeechService)->buildFilenameHash('Привет.');
     Storage::disk('local')->put("tts/{$hash}.mp3", 'fake-audio');
-    expect(makeService()->countRowsMissingAudio($rows))->toBe(2);
+    expect(makeService()->estimateTtsBatchCost($rows)['rowCount'])->toBe(2);
 });
 it('returns zero chars and cost when all TTS audio exists', function (): void {
     Storage::fake('local');

@@ -575,7 +575,7 @@ it('reports isTtsBatchRunning correctly', function () {
 
 it('blocks translateWithChatGpt while a stress batch is running', function () {
     $translationService = Mockery::mock(OpenAiTranslationService::class);
-    $translationService->shouldNotReceive('translateSourceToRussian');
+    $translationService->shouldNotReceive('translateSourceToRussianWithUsage');
     app()->instance(OpenAiTranslationService::class, $translationService);
 
     Livewire::test(CsvEditor::class)
@@ -588,7 +588,7 @@ it('blocks translateWithChatGpt while a stress batch is running', function () {
 
 it('blocks correctStressMarks while a stress batch is running', function () {
     $translationService = Mockery::mock(OpenAiTranslationService::class);
-    $translationService->shouldNotReceive('correctRussianStressMarks');
+    $translationService->shouldNotReceive('correctRussianStressMarksWithUsage');
     app()->instance(OpenAiTranslationService::class, $translationService);
 
     Livewire::test(CsvEditor::class)

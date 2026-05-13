@@ -17,16 +17,6 @@ class OpenAiTranslationService
     public function __construct(private readonly RussianAccentService $accentService) {}
 
     /**
-     * Translate a source-language phrase to natural Russian with stress marks.
-     *
-     * @throws RuntimeException when the AI request fails.
-     */
-    public function translateSourceToRussian(string $sourceText): string
-    {
-        return $this->translateSourceToRussianWithUsage($sourceText)['text'];
-    }
-
-    /**
      * Translate a source-language phrase to Russian, returning the text and
      * exact token usage reported by the API.
      *
@@ -50,17 +40,6 @@ class OpenAiTranslationService
             'promptTokens' => $response->usage->promptTokens,
             'completionTokens' => $response->usage->completionTokens,
         ];
-    }
-
-    /**
-     * Review and correct stress marks in a Russian phrase.
-     * The source text is sent as contextual hint only.
-     *
-     * @throws RuntimeException when the AI request fails.
-     */
-    public function correctRussianStressMarks(string $russianText, string $sourceContextText): string
-    {
-        return $this->correctRussianStressMarksWithUsage($russianText, $sourceContextText)['text'];
     }
 
     /**

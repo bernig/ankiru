@@ -146,21 +146,6 @@ trait ManagesTtsAudio
     }
 
     /**
-     * Return true when a cached audio file exists for the Russian phrase in
-     * column 1 of the given row.
-     */
-    public function ttsAudioExistsForRow(int $rowIndex): bool
-    {
-        $rawRussianText = $this->csvRows[$rowIndex][1] ?? '';
-
-        if (empty(trim($rawRussianText))) {
-            return false;
-        }
-
-        return $this->ttsService->audioFileExists($rawRussianText);
-    }
-
-    /**
      * Open the TTS audio player modal for the given row.
      * Dispatches open-tts-modal with the current audio URL (or null when no
      * cached file exists yet).

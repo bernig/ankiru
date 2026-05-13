@@ -38,16 +38,6 @@ class MassOperationService
     // Stress-correction estimation
     // -------------------------------------------------------------------------
     /**
-     * Count the rows that still need stress-mark correction.
-     *
-     * @param  array<int, array<int, string>>  $csvRows
-     */
-    public function countRowsMissingStress(array $csvRows): int
-    {
-        return count($this->collectStressRows($csvRows));
-    }
-
-    /**
      * Estimate input/output token counts and USD cost for the stress batch.
      *
      * @param  array<int, array<int, string>>  $csvRows
@@ -79,16 +69,6 @@ class MassOperationService
     // -------------------------------------------------------------------------
     // TTS estimation
     // -------------------------------------------------------------------------
-    /**
-     * Count the rows that are missing a cached audio file.
-     *
-     * @param  array<int, array<int, string>>  $csvRows
-     */
-    public function countRowsMissingAudio(array $csvRows): int
-    {
-        return count($this->collectTtsRows($csvRows));
-    }
-
     /**
      * Estimate total character count and USD cost for the TTS batch.
      *
@@ -207,33 +187,44 @@ class MassOperationService
     /**
      * Read the stress-batch completion report from cache.
      * Only meaningful after a stress batch has finished.
+     * Uses Cache::many() to fetch all three keys in a single round-trip.
      *
      * @return array{corrected: int, promptTokens: int, completionTokens: int}
      */
     public function getStressReport(string $sessionId): array
     {
         $prefix = "mass_op:{$sessionId}:stress";
+        $values = Cache::many([
+            "{$prefix}:corrected",
+            "{$prefix}:prompt_tokens",
+            "{$prefix}:completion_tokens",
+        ]);
 
         return [
-            'corrected' => (int) Cache::get("{$prefix}:corrected", 0),
-            'promptTokens' => (int) Cache::get("{$prefix}:prompt_tokens", 0),
-            'completionTokens' => (int) Cache::get("{$prefix}:completion_tokens", 0),
+            'corrected' => (int) ($values["{$prefix}:corrected"] ?? 0),
+            'promptTokens' => (int) ($values["{$prefix}:prompt_tokens"] ?? 0),
+            'completionTokens' => (int) ($values["{$prefix}:completion_tokens"] ?? 0),
         ];
     }
 
     /**
      * Read the TTS-batch completion report from cache.
      * Only meaningful after a TTS batch has finished.
+     * Uses Cache::many() to fetch both keys in a single round-trip.
      *
      * @return array{generated: int, actualChars: int}
      */
     public function getTtsReport(string $sessionId): array
     {
         $prefix = "mass_op:{$sessionId}:tts";
+        $values = Cache::many([
+            "{$prefix}:generated",
+            "{$prefix}:actual_chars",
+        ]);
 
         return [
-            'generated' => (int) Cache::get("{$prefix}:generated", 0),
-            'actualChars' => (int) Cache::get("{$prefix}:actual_chars", 0),
+            'generated' => (int) ($values["{$prefix}:generated"] ?? 0),
+            'actualChars' => (int) ($values["{$prefix}:actual_chars"] ?? 0),
         ];
     }
 
@@ -293,27 +284,31 @@ class MassOperationService
 
     /**
      * Write the initial cache keys for a fresh batch so progress starts at zero.
+     * Uses Cache::putMany() to write all keys in a single round-trip.
      */
     private function initialiseCacheKeys(string $sessionId, OperationType $operationType, int $total): void
     {
         $prefix = "mass_op:{$sessionId}:{$operationType->value}";
         Cache::forget("{$prefix}:cancelled");
-        Cache::put("{$prefix}:status", 'running', ttl: 3600);
-        Cache::put("{$prefix}:total", $total, ttl: 3600);
-        Cache::put("{$prefix}:processed", 0, ttl: 3600);
-        Cache::put("{$prefix}:failed", 0, ttl: 3600);
 
-        // Stress-only counters for the post-batch report.
-        if ($operationType === OperationType::Stress) {
-            Cache::put("{$prefix}:corrected", 0, ttl: 3600);
-            Cache::put("{$prefix}:prompt_tokens", 0, ttl: 3600);
-            Cache::put("{$prefix}:completion_tokens", 0, ttl: 3600);
-        }
+        $typeCounters = match ($operationType) {
+            OperationType::Stress => [
+                "{$prefix}:corrected" => 0,
+                "{$prefix}:prompt_tokens" => 0,
+                "{$prefix}:completion_tokens" => 0,
+            ],
+            OperationType::Tts => [
+                "{$prefix}:generated" => 0,
+                "{$prefix}:actual_chars" => 0,
+            ],
+        };
 
-        // TTS-only counters for the post-batch report.
-        if ($operationType === OperationType::Tts) {
-            Cache::put("{$prefix}:generated", 0, ttl: 3600);
-            Cache::put("{$prefix}:actual_chars", 0, ttl: 3600);
-        }
+        Cache::putMany([
+            "{$prefix}:status" => 'running',
+            "{$prefix}:total" => $total,
+            "{$prefix}:processed" => 0,
+            "{$prefix}:failed" => 0,
+            ...$typeCounters,
+        ], 3600);
     }
 }

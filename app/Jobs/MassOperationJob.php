@@ -183,18 +183,18 @@ class MassOperationJob implements ShouldQueue
 
         $isNewGeneration = $ttsService->generateAudio($this->russianText);
 
-        // Accumulate the exact character count sent to the TTS API.
-        Cache::increment($this->cacheKey('actual_chars'), mb_strlen($normalizedText));
+        if ($isNewGeneration) {
+            $charCount = mb_strlen($normalizedText);
+            Cache::increment($this->cacheKey('actual_chars'), $charCount);
+            Cache::increment($this->cacheKey('generated'));
 
-        // Count successfully generated audio files.
-        Cache::increment($this->cacheKey('generated'));
-
-        if ($this->userId !== null && $isNewGeneration) {
-            ApiUsageLog::create([
-                'user_id' => $this->userId,
-                'operation' => 'tts',
-                'characters' => mb_strlen($normalizedText),
-            ]);
+            if ($this->userId !== null) {
+                ApiUsageLog::create([
+                    'user_id' => $this->userId,
+                    'operation' => 'tts',
+                    'characters' => $charCount,
+                ]);
+            }
         }
     }
 
@@ -234,8 +234,9 @@ class MassOperationJob implements ShouldQueue
      */
     private function broadcastProgress(): void
     {
-        $processedCount = (int) Cache::get($this->cacheKey('processed'), 0);
-        $failedCount = (int) Cache::get($this->cacheKey('failed'), 0);
+        $counters = Cache::many([$this->cacheKey('processed'), $this->cacheKey('failed')]);
+        $processedCount = (int) ($counters[$this->cacheKey('processed')] ?? 0);
+        $failedCount = (int) ($counters[$this->cacheKey('failed')] ?? 0);
         $isDone = $processedCount >= $this->totalRows;
 
         if ($isDone) {
