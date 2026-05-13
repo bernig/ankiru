@@ -23,30 +23,47 @@
 
     </div>
 
-    <flux:table class="max-sm:block max-sm:min-w-0" container:class="w-full">
-        @if ($this->paginatedRows->isNotEmpty())
-            <flux:table.columns class="max-sm:hidden" sticky>
-                <flux:table.column class="p-2! first:ps-2 last:pe-2" colspan="2">{{ __('csv_editor.source_column') }}</flux:table.column>
-                <flux:table.column class="p-2! first:ps-2 last:pe-2" colspan="2">{{ __('csv_editor.russian_column') }}</flux:table.column>
-            </flux:table.columns>
-        @endif
+    {{-- Skeleton shown while table data is refreshing --}}
+    <div wire:loading wire:target="gotoPage,previousPage,nextPage,setPage,perPage,filterAccentNeeded,filterNoAudio,searchQuery,switchToDraft">
+        <flux:skeleton.group class="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-700/50" animate="shimmer">
+            @foreach (range(1, $this->paginatedRows->count()) as $_)
+                <div class="hidden h-12 items-center sm:flex">
+                    <flux:skeleton.line />
+                </div>
+                <div class="flex flex-col items-center py-4 sm:hidden">
+                    <flux:skeleton class="h-29 w-full rounded-lg" animate="shimmer" />
+                </div>
+            @endforeach
+        </flux:skeleton.group>
+    </div>
 
-        <flux:table.rows class="max-sm:block">
-            @forelse ($this->paginatedRows as $rowIndex => $row)
-                @php
-                    $rowHasAudio = $this->audioExistenceByRowIndex[$rowIndex] ?? false;
-                @endphp
+    {{-- Real table hidden while loading --}}
+    <div wire:loading.remove wire:target="gotoPage,previousPage,nextPage,setPage,perPage,filterAccentNeeded,filterNoAudio,searchQuery,switchToDraft">
+        <flux:table class="max-sm:block max-sm:min-w-0" container:class="w-full">
+            @if ($this->paginatedRows->isNotEmpty())
+                <flux:table.columns class="max-sm:hidden" sticky>
+                    <flux:table.column class="p-2! first:ps-2 last:pe-2" colspan="2">{{ __('csv_editor.source_column') }}</flux:table.column>
+                    <flux:table.column class="p-2! first:ps-2 last:pe-2" colspan="2">{{ __('csv_editor.russian_column') }}</flux:table.column>
+                </flux:table.columns>
+            @endif
 
-                @include('livewire.csv-editor.table-row')
-            @empty
-                <flux:table.row class="max-sm:block">
-                    <flux:table.cell class="text-center" class="max-sm:block max-sm:w-full max-sm:text-center" colspan="4">
-                        {{ $searchQuery !== '' || $filterAccentNeeded || $filterNoAudio ? __('csv_editor.no_search_results') : __('csv_editor.no_rows_yet') }}
-                    </flux:table.cell>
-                </flux:table.row>
-            @endforelse
-        </flux:table.rows>
-    </flux:table>
+            <flux:table.rows class="max-sm:block">
+                @forelse ($this->paginatedRows as $rowIndex => $row)
+                    @php
+                        $rowHasAudio = $this->audioExistenceByRowIndex[$rowIndex] ?? false;
+                    @endphp
+
+                    @include('livewire.csv-editor.table-row')
+                @empty
+                    <flux:table.row class="max-sm:block">
+                        <flux:table.cell class="text-center" class="max-sm:block max-sm:w-full max-sm:text-center" colspan="4">
+                            {{ $searchQuery !== '' || $filterAccentNeeded || $filterNoAudio ? __('csv_editor.no_search_results') : __('csv_editor.no_rows_yet') }}
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforelse
+            </flux:table.rows>
+        </flux:table>
+    </div>
 
     {{-- Translation error banner --}}
     @if ($translationError)
