@@ -19,7 +19,7 @@
     @if ($pageDescription)
         <meta name="description" content="{{ $pageDescription }}">
     @endif
-    <link rel="canonical" href="{{ $canonicalUrl }}">
+    <link href="{{ $canonicalUrl }}" rel="canonical">
 
     {{-- Open Graph --}}
     <meta property="og:type" content="website">

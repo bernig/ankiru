@@ -37,5 +37,5 @@ test('page title includes app name as suffix', function () {
     $response = $this->get('/about');
 
     $response->assertSuccessful();
-    $response->assertSee('— ' . config('app.name'), false);
+    $response->assertSee('— '.config('app.name'), false);
 });
