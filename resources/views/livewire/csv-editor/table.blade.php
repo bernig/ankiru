@@ -96,15 +96,26 @@
                 </textarea>
             </flux:field>
 
+            @php
+                $hasAnyRussianText = collect($csvRows)->some(fn($row) => !empty(trim($row[1] ?? '')));
+            @endphp
             <flux:button.group class="justify-end">
-                <flux:button variant="ghost" x-bind:title="($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim() ?
-                    '{{ __('csv_editor.retranslate_with_chatgpt') }}' :
-                    '{{ __('csv_editor.translate_with_chatgpt') }}'" x-show="($wire.csvRows[$store.mobileEdit.rowIndex]?.[0] ?? '').trim()" wire:loading.attr="disabled" wire:target="translateWithChatGpt" @click="$wire.translateWithChatGpt($store.mobileEdit.rowIndex)">
+                @if ($hasAnyRussianText)
+                    <flux:button variant="ghost" x-bind:title="($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim() ?
+                        '{{ __('csv_editor.retranslate_with_chatgpt') }}' :
+                        '{{ __('csv_editor.translate_with_chatgpt') }}'" x-show="($wire.csvRows[$store.mobileEdit.rowIndex]?.[0] ?? '').trim()" wire:loading.attr="disabled" wire:target="translateWithChatGpt" @click="$wire.translateWithChatGpt($store.mobileEdit.rowIndex)">
 
-                    <flux:icon.loading class="size-4" wire:loading wire:target="translateWithChatGpt" />
-                    <flux:icon.arrow-path class="size-4" wire:loading.remove wire:target="translateWithChatGpt" x-show="($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()" />
-                    <flux:icon.sparkles class="size-4" wire:loading.remove wire:target="translateWithChatGpt" x-show="!($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()" />
-                </flux:button>
+                        <flux:icon.loading class="size-4" wire:loading wire:target="translateWithChatGpt" />
+                        <flux:icon.arrow-path class="size-4" wire:loading.remove wire:target="translateWithChatGpt" x-show="($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()" />
+                        <flux:icon.sparkles class="size-4" wire:loading.remove wire:target="translateWithChatGpt" x-show="!($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()" />
+                    </flux:button>
+                @else
+                    <flux:button title="{{ __('csv_editor.translate_with_chatgpt') }}" variant="ghost" x-show="($wire.csvRows[$store.mobileEdit.rowIndex]?.[0] ?? '').trim()" wire:loading.attr="disabled" wire:target="translateWithChatGpt" @click="$wire.translateWithChatGpt($store.mobileEdit.rowIndex)">
+
+                        <flux:icon.loading class="size-4" wire:loading wire:target="translateWithChatGpt" />
+                        <flux:icon.sparkles class="size-4" wire:loading.remove wire:target="translateWithChatGpt" />
+                    </flux:button>
+                @endif
                 <flux:button title="{{ __('csv_editor.fix_stress_marks') }}" variant="ghost" x-show="($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()" :disabled="$this->isStressBatchRunning" wire:loading.attr="disabled" wire:target="correctStressMarks" @click="$wire.correctStressMarks($store.mobileEdit.rowIndex)">
                     <flux:icon.loading class="size-4" wire:loading wire:target="correctStressMarks" />
                     <flux:icon.exclamation-circle class="size-4" wire:loading.remove wire:target="correctStressMarks" />
