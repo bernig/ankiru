@@ -1,4 +1,28 @@
 <flux:card class="flex flex-col space-y-6">
+
+    {{-- ── Filter toggles + active chips ── --}}
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-zinc-100 pb-3 dark:border-zinc-700/50">
+
+        {{-- Toggle buttons — always visible --}}
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-400 dark:text-zinc-500">
+            <button class="{{ $filterAccentNeeded ? 'bg-amber-50 ring-1 ring-amber-300 text-amber-700 dark:bg-amber-900/30 dark:ring-amber-700 dark:text-amber-300' : '' }} flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 transition-colors hover:bg-amber-50 dark:hover:bg-amber-900/20" title="{{ __('csv_editor.filter_click_to_activate') }}" wire:click="$toggle('filterAccentNeeded')">
+                <span class="inline-block size-3 shrink-0 rounded-sm bg-amber-200 dark:bg-amber-900/50"></span>
+                <span>{{ __('csv_editor.legend_accent_needed') }}</span>
+                @if ($filterAccentNeeded)
+                    <flux:icon.x-mark class="size-4 text-amber-700" />
+                @endif
+            </button>
+            <button class="{{ $filterNoAudio ? 'bg-blue-50 ring-1 ring-blue-300 text-blue-700 dark:bg-blue-900/30 dark:ring-blue-700 dark:text-blue-300' : '' }} flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/20" title="{{ __('csv_editor.filter_click_to_activate') }}" wire:click="$toggle('filterNoAudio')">
+                <span class="inline-block size-3 shrink-0 rounded-sm bg-blue-200 dark:bg-blue-900/30"></span>
+                <span>{{ __('csv_editor.legend_audio_missing') }}</span>
+                @if ($filterNoAudio)
+                    <flux:icon.x-mark class="size-4 text-blue-700" />
+                @endif
+            </button>
+        </div>
+
+    </div>
+
     <flux:table class="max-sm:block max-sm:min-w-0" container:class="w-full">
         @if ($this->paginatedRows->isNotEmpty())
             <flux:table.columns class="max-sm:hidden" sticky>
@@ -15,9 +39,9 @@
 
                 @include('livewire.csv-editor.table-row')
             @empty
-                <flux:table.row>
-                    <flux:table.cell class="text-center" colspan="4">
-                        {{ $searchQuery !== '' ? __('csv_editor.no_search_results') : __('csv_editor.no_rows_yet') }}
+                <flux:table.row class="max-sm:block">
+                    <flux:table.cell class="text-center" class="max-sm:block max-sm:w-full max-sm:text-center" colspan="4">
+                        {{ $searchQuery !== '' || $filterAccentNeeded || $filterNoAudio ? __('csv_editor.no_search_results') : __('csv_editor.no_rows_yet') }}
                     </flux:table.cell>
                 </flux:table.row>
             @endforelse
@@ -41,7 +65,7 @@
     @endif
 
     {{-- ── Footer toolbar ── --}}
-    <div class="mx-auto mt-4 flex w-full flex-col items-center gap-3" x-show="!$store.csvSearch.active">
+    <div class="mx-auto mb-0 mt-4 flex w-full flex-col items-center gap-3" x-show="!$store.csvSearch.active">
 
         <flux:button class="rounded-full! mb-4" wire:click="addRow" icon="plus" variant="primary">
             {{ __('csv_editor.add_row') }}
@@ -52,7 +76,7 @@
             <flux:pagination class="w-full flex-wrap" :paginator="$this->paginatedRows" scroll-to="html" />
         @endif
 
-        <div class="flex w-full flex-wrap items-center justify-between gap-3">
+        <div class="flex w-full justify-end">
             <div class="flex items-center gap-2 whitespace-nowrap text-xs font-medium text-zinc-500">
                 <span>{{ __('csv_editor.per_page') }}</span>
                 <flux:select wire:model.live="perPage" size="xs">
@@ -62,20 +86,6 @@
                     <flux:select.option value="100">100</flux:select.option>
                 </flux:select>
             </div>
-
-            {{-- Color legend --}}
-            @if ($this->paginatedRows->isNotEmpty())
-                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-400 dark:text-zinc-500">
-                    <div class="flex items-center gap-1.5">
-                        <span class="inline-block size-3 rounded-sm bg-amber-200 dark:bg-amber-900/50"></span>
-                        <span>{{ __('csv_editor.legend_accent_needed') }}</span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="inline-block size-3 rounded-sm bg-blue-200 dark:bg-blue-900/30"></span>
-                        <span>{{ __('csv_editor.legend_audio_missing') }}</span>
-                    </div>
-                </div>
-            @endif
         </div>
 
     </div>

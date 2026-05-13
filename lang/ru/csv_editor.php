@@ -33,6 +33,7 @@ return [
     'russian_column' => 'Русский текст',
     'legend_accent_needed' => 'Ударения требуют проверки',
     'legend_audio_missing' => 'Аудио не создано',
+    'filter_click_to_activate' => 'Нажмите для фильтрации',
 
     'edit_source_text' => 'Редактировать исходный текст',
     'edit_russian_text' => 'Редактировать русский текст',

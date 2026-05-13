@@ -57,6 +57,10 @@ class CsvEditor extends Component
 
     public string $searchQuery = '';
 
+    public bool $filterAccentNeeded = false;
+
+    public bool $filterNoAudio = false;
+
     public bool $hasCsvLoaded = false;
 
     /** Database ID of the currently displayed draft. 0 means no draft persisted yet. */
@@ -252,6 +256,16 @@ class CsvEditor extends Component
     }
 
     public function updatedSearchQuery(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterAccentNeeded(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterNoAudio(): void
     {
         $this->resetPage();
     }
@@ -456,6 +470,8 @@ class CsvEditor extends Component
         $this->renameInput = '';
         $this->ttsModalRowIndex = -1;
         $this->searchQuery = '';
+        $this->filterAccentNeeded = false;
+        $this->filterNoAudio = false;
         $this->resetPage();
         $this->dispatch('csv-file-switched');
     }
@@ -483,6 +499,8 @@ class CsvEditor extends Component
         $this->renameInput = '';
         $this->ttsModalRowIndex = -1;
         $this->searchQuery = '';
+        $this->filterAccentNeeded = false;
+        $this->filterNoAudio = false;
         $this->resetPage();
 
         $draft->update(['last_accessed_at' => now()]);
@@ -501,6 +519,8 @@ class CsvEditor extends Component
         $this->activeDraftId = 0;
         $this->ttsModalRowIndex = -1;
         $this->searchQuery = '';
+        $this->filterAccentNeeded = false;
+        $this->filterNoAudio = false;
         $this->resetPage();
         $this->dispatch('csv-file-switched');
 
@@ -553,25 +573,46 @@ class CsvEditor extends Component
     }
 
     /**
-     * Return the subset of csvRows matching the current search query,
-     * preserving original array keys so row-index-based actions keep working.
+     * Return the subset of csvRows matching the active search query and toggle
+     * filters, preserving original array keys so row-index-based actions work.
      *
      * @return array<int, array<int, string>>
      */
     #[Computed]
     public function filteredRows(): array
     {
+        $rows = $this->csvRows;
+
         $normalizedQuery = $this->normalizeForSearch(trim($this->searchQuery));
 
-        if ($normalizedQuery === '') {
-            return $this->csvRows;
+        if ($normalizedQuery !== '') {
+            $rows = array_filter(
+                $rows,
+                fn (array $row): bool => str_contains($this->normalizeForSearch($row[0] ?? ''), $normalizedQuery)
+                    || str_contains($this->normalizeForSearch($row[1] ?? ''), $normalizedQuery)
+            );
         }
 
-        return array_filter(
-            $this->csvRows,
-            fn (array $row): bool => str_contains($this->normalizeForSearch($row[0] ?? ''), $normalizedQuery)
-                || str_contains($this->normalizeForSearch($row[1] ?? ''), $normalizedQuery)
-        );
+        if ($this->filterAccentNeeded) {
+            $rows = array_filter(
+                $rows,
+                fn (array $row): bool => $this->accentService->textNeedsStressCorrection($row[1] ?? '')
+            );
+        }
+
+        if ($this->filterNoAudio) {
+            $russianTexts = array_values(array_filter(
+                array_map(fn (array $row): string => $row[1] ?? '', $rows),
+                fn (string $text): bool => trim($text) !== '',
+            ));
+            $audioExistence = $this->ttsService->audioFilesExistBatch($russianTexts);
+            $rows = array_filter(
+                $rows,
+                fn (array $row): bool => trim($row[1] ?? '') !== '' && ! ($audioExistence[$row[1] ?? ''] ?? false)
+            );
+        }
+
+        return $rows;
     }
 
     // -------------------------------------------------------------------------

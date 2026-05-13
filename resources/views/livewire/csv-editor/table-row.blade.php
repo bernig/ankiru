@@ -42,7 +42,7 @@
 
         {{-- Mobile: single "Open" button ── --}}
         <div class="flex justify-end sm:hidden">
-            <flux:button size="sm" variant="ghost" icon="arrow-right" @click="$store.mobileEdit.rowIndex = rowIndex; $nextTick(() => $flux.modal('mobile-edit').show())">
+            <flux:button size="sm" variant="subtle" icon="arrow-right" @click="$store.mobileEdit.rowIndex = rowIndex; $nextTick(() => $flux.modal('mobile-edit').show())">
                 {{ __('csv_editor.open_row') }}
             </flux:button>
         </div>

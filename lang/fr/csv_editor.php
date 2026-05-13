@@ -37,6 +37,7 @@ return [
     'per_page' => 'Lignes par page',
     'legend_accent_needed' => 'Accents toniques à vérifier',
     'legend_audio_missing' => 'Audio non généré',
+    'filter_click_to_activate' => 'Cliquer pour filtrer',
 
     // Actions sur les lignes (infobulles des boutons)
     'edit_source_text' => 'Modifier le texte source',

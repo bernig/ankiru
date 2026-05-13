@@ -37,6 +37,7 @@ return [
     'russian_column' => 'Russian text',
     'legend_accent_needed' => 'Russian stress marks to review',
     'legend_audio_missing' => 'Audio not yet generated',
+    'filter_click_to_activate' => 'Click to filter',
 
     // Table row actions (button tooltips)
     'edit_source_text' => 'Edit source text',
