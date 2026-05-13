@@ -2,6 +2,11 @@
     {{-- Apply the user's saved accent style to CSS vars on first paint. --}}
     <div class="hidden" x-data x-init="window.applyAccentStyle(@js($accentColor), @js($accentBold), @js($accentUnicode))"></div>
 
+    @if ($stressBatchStatus === 'running' || $ttsBatchStatus === 'running')
+        {{-- Fallback for missed Reverb updates during deploy / reconnect windows. --}}
+        <div class="hidden" wire:poll.3s="refreshRunningBatchProgress"></div>
+    @endif
+
     @include('livewire.csv-editor.header')
 
     @if ($hasCsvLoaded)

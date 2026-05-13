@@ -5,7 +5,8 @@
       A) Stress-mark correction  — one MassOperationJob per qualifying row via GPT
       B) TTS audio generation    — one MassOperationJob per row missing an MP3
 
-    All progress updates arrive via Laravel Echo (Reverb) — no wire:poll.
+    Progress updates arrive primarily via Laravel Echo (Reverb), with a small
+    Livewire polling fallback to cover missed events during deploy/reconnect windows.
 
     Section layout (when not running):
       1. Previous-run summary  — shown only when status === 'done'

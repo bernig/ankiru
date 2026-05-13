@@ -99,6 +99,50 @@ it('syncs in-flight stress progress from cache when modal is opened', function (
         ->assertSet('stressBatchFailed', 1);
 });
 
+it('refreshes running batch progress from cache when a websocket update is missed', function () {
+    Storage::fake('local');
+
+    $sessionId = session()->getId();
+    Cache::put("mass_op:{$sessionId}:stress:row:0", 'Я говор<b>ю</b>.', now()->addMinutes(10));
+
+    $mockService = Mockery::mock(MassOperationService::class);
+
+    $mockService->shouldReceive('getOperationProgress')
+        ->with(Mockery::any(), OperationType::Stress)
+        ->andReturn(['status' => 'done', 'total' => 1, 'processed' => 1, 'failed' => 0]);
+
+    $mockService->shouldReceive('getOperationProgress')
+        ->with(Mockery::any(), OperationType::Tts)
+        ->andReturn(['status' => 'idle', 'total' => 0, 'processed' => 0, 'failed' => 0]);
+
+    $mockService->shouldReceive('getStressReport')
+        ->andReturn(['corrected' => 1, 'promptTokens' => 24, 'completionTokens' => 8]);
+
+    $mockService->shouldReceive('estimateStressBatchCost')->andReturn([
+        'rowCount' => 0, 'inputTokens' => 0, 'outputTokens' => 0, 'estimatedCost' => 0.0,
+    ]);
+    $mockService->shouldReceive('estimateTtsBatchCost')->andReturn([
+        'rowCount' => 0, 'totalChars' => 0, 'estimatedCost' => 0.0,
+    ]);
+
+    app()->instance(MassOperationService::class, $mockService);
+
+    $lw = Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je parle.', 'Я говорю.']])
+        ->set('hasCsvLoaded', true)
+        ->set('stressBatchStatus', 'running')
+        ->set('stressBatchTotal', 1)
+        ->call('refreshRunningBatchProgress');
+
+    $lw->assertSet('stressBatchStatus', 'done')
+        ->assertSet('stressBatchProgress', 1)
+        ->assertSet('stressBatchFailed', 0)
+        ->assertSet('stressBatchCorrectedCount', 1);
+
+    $csvRows = $lw->get('csvRows');
+    expect($csvRows[0][1])->toBe('Я говор<b>ю</b>.');
+});
+
 // ---------------------------------------------------------------------------
 // dispatchStressBatch
 // ---------------------------------------------------------------------------
@@ -627,6 +671,7 @@ it('renders the stress-correction button as disabled when a stress batch is runn
         ->set('csvRows', [['Je parle.', 'Я говорю.']])
         ->set('hasCsvLoaded', true)
         ->set('stressBatchStatus', 'running')
+        ->assertSeeHtml('wire:poll.3s="refreshRunningBatchProgress"')
         ->assertSeeHtml('disabled');
 });
 

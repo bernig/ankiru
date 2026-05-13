@@ -228,6 +228,27 @@ trait ManagesMassOperations
         };
     }
 
+    /**
+     * Fallback progress refresh used when a WebSocket update is missed during a
+     * deploy or temporary Reverb reconnect window.
+     */
+    public function refreshRunningBatchProgress(): void
+    {
+        if ($this->stressBatchStatus !== 'running' && $this->ttsBatchStatus !== 'running') {
+            return;
+        }
+
+        $stressWasRunning = $this->stressBatchStatus === 'running';
+        $ttsWasRunning = $this->ttsBatchStatus === 'running';
+
+        $this->syncProgressFromCache();
+
+        if (($stressWasRunning && $this->stressBatchStatus === 'done')
+            || ($ttsWasRunning && $this->ttsBatchStatus === 'done')) {
+            $this->refreshEstimates();
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Computed helpers (used by Blade to conditionally disable per-row buttons)
     // -------------------------------------------------------------------------
