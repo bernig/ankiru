@@ -116,6 +116,23 @@ test('contact form resets fields after successful submission', function (): void
         ->assertSet('message', '');
 });
 
+test('le formulaire de contact bloque le spam quand le honeypot est déclenché', function (): void {
+    config(['honeypot.enabled' => true]); // réactive le honeypot pour ce test
+
+    // Soumettre immédiatement après le montage signifie que valid_from (maintenant + 1s,
+    // généré dans HoneypotData::__construct) est encore dans le futur, ce que
+    // SpamProtection interprète comme une soumission de bot.
+    Livewire::test(Contact::class)
+        ->set('name', 'Spam Bot')
+        ->set('email', 'bot@example.com')
+        ->set('subject', 'Sujet spam')
+        ->set('message', 'Achetez mes produits maintenant !')
+        ->call('submit')
+        ->assertStatus(403);
+
+    Mail::assertNothingSent();
+});
+
 test('contact form mail subject is translated in russian', function (): void {
     App::setLocale('ru');
 

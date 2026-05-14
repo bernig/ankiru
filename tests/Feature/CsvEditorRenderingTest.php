@@ -81,6 +81,15 @@ test('normalises combining acute accent to bold tags on import', function (): vo
         ->assertSet('csvRows.0.1', 'раб<b>о</b>тать');
 });
 
+test('rejects a non-csv file with a validation error', function () {
+    $uploadedFile = UploadedFile::fake()->create('image.png', 100, 'image/png');
+
+    Livewire::test(CsvEditor::class)
+        ->set('uploadedCsvFile', $uploadedFile)
+        ->assertHasErrors(['uploadedCsvFile'])
+        ->assertSet('hasCsvLoaded', false);
+});
+
 test('rejects an empty csv file with a validation error', function () {
     $uploadedFile = UploadedFile::fake()->createWithContent('empty.csv', '');
 

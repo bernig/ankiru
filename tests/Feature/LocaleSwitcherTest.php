@@ -63,6 +63,10 @@ test('guest can switch locale to russian and see russian translations', function
     $loginResponse->assertSee(__('auth.login', [], 'ru'));
 });
 
+test('une locale non supportée retourne une 404', function () {
+    $this->get('/locale/ja')->assertNotFound();
+});
+
 test('guest language switcher renders navigable locale links', function () {
     $response = $this->get(route('login'));
 
