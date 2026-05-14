@@ -2,6 +2,7 @@
 
 use App\Livewire\Contact;
 use App\Mail\ContactFormMail;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
@@ -117,11 +118,11 @@ test('contact form resets fields after successful submission', function (): void
 });
 
 test('le formulaire de contact bloque le spam quand le honeypot est déclenché', function (): void {
-    config(['honeypot.enabled' => true]); // réactive le honeypot pour ce test
+    // Geler le temps pour que valid_from (now + 1s) soit toujours dans le futur
+    // quelle que soit la durée d'exécution du test sur le CI.
+    Carbon::setTestNow(now());
+    config(['honeypot.enabled' => true]);
 
-    // Soumettre immédiatement après le montage signifie que valid_from (maintenant + 1s,
-    // généré dans HoneypotData::__construct) est encore dans le futur, ce que
-    // SpamProtection interprète comme une soumission de bot.
     Livewire::test(Contact::class)
         ->set('name', 'Spam Bot')
         ->set('email', 'bot@example.com')
@@ -130,6 +131,7 @@ test('le formulaire de contact bloque le spam quand le honeypot est déclenché'
         ->call('submit')
         ->assertStatus(403);
 
+    Carbon::setTestNow(null);
     Mail::assertNothingSent();
 });
 
