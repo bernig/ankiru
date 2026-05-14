@@ -70,9 +70,7 @@
             @else
                 {{-- Skeleton while estimates are loading --}}
                 <div class="flex flex-col gap-2" wire:loading wire:target="openBulkActionsModal">
-                    <flux:skeleton.line class="w-3/4" animate="shimmer" />
-                    <flux:skeleton.line class="w-1/2" animate="shimmer" />
-                    <flux:skeleton class="mt-1 h-7 w-28 rounded-lg" animate="shimmer" />
+                    <flux:skeleton.line class="w-full sm:w-1/2" animate="shimmer" />
                 </div>
 
                 {{-- Real content hidden while loading --}}
@@ -171,9 +169,7 @@
             @else
                 {{-- Skeleton while estimates are loading --}}
                 <div class="flex flex-col gap-2" wire:loading wire:target="openBulkActionsModal">
-                    <flux:skeleton.line class="w-3/4" animate="shimmer" />
-                    <flux:skeleton.line class="w-1/2" animate="shimmer" />
-                    <flux:skeleton class="mt-1 h-7 w-28 rounded-lg" animate="shimmer" />
+                    <flux:skeleton.line class="w-full sm:w-1/2" animate="shimmer" />
                 </div>
 
                 {{-- Real content hidden while loading --}}
