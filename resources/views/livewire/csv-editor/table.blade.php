@@ -92,7 +92,7 @@
 
         {{-- Flux pagination (shown only when there is more than one page) --}}
         @if ($this->totalPages > 1)
-            <flux:pagination class="w-full flex-wrap" :paginator="$this->paginatedRows" scroll-to="html" />
+            <flux:pagination class="w-full flex-wrap" :paginator="$this->paginatedRows" />
         @endif
 
         <div class="flex w-full justify-end">

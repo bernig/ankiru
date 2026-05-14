@@ -20,6 +20,24 @@ document.addEventListener('alpine:init', () => {
     });
 });
 
+document.addEventListener('livewire:init', () => {
+    const paginationMethods = ['gotoPage', 'previousPage', 'nextPage', 'setPage'];
+
+    Livewire.hook('commit', ({ commit, succeed }) => {
+        succeed(() => {
+            const isPagination = (commit.calls || []).some(
+                call => paginationMethods.includes(call.method)
+            );
+            const isPerPageChange = commit.updates && 'perPage' in commit.updates;
+            if (isPagination || isPerPageChange) {
+                requestAnimationFrame(() => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
+        });
+    });
+});
+
 document.addEventListener('csv-file-switched', () => {
     const store = Alpine.store('csvSearch');
     if (store) {
