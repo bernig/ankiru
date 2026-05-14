@@ -132,6 +132,10 @@ trait ManagesRowGeneration
             }
 
             $this->autoSaveDraft();
+            // Clear filters so new rows are visible and totalPages is accurate.
+            $this->searchQuery = '';
+            $this->filterAccentNeeded = false;
+            $this->filterNoAudio = false;
             $this->setPage($this->totalPages);
 
             ApiUsageLog::create([

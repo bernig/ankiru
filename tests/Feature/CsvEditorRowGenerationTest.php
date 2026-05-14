@@ -17,6 +17,41 @@ beforeEach(function (): void {
     $this->actingAs($authenticatedUser);
 });
 
+// ── Pagination & filter reset ────────────────────────────────────────────────
+
+test('navigates to the last page after generation so new rows are immediately visible', function () {
+    // 52 existing rows fills page 1 (50 per page) and leaves 2 on page 2.
+    $existing = array_fill(0, 52, ['Existing', 'Существующий']);
+
+    RowGeneratorAgent::fake(['[{"source": "New", "russian": "Нов<b>ы</b>й"}]']);
+
+    $component = Livewire::test(CsvEditor::class)
+        ->set('hasCsvLoaded', true)
+        ->set('csvRows', $existing)
+        ->set('generateRowsPrompt', 'One more word')
+        ->set('generateRowsCount', 1)
+        ->call('generateRows');
+
+    // 53 rows at 50 per page → last page is 2.
+    expect($component->instance()->getPage())->toBe(2);
+});
+
+test('clears active filters after generation so new rows are not hidden', function () {
+    RowGeneratorAgent::fake(['[{"source": "Hello", "russian": "При<b>в</b>ет"}]']);
+
+    Livewire::test(CsvEditor::class)
+        ->set('hasCsvLoaded', true)
+        ->set('csvRows', [['Bonjour', 'При<b>в</b>ет']])
+        ->set('searchQuery', 'Bonjour')
+        ->set('filterAccentNeeded', true)
+        ->set('generateRowsPrompt', 'Greetings')
+        ->set('generateRowsCount', 1)
+        ->call('generateRows')
+        ->assertSet('searchQuery', '')
+        ->assertSet('filterAccentNeeded', false)
+        ->assertSet('filterNoAudio', false);
+});
+
 // ── Successful generation ────────────────────────────────────────────────────
 
 test('generates rows and appends them to csvRows', function () {
