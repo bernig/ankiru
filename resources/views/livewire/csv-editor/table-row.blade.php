@@ -56,7 +56,7 @@
                     </button>
 
                     @if (!empty(trim($row[1] ?? '')))
-                        <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 [@media(hover:none)]:opacity-100" title="{{ $this->isTtsBatchRunning ? __('csv_editor.bulk_tts_in_progress') : __('csv_editor.open_audio_player') }}" wire:click="openTtsModal({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})" @disabled($this->isTtsBatchRunning)>
+                        <button type="button" class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 [@media(hover:none)]:opacity-100" title="{{ $this->isTtsBatchRunning ? __('csv_editor.bulk_tts_in_progress') : __('csv_editor.open_audio_player') }}" wire:click="openTtsModal({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})" @disabled($this->isTtsBatchRunning)>
                             <span wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})">
                                 <flux:icon.speaker-wave class="mx-1 my-2 size-4" />
                             </span>

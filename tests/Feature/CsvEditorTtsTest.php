@@ -246,7 +246,11 @@ test('openTtsModal sets ttsModalRowIndex and dispatches open-tts-modal event wit
         ->set('hasCsvLoaded', true)
         ->call('openTtsModal', 0)
         ->assertSet('ttsModalRowIndex', 0)
-        ->assertDispatched('open-tts-modal', audioUrl: null);
+        ->assertDispatched('open-tts-modal', fn ($name, $params) => $params['audioUrl'] === null &&
+            $params['audioExists'] === false &&
+            $params['rowIndex'] === 0 &&
+            $params['russianText'] === 'Я работаю.'
+        );
 });
 
 test('openTtsModal dispatches open-tts-modal event with audio url when cached file exists', function () {
@@ -261,7 +265,11 @@ test('openTtsModal dispatches open-tts-modal event with audio url when cached fi
         ->set('hasCsvLoaded', true)
         ->call('openTtsModal', 0)
         ->assertSet('ttsModalRowIndex', 0)
-        ->assertDispatched('open-tts-modal', fn ($name, $params) => str_contains($params['audioUrl'], route('tts.serve', $filenameHash)));
+        ->assertDispatched('open-tts-modal', fn ($name, $params) => str_contains($params['audioUrl'], route('tts.serve', $filenameHash)) &&
+            $params['audioExists'] === true &&
+            $params['rowIndex'] === 0 &&
+            $params['russianText'] === $rawText
+        );
 });
 
 test('refreshTtsAudio deletes the existing file and regenerates fresh audio', function () {

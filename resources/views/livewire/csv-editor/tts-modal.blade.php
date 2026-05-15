@@ -1,24 +1,3 @@
-@php
-    $ttsModalRussianText = $ttsModalRowIndex >= 0 && isset($csvRows[$ttsModalRowIndex]) ? $csvRows[$ttsModalRowIndex][1] ?? '' : '';
-
-    $ttsModalAudioExists = false;
-    $ttsModalCreatedAt = null;
-
-    if ($ttsModalRowIndex >= 0 && !empty(trim($ttsModalRussianText))) {
-        /** @var \App\Services\RussianTextToSpeechService $ttsServiceForModal */
-        $ttsServiceForModal = app(\App\Services\RussianTextToSpeechService::class);
-        $ttsModalAudioExists = $ttsServiceForModal->audioFileExists($ttsModalRussianText);
-
-        if ($ttsModalAudioExists) {
-            $ttsModalFilenameHash = $ttsServiceForModal->buildFilenameHash($ttsModalRussianText);
-            $ttsModalLastModified = Storage::disk('local')->lastModified("tts/{$ttsModalFilenameHash}.mp3");
-            $ttsModalCreatedAt = \Illuminate\Support\Carbon::createFromTimestamp($ttsModalLastModified)
-                ->locale(app()->getLocale())
-                ->isoFormat('LLL');
-        }
-    }
-@endphp
-
 <flux:modal class="md:w-xl" name="tts-player" x-on:close="
         ttsModalOpen = false;
         ttsModalAudioSrc = null;
@@ -26,44 +5,40 @@
         if (player) { player.pause(); player.removeAttribute('src'); }
     ">
     <div class="flex flex-col gap-5">
-        <flux:heading class="pr-8" size="lg">{!! $ttsModalRussianText !!}</flux:heading>
+        <flux:heading class="pr-8" size="lg" x-html="ttsModal.russianText"></flux:heading>
 
-        @if ($ttsModalAudioExists)
+        <div x-show="ttsModal.audioExists">
             <div class="flex flex-col gap-2">
-                {{-- Native audio player; src is driven by Alpine to stay reactive across generate/refresh --}}
                 <audio class="w-full rounded" id="tts-modal-audio" controls lang="ru" :src="ttsModalAudioSrc"></audio>
-
-                {{-- File creation date in muted text --}}
-                <flux:text class="text-xs text-zinc-400">
-                    {{ __('csv_editor.generated_at', ['date' => $ttsModalCreatedAt]) }}
-                </flux:text>
+                <flux:text class="text-xs text-zinc-400" x-text="'{{ __('csv_editor.generated_at', ['date' => '%%DATE%%']) }}'.replace('%%DATE%%', ttsModal.createdAt || '')"></flux:text>
             </div>
-        @elseif ($ttsModalRowIndex >= 0)
+        </div>
+
+        <div x-show="!ttsModal.audioExists && ttsModal.rowIndex >= 0">
             <flux:callout variant="warning" icon="speaker-x-mark">
                 <flux:callout.text>
                     {{ __('csv_editor.no_audio_yet') }}
                 </flux:callout.text>
             </flux:callout>
-        @endif
+        </div>
 
-        {{-- Action buttons - inside default slot since flux:modal has no footer slot --}}
+        {{-- Action buttons --}}
         <div class="flex items-center gap-2">
             <flux:spacer />
 
-            @if ($ttsModalRowIndex >= 0 && $ttsModalAudioExists)
-                {{-- Delete: removes the cached file; modal stays open showing the "no audio" state --}}
-                <flux:button class="hover:bg-red-50! text-red-600! hover:text-red-700! rounded-full!" variant="subtle" icon:variant="outline" icon="trash" wire:click="deleteTtsAudio({{ $ttsModalRowIndex }})" wire:loading.attr="disabled" wire:target="deleteTtsAudio({{ $ttsModalRowIndex }})" :disabled="$this->isTtsBatchRunning" />
+            <div x-show="ttsModal.rowIndex >= 0 && ttsModal.audioExists" class="flex gap-2">
+                <flux:button class="hover:bg-red-50! text-red-600! hover:text-red-700! rounded-full!" variant="subtle" icon:variant="outline" icon="trash" @click="$wire.deleteTtsAudio(ttsModal.rowIndex)" wire:loading.attr="disabled" wire:target="deleteTtsAudio" x-bind:disabled="$wire.ttsBatchStatus === 'running'" />
 
-                {{-- Refresh: deletes + regenerates; tts-audio-ready updates the audio player src --}}
-                <flux:button class="rounded-full!" icon="sparkles" icon:variant="outline" wire:click="refreshTtsAudio({{ $ttsModalRowIndex }})" wire:loading.attr="disabled" wire:loading.class="opacity-60" wire:target="refreshTtsAudio({{ $ttsModalRowIndex }})" variant="primary" :disabled="$this->isTtsBatchRunning">
+                <flux:button class="rounded-full!" icon="sparkles" icon:variant="outline" @click="$wire.refreshTtsAudio(ttsModal.rowIndex)" wire:loading.attr="disabled" wire:loading.class="opacity-60" wire:target="refreshTtsAudio" variant="primary" x-bind:disabled="$wire.ttsBatchStatus === 'running'">
                     {{ __('csv_editor.regenerate') }}
                 </flux:button>
-            @elseif ($ttsModalRowIndex >= 0)
-                {{-- Generate: creates audio for the first time --}}
-                <flux:button class="rounded-full!" variant="primary" icon="speaker-wave" wire:click="generateTtsAudio({{ $ttsModalRowIndex }})" wire:loading.attr="disabled" wire:loading.class="opacity-60" wire:target="generateTtsAudio({{ $ttsModalRowIndex }})" :disabled="$this->isTtsBatchRunning">
+            </div>
+
+            <div x-show="ttsModal.rowIndex >= 0 && !ttsModal.audioExists">
+                <flux:button class="rounded-full!" variant="primary" icon="speaker-wave" @click="$wire.generateTtsAudio(ttsModal.rowIndex)" wire:loading.attr="disabled" wire:loading.class="opacity-60" wire:target="generateTtsAudio" x-bind:disabled="$wire.ttsBatchStatus === 'running'">
                     {{ __('csv_editor.generate_audio') }}
                 </flux:button>
-            @endif
+            </div>
 
             <flux:modal.close>
                 <flux:button class="rounded-full!" icon="check" variant="filled">{{ __('csv_editor.close') }}</flux:button>

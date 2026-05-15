@@ -5,11 +5,13 @@ namespace App\Livewire\Concerns;
 use App\Models\ApiUsageLog;
 use App\Services\RussianTextToSpeechService;
 use Exception;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Ai\Exceptions\FailoverableException;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Renderless;
 
 /**
  * Provides TTS audio generation, deletion, and player-modal management
@@ -115,8 +117,9 @@ trait ManagesTtsAudio
             $filenameHash = $this->ttsService->buildFilenameHash($rawRussianText);
             // Append a cache-busting timestamp so browsers always fetch the latest audio.
             $audioUrl = route('tts.serve', $filenameHash).'?v='.time();
+            $createdAt = now()->locale(app()->getLocale())->isoFormat('LLL');
 
-            $this->dispatch('tts-audio-ready', audioUrl: $audioUrl);
+            $this->dispatch('tts-audio-ready', audioUrl: $audioUrl, createdAt: $createdAt);
             // Notify the row's Alpine component so it can update its rowHasAudio state.
             $this->dispatch('tts-audio-generated', rowIndex: $rowIndex);
         } catch (Exception|FailoverableException $exception) {
@@ -145,23 +148,36 @@ trait ManagesTtsAudio
 
     /**
      * Open the TTS audio player modal for the given row.
-     * Dispatches open-tts-modal with the current audio URL (or null when no
-     * cached file exists yet).
+     * Marked Renderless to avoid a Livewire re-render (which would scroll the
+     * table to the top). All modal state is driven by Alpine.js via the event.
      */
+    #[Renderless]
     public function openTtsModal(int $rowIndex): void
     {
         $this->ttsModalRowIndex = $rowIndex;
 
         $rawRussianText = $this->csvRows[$rowIndex][1] ?? '';
         $audioUrl = null;
+        $createdAt = null;
+        $audioExists = false;
 
         if (! empty(trim($rawRussianText)) && $this->ttsService->audioFileExists($rawRussianText)) {
+            $audioExists = true;
             $filenameHash = $this->ttsService->buildFilenameHash($rawRussianText);
             $lastModified = Storage::disk('local')->lastModified("tts/{$filenameHash}.mp3");
             $audioUrl = route('tts.serve', $filenameHash).'?v='.$lastModified;
+            $createdAt = Carbon::createFromTimestamp($lastModified)
+                ->locale(app()->getLocale())
+                ->isoFormat('LLL');
         }
 
-        $this->dispatch('open-tts-modal', audioUrl: $audioUrl);
+        $this->dispatch('open-tts-modal',
+            rowIndex: $rowIndex,
+            russianText: $rawRussianText,
+            audioUrl: $audioUrl,
+            audioExists: $audioExists,
+            createdAt: $createdAt,
+        );
     }
 
     /**
