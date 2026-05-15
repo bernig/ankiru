@@ -47,6 +47,7 @@ return [
     'retranslate_with_chatgpt' => 'Regenerate translation with ChatGPT',
     'fix_stress_marks' => 'Fix stress marks with ChatGPT',
     'delete_row' => 'Delete',
+    'delete_row_confirm' => 'Delete this row? This cannot be undone.',
     'open_row' => 'Open',
 
     // TTS modal

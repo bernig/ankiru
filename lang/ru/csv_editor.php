@@ -42,6 +42,7 @@ return [
     'retranslate_with_chatgpt' => 'Сгенерировать перевод заново с помощью ChatGPT',
     'fix_stress_marks' => 'Исправить ударения с помощью ChatGPT',
     'delete_row' => 'Удалить',
+    'delete_row_confirm' => 'Удалить эту строку? Это действие нельзя отменить.',
     'open_row' => 'Открыть',
 
     'generated_at' => 'Сгенерировано: :date',

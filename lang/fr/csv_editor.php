@@ -47,6 +47,7 @@ return [
     'retranslate_with_chatgpt' => 'Régénérer la traduction avec ChatGPT',
     'fix_stress_marks' => 'Corriger les accents avec ChatGPT',
     'delete_row' => 'Supprimer',
+    'delete_row_confirm' => 'Supprimer cette ligne ? Cette action est irréversible.',
     'open_row' => 'Ouvrir',
 
     // Fenêtre TTS

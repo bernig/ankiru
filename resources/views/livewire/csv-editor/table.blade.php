@@ -156,7 +156,7 @@
             </flux:button.group>
 
             <div class="flex items-center justify-between border-t border-zinc-100 pt-3 dark:border-zinc-700">
-                <flux:button square icon="trash" icon:variant="outline" variant="danger" @click="$wire.deleteRow($store.mobileEdit.rowIndex); $flux.modal('mobile-edit').close()" />
+                <flux:button square icon="trash" icon:variant="outline" variant="danger" @click="($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim() ? $dispatch('request-delete-row', { rowIndex: $store.mobileEdit.rowIndex }) : ($wire.deleteRow($store.mobileEdit.rowIndex), $flux.modal('mobile-edit').close())" />
                 <flux:modal.close>
                     <flux:button variant="filled" icon="check">{{ __('csv_editor.close') }}</flux:button>
                 </flux:modal.close>
@@ -164,5 +164,27 @@
 
         </div>
     </flux:modal>
+
+    {{-- ── Delete row confirmation modal ── --}}
+    <div x-data="{ pendingDeleteRowIndex: -1 }" x-on:request-delete-row.window="pendingDeleteRowIndex = $event.detail.rowIndex; $nextTick(() => $flux.modal('delete-row-confirm').show())">
+        <flux:modal class="md:w-sm" name="delete-row-confirm">
+            <div class="flex flex-col gap-5">
+                <flux:heading size="lg">{{ __('csv_editor.delete_row') }}</flux:heading>
+                <flux:text>{{ __('csv_editor.delete_row_confirm') }}</flux:text>
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button class="rounded-full!" variant="subtle">{{ __('csv_editor.close') }}</flux:button>
+                    </flux:modal.close>
+                    <flux:button class="rounded-full!" variant="danger" wire:loading.attr="disabled" wire:target="deleteRow" @click="$wire.deleteRow(pendingDeleteRowIndex).then(() => { $flux.modal('mobile-edit').close(); $flux.modal('delete-row-confirm').close(); })">
+                        <span wire:loading wire:target="deleteRow"><flux:icon.arrow-path class="size-4 animate-spin" /></span>
+                        <span wire:loading.remove wire:target="deleteRow">
+                            <flux:icon.trash class="size-4" />
+                        </span>
+                        {{ __('csv_editor.delete_row') }}
+                    </flux:button>
+                </div>
+            </div>
+        </flux:modal>
+    </div>
 
 </flux:card>
