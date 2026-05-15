@@ -3,7 +3,7 @@
         ttsAudioUrl: null,
         ttsModalAudioSrc: null,
         ttsModalOpen: false,
-        ttsModal: { rowIndex: -1, russianText: '', audioUrl: null, audioExists: false, createdAt: null }
+        ttsModal: { rowIndex: -1, russianText: '', audioExists: false, createdAt: null }
     }"
     x-on:tts-audio-ready.window="
         ttsAudioUrl = $event.detail.audioUrl;
@@ -22,7 +22,6 @@
     x-on:open-tts-modal.window="
         ttsModal.rowIndex = $event.detail.rowIndex;
         ttsModal.russianText = $event.detail.russianText;
-        ttsModal.audioUrl = $event.detail.audioUrl || null;
         ttsModal.audioExists = $event.detail.audioExists;
         ttsModal.createdAt = $event.detail.createdAt || null;
         ttsModalAudioSrc = $event.detail.audioUrl || null;

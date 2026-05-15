@@ -117,9 +117,7 @@ trait ManagesTtsAudio
             $filenameHash = $this->ttsService->buildFilenameHash($rawRussianText);
             // Append a cache-busting timestamp so browsers always fetch the latest audio.
             $audioUrl = route('tts.serve', $filenameHash).'?v='.time();
-            $createdAt = now()->locale(app()->getLocale())->isoFormat('LLL');
-
-            $this->dispatch('tts-audio-ready', audioUrl: $audioUrl, createdAt: $createdAt);
+            $this->dispatch('tts-audio-ready', audioUrl: $audioUrl, createdAt: $this->formatTimestamp(time()));
             // Notify the row's Alpine component so it can update its rowHasAudio state.
             $this->dispatch('tts-audio-generated', rowIndex: $rowIndex);
         } catch (Exception|FailoverableException $exception) {
@@ -166,9 +164,7 @@ trait ManagesTtsAudio
             $filenameHash = $this->ttsService->buildFilenameHash($rawRussianText);
             $lastModified = Storage::disk('local')->lastModified("tts/{$filenameHash}.mp3");
             $audioUrl = route('tts.serve', $filenameHash).'?v='.$lastModified;
-            $createdAt = Carbon::createFromTimestamp($lastModified)
-                ->locale(app()->getLocale())
-                ->isoFormat('LLL');
+            $createdAt = $this->formatTimestamp($lastModified);
         }
 
         $this->dispatch('open-tts-modal',
@@ -188,5 +184,10 @@ trait ManagesTtsAudio
     {
         $this->ttsService->deleteAudio($this->csvRows[$rowIndex][1] ?? '');
         $this->generateTtsAudio($rowIndex);
+    }
+
+    private function formatTimestamp(int $unixTimestamp): string
+    {
+        return Carbon::createFromTimestamp($unixTimestamp)->locale(app()->getLocale())->isoFormat('LLL');
     }
 }

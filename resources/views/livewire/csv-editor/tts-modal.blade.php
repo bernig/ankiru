@@ -10,7 +10,7 @@
         <div x-show="ttsModal.audioExists">
             <div class="flex flex-col gap-2">
                 <audio class="w-full rounded" id="tts-modal-audio" controls lang="ru" :src="ttsModalAudioSrc"></audio>
-                <flux:text class="text-xs text-zinc-400" x-text="'{{ __('csv_editor.generated_at', ['date' => '%%DATE%%']) }}'.replace('%%DATE%%', ttsModal.createdAt || '')"></flux:text>
+                <flux:text class="text-xs text-zinc-400" x-text="'{{ str_replace(':date', '', __('csv_editor.generated_at')) }}' + (ttsModal.createdAt || '')"></flux:text>
             </div>
         </div>
 
