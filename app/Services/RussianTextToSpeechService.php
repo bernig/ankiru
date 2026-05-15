@@ -63,6 +63,11 @@ class RussianTextToSpeechService
      */
     public function generateAudio(string $rawRussianPhrase): bool
     {
+        if (config('app.debug') && session('debug_force_ai_error')) {
+            sleep(1);
+            throw new RuntimeException('[Debug] Simulated AI error.');
+        }
+
         $normalizedText = $this->normalizeForSpeech($rawRussianPhrase);
         $storagePath = $this->buildStoragePath($rawRussianPhrase);
 

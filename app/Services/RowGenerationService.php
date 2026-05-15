@@ -39,6 +39,11 @@ class RowGenerationService
             existingCount: $existingCount,
         );
 
+        if (config('app.debug') && session('debug_force_ai_error')) {
+            sleep(1);
+            throw new RuntimeException('[Debug] Simulated AI error.');
+        }
+
         Log::debug('Generating flashcard row pairs.', [
             'count' => $count,
             'prompt' => Str::limit($prompt, 120),

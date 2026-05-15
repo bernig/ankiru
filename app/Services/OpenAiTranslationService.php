@@ -28,6 +28,8 @@ class OpenAiTranslationService
     {
         $sourceText = trim($sourceText);
 
+        $this->throwIfDebugErrorForced();
+
         Log::debug('Translating source → Russian.', ['input' => Str::limit($sourceText, 120)]);
 
         $response = (new SourceToRussianTranslatorAgent)->prompt($sourceText);
@@ -61,6 +63,8 @@ class OpenAiTranslationService
     {
         $russianText = trim($russianText);
         $sourceContextText = trim($sourceContextText);
+
+        $this->throwIfDebugErrorForced();
 
         Log::debug('Correcting Russian stress marks.', [
             'russian' => Str::limit($russianText, 120),
@@ -110,5 +114,13 @@ TEXT;
             'promptTokens' => $response->usage->promptTokens,
             'completionTokens' => $response->usage->completionTokens,
         ];
+    }
+
+    private function throwIfDebugErrorForced(): void
+    {
+        if (config('app.debug') && session('debug_force_ai_error')) {
+            sleep(1);
+            throw new RuntimeException('[Debug] Simulated AI error.');
+        }
     }
 }

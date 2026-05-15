@@ -53,6 +53,7 @@ class MassOperationJob implements ShouldQueue
         public readonly string $sourceText,
         public readonly string $russianText,
         public readonly ?int $userId = null,
+        public readonly bool $forceDebugError = false,
     ) {}
 
     /**
@@ -76,6 +77,11 @@ class MassOperationJob implements ShouldQueue
         $this->applyUserApiKey();
 
         try {
+            if ($this->forceDebugError) {
+                sleep(1);
+                throw new \RuntimeException('[Debug] Simulated AI error.');
+            }
+
             match ($this->operationType) {
                 OperationType::Stress => $this->handleStressCorrection($accentService, $translationService),
                 OperationType::Tts => $this->handleTtsGeneration($ttsService),

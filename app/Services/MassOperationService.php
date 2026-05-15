@@ -111,6 +111,8 @@ class MassOperationService
         $this->initialiseCacheKeys($sessionId, OperationType::Stress, $total);
         $userId = Auth::id();
 
+        $forceDebugError = config('app.debug') && session('debug_force_ai_error');
+
         foreach ($qualifyingRows as [$rowIndex, $sourceText, $russianText]) {
             MassOperationJob::dispatch(
                 operationType: OperationType::Stress,
@@ -120,6 +122,7 @@ class MassOperationService
                 sourceText: $sourceText,
                 russianText: $russianText,
                 userId: $userId,
+                forceDebugError: $forceDebugError,
             );
         }
 
@@ -142,6 +145,8 @@ class MassOperationService
         $this->initialiseCacheKeys($sessionId, OperationType::Tts, $total);
         $userId = Auth::id();
 
+        $forceDebugError = config('app.debug') && session('debug_force_ai_error');
+
         foreach ($qualifyingRows as [$rowIndex, $sourceText, $russianText]) {
             MassOperationJob::dispatch(
                 operationType: OperationType::Tts,
@@ -151,6 +156,7 @@ class MassOperationService
                 sourceText: $sourceText,
                 russianText: $russianText,
                 userId: $userId,
+                forceDebugError: $forceDebugError,
             );
         }
 

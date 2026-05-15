@@ -78,6 +78,9 @@
                 <flux:separator vertical />
                 <a class="showHideToggleCookiePreferencesModal cursor-pointer hover:text-zinc-900">{{ __('cookie_consent.manage_preferences') }}</a>
             </div>
+            @if (config('app.debug'))
+                <livewire:debug-ai-error-switch />
+            @endif
             <div class="flex items-center gap-3">
                 <span class="text-xs text-zinc-500">&copy; {{ date('Y') }} {{ config('app.name') }}</span>
                 <a class="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-800" href="https://github.com/bernig/ankiru" target="_blank" rel="noopener noreferrer">
