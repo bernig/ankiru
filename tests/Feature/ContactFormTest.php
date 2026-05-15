@@ -6,16 +6,29 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 
 beforeEach(function (): void {
     Mail::fake();
     RateLimiter::clear('contact-form:127.0.0.1');
-
-    // Disabling the honeypot for tests
-    // @see https://github.com/spatie/laravel-honeypot#disabling-in-testing
-    config()->set('honeypot.enabled', false);
 });
+
+afterEach(function (): void {
+    Carbon::setTestNow(null);
+});
+
+/**
+ * Mounts the Contact component and advances time 2s past valid_from so the
+ * honeypot timing check treats the submission as a legitimate human interaction.
+ */
+function livewireContact(): Testable
+{
+    $component = Livewire::test(Contact::class);
+    Carbon::setTestNow(now()->addSeconds(2));
+
+    return $component;
+}
 
 test('contact page renders the livewire component', function (): void {
     $this->get(route('contact'))
@@ -24,7 +37,7 @@ test('contact page renders the livewire component', function (): void {
 });
 
 test('contact form can be submitted successfully', function (): void {
-    Livewire::test(Contact::class)
+    livewireContact()
         ->set('name', 'Jean Dupont')
         ->set('email', 'jean@example.com')
         ->set('subject', 'Question sur le service')
@@ -43,7 +56,7 @@ test('contact form can be submitted successfully', function (): void {
 test('contact form mail is sent to the configured reception email', function (): void {
     config(['contact.reception_email' => 'admin@example.com']);
 
-    Livewire::test(Contact::class)
+    livewireContact()
         ->set('name', 'Test User')
         ->set('email', 'test@example.com')
         ->set('subject', 'Test sujet')
@@ -54,7 +67,7 @@ test('contact form mail is sent to the configured reception email', function ():
 });
 
 test('contact form validates required fields', function (): void {
-    Livewire::test(Contact::class)
+    livewireContact()
         ->call('submit')
         ->assertHasErrors(['name', 'email', 'subject', 'message'])
         ->assertSet('sent', false);
@@ -63,7 +76,7 @@ test('contact form validates required fields', function (): void {
 });
 
 test('contact form validates email format', function (): void {
-    Livewire::test(Contact::class)
+    livewireContact()
         ->set('name', 'Jean Dupont')
         ->set('email', 'pas-un-email')
         ->set('subject', 'Sujet')
@@ -73,7 +86,7 @@ test('contact form validates email format', function (): void {
 });
 
 test('contact form validates message minimum length', function (): void {
-    Livewire::test(Contact::class)
+    livewireContact()
         ->set('name', 'Jean Dupont')
         ->set('email', 'jean@example.com')
         ->set('subject', 'Sujet')
@@ -90,7 +103,7 @@ test('contact form is rate limited after 3 attempts', function (): void {
         'message' => 'Message assez long pour passer la validation.',
     ];
 
-    $component = Livewire::test(Contact::class);
+    $component = livewireContact();
 
     foreach (range(1, 3) as $i) {
         $component->set($formData)->call('submit');
@@ -105,7 +118,7 @@ test('contact form is rate limited after 3 attempts', function (): void {
 });
 
 test('contact form resets fields after successful submission', function (): void {
-    Livewire::test(Contact::class)
+    livewireContact()
         ->set('name', 'Jean Dupont')
         ->set('email', 'jean@example.com')
         ->set('subject', 'Sujet test')
@@ -118,10 +131,10 @@ test('contact form resets fields after successful submission', function (): void
 });
 
 test('le formulaire de contact bloque le spam quand le honeypot est déclenché', function (): void {
-    // Geler le temps pour que valid_from (now + 1s) soit toujours dans le futur
-    // quelle que soit la durée d'exécution du test sur le CI.
+    // Geler le temps : valid_from = now() + 1s sera toujours dans le futur
+    // quand submit() est appelé (now() reste identique), ce que SpamProtection
+    // interprète comme une soumission de bot.
     Carbon::setTestNow(now());
-    config(['honeypot.enabled' => true]);
 
     Livewire::test(Contact::class)
         ->set('name', 'Spam Bot')
@@ -131,7 +144,6 @@ test('le formulaire de contact bloque le spam quand le honeypot est déclenché'
         ->call('submit')
         ->assertStatus(403);
 
-    Carbon::setTestNow(null);
     Mail::assertNothingSent();
 });
 
