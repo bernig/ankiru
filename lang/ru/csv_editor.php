@@ -122,4 +122,21 @@ return [
     'error_csv_empty_or_malformed' => 'CSV-файл пуст или имеет неверный формат.',
     'error_audio_generation_failed' => 'Ошибка генерации аудио: :message',
     'error_rate_limit' => 'Слишком много запросов. Подождите немного перед новой попыткой.',
+
+    // Режим практики
+    'practice_mode' => 'Практика',
+    'practice_flip' => 'Показать ответ',
+    'practice_grade_again' => 'Снова',
+    'practice_grade_again_interval' => '< 1 дня',
+    'practice_grade_hard' => 'Сложно',
+    'practice_grade_hard_interval' => 'короче',
+    'practice_grade_good' => 'Хорошо',
+    'practice_grade_good_interval' => 'обычно',
+    'practice_grade_easy' => 'Легко',
+    'practice_grade_easy_interval' => 'длиннее',
+    'practice_session_done' => 'Сессия завершена!',
+    'practice_cards_reviewed' => ':count карточка изучена|:count карточки изучены|:count карточек изучено',
+    'practice_nothing_due' => 'Нечего повторять',
+    'practice_nothing_due_description' => 'Все карточки актуальны. Возвращайтесь завтра!',
+    'practice_autoplay_tooltip' => 'Автовоспроизведение при перевороте',
 ];

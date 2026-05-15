@@ -4,7 +4,7 @@ return [
     'seo_description' => 'Turn your own Russian phrases into Anki cards with stress marks, translations, and audio. Free to use: just bring your OpenAI API key.',
     'hero_badge' => 'For people who build their own Russian Anki decks',
     'hero_title' => 'Turn the phrases you actually use into perfect Russian Anki cards',
-    'hero_description' => 'Anki is much more effective when you learn from your own personal material. This app helps you turn that material into high-quality cards with Russian text, stress marks, and audio, all ready to export and review.',
+    'hero_description' => 'Anki is much more effective when you learn from your own personal material. This app helps you turn that material into high-quality cards with Russian text, stress marks, and audio, ready to review right in the app or export to Anki.',
     'pricing_title' => 'Free to use, pay-at-cost AI',
     'pricing_description' => 'The app itself is 100% free. To use the AI features, you simply plug in your own OpenAI API key. No markups, no subscriptions: you pay exactly for what you use.',
     'cta_register' => 'Create an account',
@@ -34,6 +34,9 @@ return [
     'workflow_step_3_title' => 'Export your Anki deck',
     'workflow_step_3_description' => 'Download your Anki package with perfectly formatted text and audio, ready for your study session.',
 
+    'workflow_step_4_title' => 'Or practice directly in the app',
+    'workflow_step_4_description' => 'Use the built-in practice mode to review your cards with spaced repetition (SM-2). Your progress is saved so you can pick up exactly where you left off.',
+
     'features_title' => 'What saves you time',
     'features_description' => 'These features automate the most tedious parts of building Anki decks.',
 
@@ -51,6 +54,9 @@ return [
 
     'feature_export_title' => 'Instant export',
     'feature_export_description' => 'Create an .apkg file containing your notes and audio with a single click, ready to be added to Anki.',
+
+    'feature_practice_title' => 'Built-in spaced repetition',
+    'feature_practice_description' => 'Review your cards without leaving the app. The SM-2 algorithm schedules each card at the right interval: you only review what needs reviewing, nothing more.',
 
     'open_source_badge' => 'Open source',
     'open_source_label' => 'See on GitHub',

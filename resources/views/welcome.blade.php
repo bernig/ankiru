@@ -39,6 +39,11 @@
                 'title' => __('welcome.workflow_step_3_title'),
                 'description' => __('welcome.workflow_step_3_description'),
             ],
+            [
+                'number' => '4',
+                'title' => __('welcome.workflow_step_4_title'),
+                'description' => __('welcome.workflow_step_4_description'),
+            ],
         ];
 
         $featureCards = [
@@ -71,6 +76,12 @@
                 'iconClass' => 'bg-emerald-100 text-emerald-600',
                 'title' => __('welcome.feature_export_title'),
                 'description' => __('welcome.feature_export_description'),
+            ],
+            [
+                'icon' => 'play',
+                'iconClass' => 'bg-violet-100 text-violet-600',
+                'title' => __('welcome.feature_practice_title'),
+                'description' => __('welcome.feature_practice_description'),
             ],
         ];
     @endphp
@@ -165,7 +176,7 @@
                 </p>
             </div>
 
-            <div class="grid gap-4 lg:grid-cols-3">
+            <div class="grid gap-4 sm:grid-cols-2">
                 @foreach ($workflowSteps as $workflowStep)
                     <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-6">
                         <div class="mb-4 flex size-10 items-center justify-center rounded-full bg-zinc-900 text-sm font-semibold text-white">

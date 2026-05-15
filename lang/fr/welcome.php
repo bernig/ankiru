@@ -4,7 +4,7 @@ return [
     'seo_description' => 'Transformez vos phrases russes en cartes Anki avec accents toniques, traductions et audio. Gratuit : il suffit d\'avoir votre clé API OpenAI.',
     'hero_badge' => 'Pour ceux qui créent leurs propres paquets Anki en russe',
     'hero_title' => 'Partez de vos propres phrases et transformez-les en parfaites cartes Anki pour le russe',
-    'hero_description' => 'Anki est bien plus efficace quand on apprend avec ses propres phrases. Cette application vous aide à en faire des cartes de qualité : texte russe, accents toniques, audio, le tout prêt à être exporté et révisé.',
+    'hero_description' => 'Anki est bien plus efficace quand on apprend avec ses propres phrases. Cette application vous aide à en faire des cartes de qualité : texte russe, accents toniques, audio. Révisez-les ensuite directement dans l\'app ou exportez-les vers Anki.',
     'pricing_title' => 'Utilisation gratuite, coûts de l\'IA à prix coûtant',
     'pricing_description' => 'L\'application en elle-même est 100 % gratuite. Pour les fonctionnalités IA, vous renseignez simplement votre propre clé API OpenAI. Pas de surcoût ni d\'abonnement : vous payez exactement ce que vous consommez.',
     'cta_register' => 'Créer un compte',
@@ -34,6 +34,9 @@ return [
     'workflow_step_3_title' => 'Exportez le paquet Anki',
     'workflow_step_3_description' => 'Téléchargez votre paquet Anki avec l\'audio et les textes correctement formatés, prêt pour votre session de révisions.',
 
+    'workflow_step_4_title' => 'Ou révisez directement sur l\'appli',
+    'workflow_step_4_description' => 'Utilisez le mode pratique intégré pour réviser vos cartes avec la répétition espacée (SM-2). Votre progression est sauvegardée pour reprendre là où vous vous étiez arrêté.',
+
     'features_title' => 'Ce qui fait gagner du temps',
     'features_description' => 'Ces fonctionnalités automatisent les parties les plus fastidieuses de la création de paquets Anki.',
 
@@ -51,6 +54,9 @@ return [
 
     'feature_export_title' => 'Export immédiat',
     'feature_export_description' => 'Créez d\'un simple clic un fichier .apkg contenant les notes et l\'audio, prêt à être ajouté à votre profil Anki.',
+
+    'feature_practice_title' => 'Répétition espacée intégrée',
+    'feature_practice_description' => 'Révisez vos cartes sans quitter l\'application. L\'algorithme SM-2 planifie chaque carte au bon intervalle : vous ne révisez que ce qui en a besoin, ni plus ni moins.',
 
     'open_source_badge' => 'Open source',
     'open_source_label' => 'Voir sur GitHub',

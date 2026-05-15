@@ -44,6 +44,41 @@ namespace App\Models{
 /**
  * @property int $id
  * @property int $user_id
+ * @property int $csv_draft_id
+ * @property int $row_index
+ * @property int $repetitions
+ * @property numeric $ease_factor
+ * @property int $interval_days
+ * @property \Carbon\CarbonImmutable $due_date
+ * @property \Carbon\CarbonImmutable|null $last_reviewed_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \App\Models\CsvDraft $csvDraft
+ * @property-read \App\Models\User $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereCsvDraftId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereDueDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereEaseFactor($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereIntervalDays($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereLastReviewedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereRepetitions($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereRowIndex($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereUserId($value)
+ * @noinspection PhpFullyQualifiedNameUsageInspection
+ * @noinspection PhpUnnecessaryFullyQualifiedNameInspection
+ */
+	class CardReview extends \Eloquent {}
+}
+
+namespace App\Models{
+/**
+ * @property int $id
+ * @property int $user_id
  * @property string $original_file_name
  * @property array<array-key, mixed>|null $csv_rows
  * @property bool $has_csv_loaded

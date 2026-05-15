@@ -16,6 +16,7 @@
         @include('livewire.csv-editor.collection-export-modal')
         @include('livewire.csv-editor.accent-style-modal')
         @include('livewire.csv-editor.generate-rows-modal')
+        @include('livewire.csv-editor.practice-mode-modal')
     @else
         @include('livewire.csv-editor.upload-panel')
     @endif

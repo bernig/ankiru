@@ -132,4 +132,21 @@ return [
     'error_csv_empty_or_malformed' => 'Le fichier CSV semble vide ou malformé.',
     'error_audio_generation_failed' => 'Échec de la génération audio : :message',
     'error_rate_limit' => 'Trop de requêtes. Veuillez patienter un moment avant de réessayer.',
+
+    // Mode pratique
+    'practice_mode' => 'Réviser',
+    'practice_flip' => 'Voir la réponse',
+    'practice_grade_again' => 'À revoir',
+    'practice_grade_again_interval' => '< 1 jour',
+    'practice_grade_hard' => 'Difficile',
+    'practice_grade_hard_interval' => 'plus court',
+    'practice_grade_good' => 'Bien',
+    'practice_grade_good_interval' => 'normal',
+    'practice_grade_easy' => 'Facile',
+    'practice_grade_easy_interval' => 'plus long',
+    'practice_session_done' => 'Session terminée !',
+    'practice_cards_reviewed' => ':count carte révisée|:count cartes révisées',
+    'practice_nothing_due' => 'Rien à réviser',
+    'practice_nothing_due_description' => 'Toutes les cartes sont à jour. Revenez demain !',
+    'practice_autoplay_tooltip' => 'Lecture automatique au retournement',
 ];

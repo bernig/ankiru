@@ -14,6 +14,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Laravel\Ai\AiManager;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -79,7 +80,7 @@ class MassOperationJob implements ShouldQueue
         try {
             if ($this->forceDebugError) {
                 sleep(1);
-                throw new \RuntimeException('[Debug] Simulated AI error.');
+                throw new RuntimeException('[Debug] Simulated AI error.');
             }
 
             match ($this->operationType) {

@@ -5,7 +5,7 @@ return [
     'seo_description' => 'Learn why Ankiru was built: to fix missing stress marks and audio in Russian Anki decks. Discover how it works under the hood.',
     'subtitle' => 'Why this app exists.',
     'paragraph_1' => 'As a French speaker learning Russian, I hit a wall pretty fast: most Anki decks you find online are missing correct stress marks, and getting good audio to nail the pronunciation is a hassle.',
-    'paragraph_2' => 'So I built this to solve my own problem. It takes my phrases, uses AI to translate and add stress marks, generates high-quality audio, and bundles everything into an .apkg file I can dump straight into Anki.',
+    'paragraph_2' => 'So I built this to solve my own problem. It takes my phrases, uses AI to translate and add stress marks, generates high-quality audio, and either bundles everything into an .apkg file for Anki or lets me review the cards directly in the app with built-in spaced repetition.',
     'paragraph_3' => 'If you\'re learning Russian too, I hope this saves you as much time as it saves me.',
 
     'how_title' => 'How does it work under the hood?',
@@ -22,6 +22,9 @@ return [
 
     'how_export_title' => 'Exporting to Anki',
     'how_export_body' => 'Your cards and audio are packed into a neat .apkg file. Just import it into Anki, and you\'re good to go.',
+
+    'how_practice_title' => 'Built-in practice mode',
+    'how_practice_body' => 'The practice mode lets you review your cards without opening Anki. It uses the SM-2 spaced repetition algorithm: the more easily you recall a card, the longer the app waits before showing it again. Your progress is stored per deck so you can pick up exactly where you left off.',
 
     'key_title' => 'Why do you need your own API key?',
     'key_paragraph_1' => 'The app is free, but the AI is not. Instead of charging a monthly subscription or selling marked-up credits, I just ask you to plug in your own OpenAI key.',

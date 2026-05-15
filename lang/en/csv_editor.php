@@ -132,4 +132,21 @@ return [
     'error_csv_empty_or_malformed' => 'The CSV file appears to be empty or malformed.',
     'error_audio_generation_failed' => 'Audio generation failed: :message',
     'error_rate_limit' => 'Too many requests. Please wait a moment before trying again.',
+
+    // Practice mode
+    'practice_mode' => 'Practice',
+    'practice_flip' => 'Show answer',
+    'practice_grade_again' => 'Again',
+    'practice_grade_again_interval' => '< 1 day',
+    'practice_grade_hard' => 'Hard',
+    'practice_grade_hard_interval' => 'shorter',
+    'practice_grade_good' => 'Good',
+    'practice_grade_good_interval' => 'normal',
+    'practice_grade_easy' => 'Easy',
+    'practice_grade_easy_interval' => 'longer',
+    'practice_session_done' => 'Session complete!',
+    'practice_cards_reviewed' => ':count card reviewed|:count cards reviewed',
+    'practice_nothing_due' => 'Nothing to review',
+    'practice_nothing_due_description' => 'All cards are up to date. Come back tomorrow!',
+    'practice_autoplay_tooltip' => 'Auto-play audio on flip',
 ];
