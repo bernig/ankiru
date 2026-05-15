@@ -65,15 +65,13 @@
         </flux:table>
     </div>
 
-    {{-- Error banners: translation/stress correction and TTS --}}
-    @foreach ([$translationError, $ttsError] as $errorMessage)
-        @if ($errorMessage)
-            <div class="mb-3 flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800">
-                <flux:icon.exclamation-triangle class="size-4 shrink-0" />
-                <span>{{ $errorMessage }}</span>
-            </div>
-        @endif
-    @endforeach
+    {{-- Error banner: translation/stress correction --}}
+    @if ($translationError)
+        <div class="mb-3 flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800">
+            <flux:icon.exclamation-triangle class="size-4 shrink-0" />
+            <span>{{ $translationError }}</span>
+        </div>
+    @endif
 
     {{-- ── Footer toolbar ── --}}
     <div class="mx-auto mb-0 mt-4 flex w-full flex-col items-center gap-3" x-show="!$store.csvSearch.active">

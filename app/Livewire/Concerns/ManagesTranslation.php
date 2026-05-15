@@ -57,6 +57,7 @@ trait ManagesTranslation
         }
 
         $this->translatingRowIndex = $rowIndex;
+        $success = false;
 
         try {
             $result = $this->translationService->translateSourceToRussianWithUsage($sourceText);
@@ -69,10 +70,13 @@ trait ManagesTranslation
                 'prompt_tokens' => $result['promptTokens'],
                 'completion_tokens' => $result['completionTokens'],
             ]);
+
+            $success = true;
         } catch (Exception $exception) {
             $this->translationError = $exception->getMessage();
         } finally {
             $this->translatingRowIndex = -1;
+            $this->dispatch('ai-row-result', rowIndex: $rowIndex, success: $success);
         }
     }
 
@@ -105,6 +109,7 @@ trait ManagesTranslation
         }
 
         $this->correctingStressRowIndex = $rowIndex;
+        $success = false;
 
         try {
             $result = $this->translationService->correctRussianStressMarksWithUsage($russianText, $sourceText);
@@ -122,10 +127,13 @@ trait ManagesTranslation
                     'completion_tokens' => $result['completionTokens'],
                 ]);
             }
+
+            $success = true;
         } catch (Exception $exception) {
             $this->translationError = $exception->getMessage();
         } finally {
             $this->correctingStressRowIndex = -1;
+            $this->dispatch('ai-row-result', rowIndex: $rowIndex, success: $success);
         }
     }
 

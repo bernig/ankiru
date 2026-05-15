@@ -4,7 +4,7 @@
       $row         (array) - ['source text', 'russian text']
       $rowHasAudio (bool)  - whether a cached TTS file exists for this row
 --}}
-<flux:table.row class="hover:bg-accent/2 max-sm:shadow-xs max-sm:border-taupe-200 group max-sm:mb-3 max-sm:block max-sm:overflow-hidden max-sm:rounded-lg max-sm:border max-sm:bg-white max-sm:p-2 max-sm:dark:bg-zinc-700" wire:key="row-{{ $rowIndex }}" x-data="{ rowIndex: {{ $rowIndex }}, rowHasAudio: {{ $rowHasAudio ? 'true' : 'false' }} }" x-on:tts-audio-generated.window="if ($event.detail.rowIndex === rowIndex) { rowHasAudio = true; }" x-on:tts-audio-deleted.window="if ($event.detail.rowIndex === rowIndex) { rowHasAudio = false; }" x-on:csv-row-added.window="if ($event.detail.rowIndex === rowIndex) { $store.csvEditing.rowIndex = rowIndex; $store.csvEditing.columnIndex = 0; $nextTick(() => $refs.input_0?.focus()) }" x-bind:class="(function() {
+<flux:table.row class="hover:bg-accent/2 max-sm:shadow-xs max-sm:border-taupe-200 group max-sm:mb-3 max-sm:block max-sm:overflow-hidden max-sm:rounded-lg max-sm:border max-sm:bg-white max-sm:p-2 max-sm:dark:bg-zinc-700" wire:key="row-{{ $rowIndex }}" x-data="{ rowIndex: {{ $rowIndex }}, rowHasAudio: {{ $rowHasAudio ? 'true' : 'false' }}, rowAiResult: null, rowAiResultTimer: null }" x-on:tts-audio-generated.window="if ($event.detail.rowIndex === rowIndex) { rowHasAudio = true; }" x-on:tts-audio-deleted.window="if ($event.detail.rowIndex === rowIndex) { rowHasAudio = false; }" x-on:csv-row-added.window="if ($event.detail.rowIndex === rowIndex) { $store.csvEditing.rowIndex = rowIndex; $store.csvEditing.columnIndex = 0; $nextTick(() => $refs.input_0?.focus()) }" x-on:ai-row-result.window="if ($event.detail.rowIndex === rowIndex) { clearTimeout(rowAiResultTimer); rowAiResult = $event.detail; rowAiResultTimer = setTimeout(() => { rowAiResult = null; }, 3000); }" x-bind:class="(function() {
     var notEditing = $store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1;
     var text = $wire.csvRows[rowIndex]?.[1] ?? '';
     if (notEditing && window.csvAccentMode.cellNeedsAccent(text)) return 'bg-amber-50';
@@ -32,7 +32,11 @@
 
     {{-- ── Column 1: Russian text (accent mode) ── --}}
     <flux:table.cell class="py-2! max-sm:border-t-0! px-2! w-1/2 whitespace-normal first:ps-2 last:pe-2 max-sm:block max-sm:w-full max-sm:pb-0 max-sm:pt-1">
-        <div class="cursor-default" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1" x-html="window.csvAccentMode.buildHtml($wire.csvRows[rowIndex]?.[1] ?? '')" @click="window.csvAccentMode.invalidateCache($wire.csvRows[rowIndex]?.[1] ?? ''); window.csvAccentMode.handleClick($event, $wire, 'cell', rowIndex, 1)"></div>
+        <div class="flex items-center gap-1" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1">
+            <div class="grow cursor-default" x-html="window.csvAccentMode.buildHtml($wire.csvRows[rowIndex]?.[1] ?? '')" @click="window.csvAccentMode.invalidateCache($wire.csvRows[rowIndex]?.[1] ?? ''); window.csvAccentMode.handleClick($event, $wire, 'cell', rowIndex, 1)"></div>
+            <flux:icon.check-circle class="size-5 shrink-0 text-green-500 transition-opacity duration-500" x-show="rowAiResult?.success" x-transition:leave="opacity-0" />
+            <flux:icon.x-circle class="size-5 shrink-0 text-red-500 transition-opacity duration-500" x-show="rowAiResult && !rowAiResult.success" x-transition:leave="opacity-0" />
+        </div>
 
         <input class="border-accent w-full rounded border bg-white p-1.5 outline-none transition-colors" x-show="$store.csvEditing.rowIndex === rowIndex && $store.csvEditing.columnIndex === 1" x-ref="input_1" :value="$wire.csvRows[rowIndex][1]" @blur="window.csvAccentMode.invalidateCache($wire.csvRows[rowIndex]?.[1] ?? ''); $wire.updateCell(rowIndex, 1, $event.target.value); $store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @keydown.enter="$el.blur()" @keydown.escape="$store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @click.stop placeholder="-" />
     </flux:table.cell>
@@ -56,7 +60,7 @@
                     </button>
 
                     @if (!empty(trim($row[1] ?? '')))
-                        <button type="button" class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 [@media(hover:none)]:opacity-100" title="{{ $this->isTtsBatchRunning ? __('csv_editor.bulk_tts_in_progress') : __('csv_editor.open_audio_player') }}" wire:click="openTtsModal({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})" @disabled($this->isTtsBatchRunning)>
+                        <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 [@media(hover:none)]:opacity-100" type="button" title="{{ $this->isTtsBatchRunning ? __('csv_editor.bulk_tts_in_progress') : __('csv_editor.open_audio_player') }}" wire:click="openTtsModal({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})" @disabled($this->isTtsBatchRunning)>
                             <span wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})">
                                 <flux:icon.speaker-wave class="mx-1 my-2 size-4" />
                             </span>

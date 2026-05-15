@@ -22,20 +22,33 @@
             </flux:callout>
         </div>
 
+        <div class="flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800" x-show="$wire.ttsError">
+            <flux:icon.exclamation-triangle class="size-4 shrink-0" />
+            <span x-text="$wire.ttsError"></span>
+        </div>
+
         {{-- Action buttons --}}
         <div class="flex items-center gap-2">
             <flux:spacer />
 
-            <div x-show="ttsModal.rowIndex >= 0 && ttsModal.audioExists" class="flex gap-2">
+            <div class="flex gap-2" x-show="ttsModal.rowIndex >= 0 && ttsModal.audioExists">
                 <flux:button class="hover:bg-red-50! text-red-600! hover:text-red-700! rounded-full!" variant="subtle" icon:variant="outline" icon="trash" @click="$wire.deleteTtsAudio(ttsModal.rowIndex)" wire:loading.attr="disabled" wire:target="deleteTtsAudio" x-bind:disabled="$wire.ttsBatchStatus === 'running'" />
 
-                <flux:button class="rounded-full!" icon="sparkles" icon:variant="outline" @click="$wire.refreshTtsAudio(ttsModal.rowIndex)" wire:loading.attr="disabled" wire:loading.class="opacity-60" wire:target="refreshTtsAudio" variant="primary" x-bind:disabled="$wire.ttsBatchStatus === 'running'">
+                <flux:button class="rounded-full!" @click="$wire.refreshTtsAudio(ttsModal.rowIndex)" wire:loading.attr="disabled" wire:target="refreshTtsAudio" variant="primary" x-bind:disabled="$wire.ttsBatchStatus === 'running'">
+                    <span wire:loading wire:target="refreshTtsAudio"><flux:icon.arrow-path class="size-4 animate-spin" /></span>
+                    <span wire:loading.remove wire:target="refreshTtsAudio">
+                        <flux:icon class="size-4" name="sparkles" variant="outline" />
+                    </span>
                     {{ __('csv_editor.regenerate') }}
                 </flux:button>
             </div>
 
             <div x-show="ttsModal.rowIndex >= 0 && !ttsModal.audioExists">
-                <flux:button class="rounded-full!" variant="primary" icon="speaker-wave" @click="$wire.generateTtsAudio(ttsModal.rowIndex)" wire:loading.attr="disabled" wire:loading.class="opacity-60" wire:target="generateTtsAudio" x-bind:disabled="$wire.ttsBatchStatus === 'running'">
+                <flux:button class="rounded-full!" variant="primary" @click="$wire.generateTtsAudio(ttsModal.rowIndex)" wire:loading.attr="disabled" wire:target="generateTtsAudio" x-bind:disabled="$wire.ttsBatchStatus === 'running'">
+                    <span wire:loading wire:target="generateTtsAudio"><flux:icon.arrow-path class="size-4 animate-spin" /></span>
+                    <span wire:loading.remove wire:target="generateTtsAudio">
+                        <flux:icon class="size-4" name="speaker-wave" variant="outline" />
+                    </span>
                     {{ __('csv_editor.generate_audio') }}
                 </flux:button>
             </div>

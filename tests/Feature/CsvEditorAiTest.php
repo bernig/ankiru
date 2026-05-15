@@ -24,7 +24,8 @@ test('translates french text to russian and stores the result', function () {
         ->call('translateWithChatGpt', 0)
         ->assertSet('csvRows.0.1', 'Я раб<b>о</b>таю из д<b>о</b>ма.')
         ->assertSet('translationError', '')
-        ->assertSet('translatingRowIndex', -1);
+        ->assertSet('translatingRowIndex', -1)
+        ->assertDispatched('ai-row-result', rowIndex: 0, success: true);
 
     SourceToRussianTranslatorAgent::assertPrompted('Je travaille depuis chez moi.');
 });
@@ -38,7 +39,8 @@ test('sets a translation error when the agent throws an exception', function () 
         ->set('csvRows', [['Je travaille depuis chez moi.', '']])
         ->set('hasCsvLoaded', true)
         ->call('translateWithChatGpt', 0)
-        ->assertSet('translationError', 'Service unavailable.');
+        ->assertSet('translationError', 'Service unavailable.')
+        ->assertDispatched('ai-row-result', rowIndex: 0, success: false);
 });
 
 test('does nothing when the french column is empty', function () {
@@ -63,7 +65,8 @@ test('shows an error when the stress correction agent throws an exception', func
         ->set('csvRows', [['Je travaille.', 'Я работаю.']])
         ->set('hasCsvLoaded', true)
         ->call('correctStressMarks', 0)
-        ->assertSet('translationError', 'Service unavailable.');
+        ->assertSet('translationError', 'Service unavailable.')
+        ->assertDispatched('ai-row-result', rowIndex: 0, success: false);
 });
 
 test('corrects stress marks and sends french context with the russian text', function () {
@@ -74,7 +77,8 @@ test('corrects stress marks and sends french context with the russian text', fun
         ->set('hasCsvLoaded', true)
         ->call('correctStressMarks', 0)
         ->assertSet('csvRows.0.1', 'Я раб<b>о</b>таю из д<b>о</b>ма.')
-        ->assertSet('correctingStressRowIndex', -1);
+        ->assertSet('correctingStressRowIndex', -1)
+        ->assertDispatched('ai-row-result', rowIndex: 0, success: true);
 
     RussianStressCorrectorAgent::assertPrompted(function ($prompt) {
         return str_contains($prompt->prompt, 'Source text for meaning/context only:')
