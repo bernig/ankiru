@@ -4,8 +4,7 @@
         ttsModalAudioSrc: null,
         ttsModalOpen: false,
         ttsModal: { rowIndex: -1, russianText: '', audioExists: false, createdAt: null }
-    }"
-    x-on:tts-audio-ready.window="
+    }" x-on:tts-audio-ready.window="
         ttsAudioUrl = $event.detail.audioUrl;
         ttsModalAudioSrc = $event.detail.audioUrl;
         ttsModal.audioExists = true;
@@ -18,8 +17,8 @@
                 if ($refs.ttsPlayer) { $refs.ttsPlayer.load(); $refs.ttsPlayer.play(); }
             }
         });
-    "
-    x-on:open-tts-modal.window="
+    " x-on:open-tts-modal.window="
+        $wire.set('ttsError', '');
         ttsModal.rowIndex = $event.detail.rowIndex;
         ttsModal.russianText = $event.detail.russianText;
         ttsModal.audioExists = $event.detail.audioExists;
@@ -33,8 +32,7 @@
                 if (modalPlayer) { modalPlayer.load(); modalPlayer.play(); }
             });
         }
-    "
-    x-on:tts-audio-deleted.window="
+    " x-on:tts-audio-deleted.window="
         if ($event.detail.rowIndex === ttsModal.rowIndex) {
             ttsModal.audioExists = false;
             ttsModal.createdAt = null;
