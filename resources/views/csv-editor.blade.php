@@ -9,13 +9,12 @@
         ttsModalAudioSrc = $event.detail.audioUrl;
         ttsModal.audioExists = true;
         ttsModal.createdAt = $event.detail.createdAt || null;
+
         $nextTick(() => {
-            if (ttsModalOpen) {
-                const modalPlayer = document.getElementById('tts-modal-audio');
-                if (modalPlayer) { modalPlayer.load(); modalPlayer.play(); }
-            } else {
-                if ($refs.ttsPlayer) { $refs.ttsPlayer.load(); $refs.ttsPlayer.play(); }
-            }
+            window.playAudioWhenReady(ttsModalOpen
+                ? document.getElementById('tts-modal-audio')
+                : $refs.ttsPlayer
+            );
         });
     " x-on:open-tts-modal.window="
         $wire.set('ttsError', '');
@@ -25,12 +24,11 @@
         ttsModal.createdAt = $event.detail.createdAt || null;
         ttsModalAudioSrc = $event.detail.audioUrl || null;
         ttsModalOpen = true;
+
         $flux.modal('tts-player').show();
+
         if ($event.detail.audioUrl) {
-            $nextTick(() => {
-                const modalPlayer = document.getElementById('tts-modal-audio');
-                if (modalPlayer) { modalPlayer.load(); modalPlayer.play(); }
-            });
+            $nextTick(() => window.playAudioWhenReady(document.getElementById('tts-modal-audio')));
         }
     " x-on:tts-audio-deleted.window="
         if ($event.detail.rowIndex === ttsModal.rowIndex) {

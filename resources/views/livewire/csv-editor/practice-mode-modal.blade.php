@@ -60,10 +60,7 @@
 
                     {{-- Verso (texte russe avec accents cliquables) --}}
                     <div class="flex flex-col items-center gap-3 py-2 text-center" x-data x-init="if ($wire.practiceAutoplay && $wire.practiceCardAudioUrl) {
-                        $nextTick(() => {
-                            const audio = document.getElementById('practice-audio');
-                            if (audio) { audio.play().catch(() => {}); }
-                        });
+                        $nextTick(() => window.playAudioWhenReady(document.getElementById('practice-audio')));
                     }">
                         <div class="cursor-default text-xl font-medium text-zinc-900 sm:text-2xl dark:text-zinc-100" x-html="window.csvAccentMode.buildHtml($wire.csvRows[$wire.practiceQueue[$wire.practiceQueuePosition]]?.[1] ?? '')" @click="
                                 const t = $wire.csvRows[$wire.practiceQueue[$wire.practiceQueuePosition]]?.[1] ?? '';

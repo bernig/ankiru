@@ -373,6 +373,28 @@ window.csvAccentMode = (function () {
 }());
 
 /**
+ * Play an audio element as soon as it has buffered enough data.
+ *
+ * Calls load() then waits for the 'canplay' event on mobile where the element
+ * may not be ready immediately after the src is set.
+ *
+ * @param {HTMLAudioElement|null} el
+ */
+window.playAudioWhenReady = function (el) {
+    if (!el) {
+        return;
+    }
+
+    el.load();
+
+    if (el.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+        el.play().catch(() => {});
+    } else {
+        el.addEventListener('canplay', () => el.play().catch(() => {}), { once: true });
+    }
+};
+
+/**
  * Apply accent style CSS custom properties to the document root.
  *
  * Called from the Blade template (x-init) with server-rendered values so
