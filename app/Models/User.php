@@ -28,6 +28,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'accent_bold',
         'accent_unicode',
         'learning_context',
+        'is_admin',
     ];
 
     /**
@@ -68,6 +69,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'openai_api_key' => 'encrypted',
             'accent_bold' => 'boolean',
             'accent_unicode' => 'boolean',
+            'is_admin' => 'boolean',
         ];
     }
 }

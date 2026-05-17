@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Honeypot\ProtectAgainstSpam;
@@ -67,6 +68,13 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         return view('profile');
     })->name('profile');
 });
+
+Route::middleware(['auth', 'verified', EnsureUserIsAdmin::class])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function (): void {
+        Route::get('/', fn () => view('admin.dashboard'))->name('dashboard');
+    });
 
 /**
  * Serve a TTS audio file by its SHA-256 filename hash.

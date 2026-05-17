@@ -58,6 +58,18 @@ composer run dev
 
 > **OpenAI API key** — each user enters their own OpenAI API key directly in the app after signing in. There is no sitewide key to configure.
 
+## Admin panel
+
+A built-in admin panel is available at `/admin`. It shows registered users, CSV drafts, per-user AI usage statistics, and a live Laravel log viewer.
+
+To grant admin access to a user:
+
+```bash
+php artisan admin:grant user@example.com
+```
+
+Only users with `is_admin = true` in the database can access `/admin`. There is no hardcoded admin account.
+
 ## Production
 
 In production, the queue worker and Reverb WebSocket server must run continuously. Use Supervisor to manage them:
