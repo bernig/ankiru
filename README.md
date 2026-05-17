@@ -25,6 +25,30 @@ Translate phrases into Russian with stress marks, generate audio, and export a `
 - Composer
 - Node.js >= 22
 
+## Dependencies requiring a license
+
+**Flux UI Pro** (`livewire/flux-pro`) is a paid UI component library. `composer install` will fail without valid credentials.
+
+1. Purchase a license at [fluxui.dev](https://fluxui.dev).
+2. Add your credentials to `~/.composer/auth.json`:
+
+```json
+{
+    "http-basic": {
+        "composer.fluxui.dev": {
+            "username": "your@email.com",
+            "password": "your-license-key"
+        }
+    }
+}
+```
+
+Alternatively, set the environment variable before running Composer:
+
+```bash
+COMPOSER_AUTH='{"http-basic":{"composer.fluxui.dev":{"username":"your@email.com","password":"your-license-key"}}}' composer install
+```
+
 ## Installation
 
 ```bash
