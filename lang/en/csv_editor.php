@@ -86,6 +86,7 @@ return [
     'bulk_report_generated' => ':count generated',
     'bulk_report_chars' => ':chars characters (exact)',
     'bulk_widget_details' => 'Details',
+    'bulk_widget_dismiss' => 'Dismiss',
     'bulk_widget_tokens' => 'tokens',
     'bulk_widget_chars' => 'chars',
     'bulk_stress_in_progress' => 'Bulk stress correction in progress',

@@ -18,7 +18,7 @@ class NewFileMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '['.config('app.name').'] Nouveau fichier créé',
+            subject: sprintf(__('mail.new_file.subject'), config('app.name')),
         );
     }
 

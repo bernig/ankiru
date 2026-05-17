@@ -91,7 +91,7 @@
                 </a>
                 <a class="text-accent-content hover:text-accent-foreground flex items-center gap-1.5 text-xs" href="https://buymeacoffee.com/bernig" target="_blank" rel="noopener noreferrer">
                     <span>☕</span>
-                    <span>Buy me a coffee</span>
+                    <span>{{ __('welcome.buy_me_coffee') }}</span>
                 </a>
             </div>
         </div>

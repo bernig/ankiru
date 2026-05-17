@@ -86,6 +86,7 @@ return [
     'bulk_report_generated' => ':count généré(s)',
     'bulk_report_chars' => ':chars caractères',
     'bulk_widget_details' => 'Détails',
+    'bulk_widget_dismiss' => 'Fermer',
     'bulk_widget_tokens' => 'tokens',
     'bulk_widget_chars' => 'caractères',
     'bulk_stress_in_progress' => 'Correction groupée des accents en cours',

@@ -23,7 +23,7 @@ class DailySummaryMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '['.config('app.name').'] Résumé du '.$this->date,
+            subject: sprintf(__('mail.daily_summary.subject'), config('app.name'), $this->date),
         );
     }
 

@@ -27,7 +27,7 @@
                 </button>
 
                 {{-- Dismiss button - only available when nothing is running --}}
-                <button class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300" type="button" aria-label="Dismiss" x-show="$wire.stressBatchStatus !== 'running' && $wire.ttsBatchStatus !== 'running'" x-on:click="dismissed = true">
+                <button class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300" type="button" aria-label="{{ __('csv_editor.bulk_widget_dismiss') }}" x-show="$wire.stressBatchStatus !== 'running' && $wire.ttsBatchStatus !== 'running'" x-on:click="dismissed = true">
                     <flux:icon.x-mark class="size-3.5" />
                 </button>
             </div>

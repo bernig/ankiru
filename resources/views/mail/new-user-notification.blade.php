@@ -6,21 +6,21 @@
     </x-mail::header>
 </x-slot:header>
 
-## Nouvel utilisateur inscrit
+## {{ __('mail.new_user.heading') }}
 
-Un nouveau compte vient d'être créé sur **{{ config('app.name') }}**.
+{{ __('mail.new_user.intro', ['app' => config('app.name')]) }}
 
 <x-mail::table>
 | | |
 |:---|:---|
-| **Nom** | {{ $user->name }} |
-| **Email** | [{{ $user->email }}](mailto:{{ $user->email }}) |
-| **Date d'inscription** | {{ $user->created_at->format('d/m/Y à H:i') }} |
+| **{{ __('mail.new_user.col_name') }}** | {{ $user->name }} |
+| **{{ __('mail.new_user.col_email') }}** | [{{ $user->email }}](mailto:{{ $user->email }}) |
+| **{{ __('mail.new_user.col_registered_at') }}** | {{ $user->created_at->format('d/m/Y à H:i') }} |
 </x-mail::table>
 
 <x-slot:footer>
     <x-mail::footer>
-        © {{ date('Y') }} {{ config('app.name') }}. Tous droits réservés.
+        © {{ date('Y') }} {{ config('app.name') }}. {{ __('All rights reserved.') }}
     </x-mail::footer>
 </x-slot:footer>
 </x-mail::layout>

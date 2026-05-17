@@ -18,7 +18,7 @@ class NewUserNotificationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '['.config('app.name').'] Nouvel utilisateur inscrit',
+            subject: sprintf(__('mail.new_user.subject'), config('app.name')),
         );
     }
 

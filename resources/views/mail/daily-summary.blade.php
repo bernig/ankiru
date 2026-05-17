@@ -6,23 +6,23 @@
     </x-mail::header>
 </x-slot:header>
 
-## Résumé du {{ $date }}
+## {{ __('mail.daily_summary.heading', ['date' => $date]) }}
 
-Voici l'activité enregistrée sur **{{ config('app.name') }}** le {{ $date }}.
+{{ __('mail.daily_summary.intro', ['app' => config('app.name'), 'date' => $date]) }}
 
 <x-mail::table>
-| Événement | Nombre |
+| {{ __('mail.daily_summary.col_event') }} | {{ __('mail.daily_summary.col_count') }} |
 |:---|---:|
-| Nouveaux utilisateurs | {{ $stats['new_users'] }} |
-| Nouveaux fichiers créés | {{ $stats['new_files'] }} |
-| Traductions effectuées | {{ $stats['translations'] }} |
-| Corrections d'accents | {{ $stats['stress_corrections'] }} |
-| Générations audio (TTS) | {{ $stats['tts_generations'] }} |
+| {{ __('mail.daily_summary.new_users') }} | {{ $stats['new_users'] }} |
+| {{ __('mail.daily_summary.new_files') }} | {{ $stats['new_files'] }} |
+| {{ __('mail.daily_summary.translations') }} | {{ $stats['translations'] }} |
+| {{ __('mail.daily_summary.stress_corrections') }} | {{ $stats['stress_corrections'] }} |
+| {{ __('mail.daily_summary.tts_generations') }} | {{ $stats['tts_generations'] }} |
 </x-mail::table>
 
 <x-slot:footer>
     <x-mail::footer>
-        © {{ date('Y') }} {{ config('app.name') }}. Tous droits réservés.
+        © {{ date('Y') }} {{ config('app.name') }}. {{ __('All rights reserved.') }}
     </x-mail::footer>
 </x-slot:footer>
 </x-mail::layout>

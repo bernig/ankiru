@@ -60,4 +60,6 @@ return [
 
     'open_source_badge' => 'Open source',
     'open_source_label' => 'Voir sur GitHub',
+
+    'buy_me_coffee' => 'Offrez-moi un café',
 ];

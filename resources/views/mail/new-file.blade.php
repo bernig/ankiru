@@ -6,22 +6,22 @@
     </x-mail::header>
 </x-slot:header>
 
-## Nouveau fichier créé
+## {{ __('mail.new_file.heading') }}
 
-Un utilisateur vient de créer ou importer un nouveau fichier sur **{{ config('app.name') }}**.
+{{ __('mail.new_file.intro', ['app' => config('app.name')]) }}
 
 <x-mail::table>
 | | |
 |:---|:---|
-| **Fichier** | {{ $draft->original_file_name ?: '(sans nom)' }} |
-| **Utilisateur** | {{ $draft->user->name }} |
-| **Email** | [{{ $draft->user->email }}](mailto:{{ $draft->user->email }}) |
-| **Date** | {{ $draft->created_at->format('d/m/Y à H:i') }} |
+| **{{ __('mail.new_file.col_file') }}** | {{ $draft->original_file_name ?: __('mail.new_file.unnamed') }} |
+| **{{ __('mail.new_file.col_user') }}** | {{ $draft->user->name }} |
+| **{{ __('mail.new_file.col_email') }}** | [{{ $draft->user->email }}](mailto:{{ $draft->user->email }}) |
+| **{{ __('mail.new_file.col_date') }}** | {{ $draft->created_at->format('d/m/Y à H:i') }} |
 </x-mail::table>
 
 <x-slot:footer>
     <x-mail::footer>
-        © {{ date('Y') }} {{ config('app.name') }}. Tous droits réservés.
+        © {{ date('Y') }} {{ config('app.name') }}. {{ __('All rights reserved.') }}
     </x-mail::footer>
 </x-slot:footer>
 </x-mail::layout>

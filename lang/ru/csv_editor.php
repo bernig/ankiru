@@ -78,6 +78,7 @@ return [
     'bulk_report_generated' => 'Сгенерировано: :count',
     'bulk_report_chars' => 'Символов: :chars (точно)',
     'bulk_widget_details' => 'Подробности',
+    'bulk_widget_dismiss' => 'Закрыть',
     'bulk_widget_tokens' => 'токенов',
     'bulk_widget_chars' => 'символов',
     'bulk_stress_in_progress' => 'Идет массовое исправление ударений',
