@@ -59,6 +59,9 @@ window.csvAccentMode = (function () {
     /** Regex that matches maximal runs of Cyrillic characters (= one Russian word). */
     const CYRILLIC_WORD_RE = /[а-яёА-ЯЁ]+/g;
 
+    /** Regex that matches a single Cyrillic character (used for word-boundary walking). */
+    const CYRILLIC_CHAR_RE = /[а-яёА-ЯЁ]/;
+
     /** Unicode combining acute accent (U+0301), appended to the stressed vowel in unicode mode. */
     const COMBINING_ACUTE = '́';
 
@@ -243,10 +246,60 @@ window.csvAccentMode = (function () {
     }
 
     /**
+     * Client-side mirror of RussianAccentService::moveAccentToPosition().
+     *
+     * Moves the <b> accent tag to the Russian vowel at the given plain-text
+     * character position, stripping existing bold from the same word and
+     * preserving bold on all other words.
+     *
+     * @param  {string} rawText
+     * @param  {number} charPosition  0-based index in the stripped plain text.
+     * @returns {string}
+     */
+    function moveAccentToPosition(rawText, charPosition) {
+        const plain = rawText.replace(/<\/?b>/g, '');
+        const plainChars = [...plain];
+        const plainLength = plainChars.length;
+
+        if (charPosition < 0 || charPosition >= plainLength) return rawText;
+        if (!RUSSIAN_VOWELS.has(plainChars[charPosition])) return rawText;
+
+        // Find the word boundaries [wordStart, wordEnd) around charPosition.
+        let wordStart = charPosition;
+        while (wordStart > 0 && CYRILLIC_CHAR_RE.test(plainChars[wordStart - 1])) wordStart--;
+        let wordEnd = charPosition + 1;
+        while (wordEnd < plainLength && CYRILLIC_CHAR_RE.test(plainChars[wordEnd])) wordEnd++;
+
+        const segments = parseSegments(rawText);
+        let result = '';
+        let plainPos = 0;
+
+        for (const seg of segments) {
+            const segChars = [...seg.text];
+            for (let j = 0; j < segChars.length; j++) {
+                const ch = segChars[j];
+                const pos = plainPos + j;
+
+                if (pos === charPosition) {
+                    result += '<b>' + ch + '</b>';
+                } else if (pos >= wordStart && pos < wordEnd) {
+                    result += ch; // strip existing bold within the target word
+                } else {
+                    result += seg.bold ? '<b>' + ch + '</b>' : ch;
+                }
+            }
+            plainPos += segChars.length;
+        }
+
+        return result;
+    }
+
+    /**
      * Handle a click inside an accent-mode cell display element.
      *
-     * Finds the nearest ancestor span with data-vowel-pos and dispatches the
-     * appropriate Livewire action.
+     * Applies an optimistic update to the local Alpine/Livewire state immediately
+     * (so the DOM reflects the new accent without waiting for the server), then
+     * dispatches the Livewire action to persist and confirm the change server-side.
      *
      * @param {MouseEvent}       event
      * @param {object}           wire      Alpine $wire proxy for this component.
@@ -262,6 +315,18 @@ window.csvAccentMode = (function () {
 
         const vowelPos = parseInt(target.dataset.vowelPos, 10);
         if (isNaN(vowelPos)) return;
+
+        // Optimistic update: compute and apply the new accent position immediately
+        // in the local Alpine/Livewire reactive state so the DOM updates instantly,
+        // before the server round-trip completes. The server call below confirms and
+        // persists the same change; on response the value stays identical (no flicker).
+        if (type === 'cell' && secondary !== undefined) {
+            const oldValue = (wire.csvRows[primary] ?? [])[secondary] ?? '';
+            const newValue = moveAccentToPosition(oldValue, vowelPos);
+            if (newValue !== oldValue) {
+                wire.csvRows[primary][secondary] = newValue;
+            }
+        }
 
         wire.placeAccentOnVowel(primary, secondary, vowelPos);
     }
@@ -368,7 +433,7 @@ window.csvAccentMode = (function () {
         }
     }
 
-    return { buildHtml, handleClick, cellNeedsAccent, invalidateCache, setStyleMode };
+    return { buildHtml, handleClick, cellNeedsAccent, invalidateCache, setStyleMode, moveAccentToPosition };
 
 }());
 
