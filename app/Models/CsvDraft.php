@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Observers\CsvDraftObserver;
 use Database\Factories\CsvDraftFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[ObservedBy(CsvDraftObserver::class)]
 class CsvDraft extends Model
 {
     /** @use HasFactory<CsvDraftFactory> */
