@@ -54,31 +54,73 @@ COMPOSER_AUTH='{"http-basic":{"composer.fluxui.dev":{"username":"your@email.com"
 ```bash
 git clone https://github.com/bernig/ankiru.git
 cd ankiru
+```
 
+Then run the setup script, which installs dependencies, copies `.env`, generates the app key, runs migrations, and builds assets in one step:
+
+```bash
+composer setup
+```
+
+Or manually, step by step:
+
+```bash
 composer install
 cp .env.example .env
 php artisan key:generate
+touch database/database.sqlite
+php artisan migrate
+npm install && npm run build
 ```
 
-Configure your `.env`:
+### Configure your `.env`
+
+Set your application URL:
 
 ```env
 APP_URL=http://localhost:8000
 ```
 
-Create the database and run migrations:
+**Locale** — the default locale is `en` (English). Change it to `fr` for French:
 
-```bash
-touch database/database.sqlite
-php artisan migrate
+```env
+APP_LOCALE=fr
 ```
 
-Install assets and start the development server:
+### Generate WebSocket credentials
+
+Real-time progress (mass stress correction, mass TTS) requires Laravel Reverb. Generate the WebSocket credentials with:
 
 ```bash
-npm install
+php artisan reverb:install
+```
+
+This writes the `REVERB_APP_ID`, `REVERB_APP_KEY`, and `REVERB_APP_SECRET` values into your `.env`.
+
+### Configure mail
+
+Email verification is required — users cannot sign in without confirming their address. Configure an SMTP provider in your `.env`:
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.example.com
+MAIL_PORT=587
+MAIL_USERNAME=your@email.com
+MAIL_PASSWORD=your-password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS="no-reply@example.com"
+MAIL_FROM_NAME="Ankiru"
+```
+
+For local development, [Mailpit](https://github.com/axllent/mailpit) (bundled with Laravel Sail) or [Mailtrap](https://mailtrap.io) are the easiest options. The default `.env.example` already points to Mailpit on port 1025.
+
+### Start the development server
+
+```bash
 composer run dev
 ```
+
+This starts the HTTP server, queue worker, Vite, Reverb WebSocket server, and log viewer concurrently.
 
 > **OpenAI API key** — each user enters their own OpenAI API key directly in the app after signing in. There is no sitewide key to configure.
 
