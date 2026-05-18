@@ -205,6 +205,9 @@ return [
         'message' => 'message',
         'uploadedCsvFile' => 'CSV file',
         'openai_api_key' => 'OpenAI API key',
+        'generateRowsPrompt' => 'prompt',
+        'generateRowsCount' => 'number of rows',
+        'learning_context' => 'learning context',
     ],
 
 ];

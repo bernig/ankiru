@@ -40,5 +40,8 @@ return [
         'message' => 'сообщение',
         'uploadedCsvFile' => 'CSV-файл',
         'openai_api_key' => 'API-ключ OpenAI',
+        'generateRowsPrompt' => 'подсказка',
+        'generateRowsCount' => 'количество строк',
+        'learning_context' => 'контекст обучения',
     ],
 ];

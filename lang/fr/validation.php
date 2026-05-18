@@ -172,6 +172,9 @@ return [
         'message' => 'message',
         'uploadedCsvFile' => 'fichier CSV',
         'openai_api_key' => 'clé API OpenAI',
+        'generateRowsPrompt' => 'invite',
+        'generateRowsCount' => 'nombre de lignes',
+        'learning_context' => 'contexte d\'apprentissage',
     ],
 
 ];
