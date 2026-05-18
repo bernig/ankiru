@@ -4,8 +4,8 @@ namespace App\Livewire;
 
 use App\Livewire\Concerns\ManagesMassOperations;
 use App\Livewire\Concerns\ManagesPersistence;
-use App\Livewire\Concerns\ManagesPracticeMode;
 use App\Livewire\Concerns\ManagesRowGeneration;
+use App\Livewire\Concerns\ManagesTestMode;
 use App\Livewire\Concerns\ManagesTranslation;
 use App\Livewire\Concerns\ManagesTtsAudio;
 use App\Models\CsvDraft;
@@ -29,8 +29,8 @@ class CsvEditor extends Component
 {
     use ManagesMassOperations;
     use ManagesPersistence;
-    use ManagesPracticeMode;
     use ManagesRowGeneration;
+    use ManagesTestMode;
     use ManagesTranslation;
     use ManagesTtsAudio;
     use WithFileUploads;

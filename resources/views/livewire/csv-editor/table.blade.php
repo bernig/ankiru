@@ -23,9 +23,9 @@
 
         <flux:spacer />
 
-        <flux:button class="rounded-full!" size="sm" icon="play" variant="primary" color="purple" wire:click="openPracticeMode" wire:loading.attr="disabled" wire:target="openPracticeMode">
-            <flux:icon.loading class="size-4" wire:loading wire:target="openPracticeMode" />
-            <span wire:loading.remove wire:target="openPracticeMode">{{ __('csv_editor.practice_mode') }}</span>
+        <flux:button class="rounded-full!" size="sm" icon="play" variant="primary" color="purple" wire:click="openTestMode" wire:loading.attr="disabled" wire:target="openTestMode">
+            <flux:icon.loading class="size-4" wire:loading wire:target="openTestMode" />
+            <span wire:loading.remove wire:target="openTestMode">{{ __('csv_editor.practice_mode') }}</span>
         </flux:button>
     </div>
 

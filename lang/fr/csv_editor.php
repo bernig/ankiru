@@ -134,20 +134,14 @@ return [
     'error_audio_generation_failed' => 'Échec de la génération audio : :message',
     'error_rate_limit' => 'Trop de requêtes. Veuillez patienter un moment avant de réessayer.',
 
-    // Mode pratique
-    'practice_mode' => 'Réviser',
+    // Mode test
+    'practice_mode' => 'Tester',
     'practice_flip' => 'Voir la réponse',
-    'practice_grade_again' => 'À revoir',
-    'practice_grade_again_interval' => '< 1 jour',
-    'practice_grade_hard' => 'Difficile',
-    'practice_grade_hard_interval' => 'plus court',
-    'practice_grade_good' => 'Bien',
-    'practice_grade_good_interval' => 'normal',
-    'practice_grade_easy' => 'Facile',
-    'practice_grade_easy_interval' => 'plus long',
-    'practice_session_done' => 'Session terminée !',
-    'practice_cards_reviewed' => ':count carte révisée|:count cartes révisées',
-    'practice_nothing_due' => 'Rien à réviser',
-    'practice_nothing_due_description' => 'Toutes les cartes sont à jour. Revenez demain !',
+    'practice_next' => 'Suivant',
+    'practice_restart' => 'Recommencer',
+    'practice_session_done' => 'Terminé !',
+    'practice_session_done_description' => ':count carte vue|:count cartes vues',
+    'practice_empty' => 'Aucune carte à tester',
+    'practice_empty_description' => 'Remplissez les deux colonnes d\'au moins une carte pour commencer.',
     'practice_autoplay_tooltip' => 'Lecture automatique au retournement',
 ];

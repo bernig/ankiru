@@ -134,20 +134,14 @@ return [
     'error_audio_generation_failed' => 'Audio generation failed: :message',
     'error_rate_limit' => 'Too many requests. Please wait a moment before trying again.',
 
-    // Practice mode
-    'practice_mode' => 'Practice',
+    // Test mode
+    'practice_mode' => 'Test',
     'practice_flip' => 'Show answer',
-    'practice_grade_again' => 'Again',
-    'practice_grade_again_interval' => '< 1 day',
-    'practice_grade_hard' => 'Hard',
-    'practice_grade_hard_interval' => 'shorter',
-    'practice_grade_good' => 'Good',
-    'practice_grade_good_interval' => 'normal',
-    'practice_grade_easy' => 'Easy',
-    'practice_grade_easy_interval' => 'longer',
-    'practice_session_done' => 'Session complete!',
-    'practice_cards_reviewed' => ':count card reviewed|:count cards reviewed',
-    'practice_nothing_due' => 'Nothing to review',
-    'practice_nothing_due_description' => 'All cards are up to date. Come back tomorrow!',
+    'practice_next' => 'Next',
+    'practice_restart' => 'Test again',
+    'practice_session_done' => 'All done!',
+    'practice_session_done_description' => ':count card seen|:count cards seen',
+    'practice_empty' => 'No cards to test',
+    'practice_empty_description' => 'Fill in both columns of at least one card to get started.',
     'practice_autoplay_tooltip' => 'Auto-play audio on flip',
 ];
