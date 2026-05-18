@@ -58,7 +58,7 @@
                 <flux:table.rows>
                     @foreach ($this->batches() as $batch)
                         <flux:table.row :key="$batch->id">
-                            <flux:table.cell class="font-medium">{{ $batch->name ?: '—' }}</flux:table.cell>
+                            <flux:table.cell class="font-medium">{{ $batch->name ?: '-' }}</flux:table.cell>
                             <flux:table.cell>
                                 <div class="flex items-center gap-2">
                                     <div class="h-1.5 w-24 rounded-full bg-zinc-200">

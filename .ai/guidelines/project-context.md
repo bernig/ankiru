@@ -50,6 +50,10 @@ This is a web-based Anki flashcard creation tool specialized for French → Russ
 - **Qualifying rows for TTS** — a row qualifies only when its Russian text is non-empty and no cached MP3 exists for it.
 - All AI agents use `gpt-5.4`.
 
+## UI conventions
+
+- **No em dashes in views** — never use `—` (U+2014) in Blade templates. Use a simple hyphen `-` as a null/empty placeholder in tables, and plain punctuation (`:`, `,`, `.`) elsewhere. Em dashes feel unnatural in a web UI context.
+
 ## Out of scope
 
 - Do not change the `.apkg` export format (SQLite schema, media JSON map, ZIP structure) — it must remain compatible with Anki Desktop and AnkiDroid.

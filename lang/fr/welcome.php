@@ -59,7 +59,7 @@ return [
     'feature_practice_description' => 'Révisez vos cartes sans quitter l\'application. L\'algorithme SM-2 planifie chaque carte au bon intervalle : vous ne révisez que ce qui en a besoin, ni plus ni moins.',
 
     'anki_callout_title' => 'Vous ne connaissez pas Anki ?',
-    'anki_callout_body' => 'Anki est une application de flashcards gratuite basée sur la répétition espacée. Exportez vos cartes depuis Ankiru en fichier .apkg et importez-les dans Anki — ou révisez-les directement dans l\'application, sans rien installer.',
+    'anki_callout_body' => 'Anki est une application de flashcards gratuite basée sur la répétition espacée. Exportez vos cartes depuis Ankiru en fichier .apkg et importez-les dans Anki, ou révisez-les directement dans l\'application, sans rien installer.',
     'anki_callout_desktop' => 'Anki Desktop (gratuit)',
     'anki_callout_android' => 'AnkiDroid Android (gratuit)',
     'anki_callout_ios' => 'AnkiMobile iOS (~30 €)',

@@ -59,7 +59,7 @@ return [
     'feature_practice_description' => 'Review your cards without leaving the app. The SM-2 algorithm schedules each card at the right interval: you only review what needs reviewing, nothing more.',
 
     'anki_callout_title' => 'New to Anki?',
-    'anki_callout_body' => 'Anki is a free spaced repetition flashcard app. Export your cards from Ankiru as a .apkg file and import them into Anki — or just review them directly in the app, no installation required.',
+    'anki_callout_body' => 'Anki is a free spaced repetition flashcard app. Export your cards from Ankiru as a .apkg file and import them into Anki, or just review them directly in the app, no installation required.',
     'anki_callout_desktop' => 'Anki Desktop (free)',
     'anki_callout_android' => 'AnkiDroid Android (free)',
     'anki_callout_ios' => 'AnkiMobile iOS ($24.99)',

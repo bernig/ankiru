@@ -124,7 +124,7 @@
                                     @endif
                                 </flux:table.cell>
                                 <flux:table.cell class="text-sm text-zinc-500">
-                                    {{ $draft->last_accessed_at?->format('d/m/Y H:i') ?? '—' }}
+                                    {{ $draft->last_accessed_at?->format('d/m/Y H:i') ?? '-' }}
                                 </flux:table.cell>
                                 <flux:table.cell class="text-sm text-zinc-500">{{ $draft->created_at->format('d/m/Y') }}</flux:table.cell>
                             </flux:table.row>
@@ -165,7 +165,7 @@
                             <flux:table.cell>{{ number_format($stat->total_completion_tokens ?? 0) }}</flux:table.cell>
                             <flux:table.cell>{{ number_format($stat->total_characters ?? 0) }}</flux:table.cell>
                             <flux:table.cell class="text-sm text-zinc-500">
-                                {{ $stat->last_used_at ? \Carbon\Carbon::parse($stat->last_used_at)->format('d/m/Y H:i') : '—' }}
+                                {{ $stat->last_used_at ? \Carbon\Carbon::parse($stat->last_used_at)->format('d/m/Y H:i') : '-' }}
                             </flux:table.cell>
                         </flux:table.row>
                     @empty
