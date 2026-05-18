@@ -3,6 +3,7 @@
 namespace App\Livewire\Concerns;
 
 use App\Models\ApiUsageLog;
+use App\Services\CreditService;
 use App\Services\OpenAiTranslationService;
 use App\Services\RussianAccentService;
 use Exception;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\RateLimiter;
  *
  * @property OpenAiTranslationService $translationService
  * @property RussianAccentService $accentService
+ * @property CreditService $creditService
  * @property array<int, array<int, string>> $csvRows
  */
 trait ManagesTranslation
@@ -56,6 +58,15 @@ trait ManagesTranslation
             return;
         }
 
+        $user = Auth::user();
+
+        if ($user->usesPlatformCredits() && ! $this->creditService->hasEnoughCredits($user, CreditService::TRANSLATION_ESTIMATED_CREDITS)) {
+            $this->translationError = __('csv_editor.error_insufficient_credits');
+            $this->dispatch('open-credits-shop');
+
+            return;
+        }
+
         $this->translatingRowIndex = $rowIndex;
         $success = false;
 
@@ -70,6 +81,14 @@ trait ManagesTranslation
                 'prompt_tokens' => $result['promptTokens'],
                 'completion_tokens' => $result['completionTokens'],
             ]);
+
+            if ($user->usesPlatformCredits()) {
+                $this->creditService->deduct(
+                    $user,
+                    $this->creditService->tokensToCredits($result['promptTokens'], $result['completionTokens']),
+                );
+                $user->refresh();
+            }
 
             $success = true;
         } catch (Exception $exception) {
@@ -108,6 +127,15 @@ trait ManagesTranslation
             return;
         }
 
+        $user = Auth::user();
+
+        if ($user->usesPlatformCredits() && ! $this->creditService->hasEnoughCredits($user, CreditService::STRESS_CORRECTION_ESTIMATED_CREDITS)) {
+            $this->translationError = __('csv_editor.error_insufficient_credits');
+            $this->dispatch('open-credits-shop');
+
+            return;
+        }
+
         $this->correctingStressRowIndex = $rowIndex;
         $success = false;
 
@@ -126,6 +154,14 @@ trait ManagesTranslation
                     'prompt_tokens' => $result['promptTokens'],
                     'completion_tokens' => $result['completionTokens'],
                 ]);
+
+                if ($user->usesPlatformCredits()) {
+                    $this->creditService->deduct(
+                        $user,
+                        $this->creditService->tokensToCredits($result['promptTokens'], $result['completionTokens']),
+                    );
+                    $user->refresh();
+                }
             }
 
             $success = true;

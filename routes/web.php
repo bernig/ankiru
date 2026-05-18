@@ -7,11 +7,16 @@ use App\Http\Controllers\Auth\EmailVerificationResendController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\CreditController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\StripeWebhookController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Honeypot\ProtectAgainstSpam;
+
+// Webhook Stripe — sans authentification ni CSRF (signature Stripe valide à la place)
+Route::post('stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
 Route::get('contact', fn () => view('contact'))->name('contact');
 Route::get('about', fn () => view('about'))->name('about');
@@ -67,6 +72,13 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('profile', function () {
         return view('profile');
     })->name('profile');
+
+    Route::prefix('credits')->name('credits.')->group(function (): void {
+        Route::get('/', [CreditController::class, 'index'])->name('index');
+        Route::post('checkout', [CreditController::class, 'checkout'])->name('checkout');
+        Route::get('success', [CreditController::class, 'success'])->name('success');
+        Route::get('cancel', [CreditController::class, 'cancel'])->name('cancel');
+    });
 });
 
 Route::middleware(['auth', 'verified', EnsureUserIsAdmin::class])

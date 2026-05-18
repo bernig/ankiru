@@ -46,6 +46,9 @@
                         <flux:navmenu.item href="{{ route('profile') }}" icon="user-circle" icon:variant="outline" wire:navigate>
                             {{ __('profile.title') }}
                         </flux:navmenu.item>
+                        <flux:navmenu.item href="{{ route('credits.index') }}" icon="credit-card" icon:variant="outline" wire:navigate>
+                            {{ __('credits.nav_credits') }}
+                        </flux:navmenu.item>
                         <flux:navmenu.item href="#" icon="arrow-right-start-on-rectangle" icon:variant="outline" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" variant="danger">
                             {{ __('csv_editor.logout') }}
                         </flux:navmenu.item>
@@ -88,6 +91,9 @@
                 </div>
                 <flux:navlist.item href="{{ route('profile') }}" icon="user-circle" icon:variant="outline" wire:navigate>
                     {{ __('profile.title') }}
+                </flux:navlist.item>
+                <flux:navlist.item href="{{ route('credits.index') }}" icon="credit-card" icon:variant="outline" wire:navigate>
+                    {{ __('credits.nav_credits') }}
                 </flux:navlist.item>
                 <flux:navlist.item href="#" icon="arrow-right-start-on-rectangle" onclick="event.preventDefault(); document.getElementById('logout-form-mobile').submit();" variant="danger" icon:variant="outline">
                     {{ __('csv_editor.logout') }}

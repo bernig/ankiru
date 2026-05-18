@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Credits\ApiKeyForm;
 use App\Livewire\Profile;
 use App\Models\ApiUsageLog;
 use App\Models\User;
@@ -90,11 +91,13 @@ test('la mise à jour du mot de passe exige la confirmation', function () {
         ->assertHasErrors(['password']);
 });
 
+// ── Clé API OpenAI (déplacée vers Credits\ApiKeyForm) ────────────────────────
+
 test('la clé API OpenAI peut être enregistrée', function () {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test(Profile::class)
+        ->test(ApiKeyForm::class)
         ->set('openai_api_key', 'sk-test-cle-api-valide-de-plus-de-20-caracteres')
         ->call('saveApiKey')
         ->assertSet('apiKeySaved', true)
@@ -107,7 +110,7 @@ test('la clé API OpenAI est validée', function () {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test(Profile::class)
+        ->test(ApiKeyForm::class)
         ->set('openai_api_key', 'trop-court')
         ->call('saveApiKey')
         ->assertHasErrors(['openai_api_key']);
@@ -117,7 +120,7 @@ test('la clé API OpenAI peut être supprimée', function () {
     $user = User::factory()->create(['openai_api_key' => 'sk-test-cle-api-valide-de-plus-de-20-caracteres']);
 
     Livewire::actingAs($user)
-        ->test(Profile::class)
+        ->test(ApiKeyForm::class)
         ->call('clearApiKey');
 
     expect($user->fresh()->openai_api_key)->toBeNull();
@@ -127,7 +130,7 @@ test('les statistiques d\'utilisation sont vides sans logs', function () {
     $user = User::factory()->create(['openai_api_key' => 'sk-test-cle-api-valide-de-plus-de-20-caracteres']);
 
     Livewire::actingAs($user)
-        ->test(Profile::class)
+        ->test(ApiKeyForm::class)
         ->assertSee(__('profile.api_usage_empty'));
 });
 
@@ -138,7 +141,7 @@ test('les statistiques d\'utilisation agrègent les logs par opération', functi
     ApiUsageLog::factory()->create(['user_id' => $user->id, 'operation' => 'translation', 'prompt_tokens' => 200, 'completion_tokens' => 80, 'characters' => null]);
     ApiUsageLog::factory()->create(['user_id' => $user->id, 'operation' => 'tts', 'prompt_tokens' => null, 'completion_tokens' => null, 'characters' => 500]);
 
-    $component = Livewire::actingAs($user)->test(Profile::class);
+    $component = Livewire::actingAs($user)->test(ApiKeyForm::class);
     $stats = $component->instance()->usageStats;
 
     $translation = $stats->firstWhere('operation', 'translation');
@@ -157,7 +160,7 @@ test('les statistiques n\'incluent pas les logs des autres utilisateurs', functi
 
     ApiUsageLog::factory()->create(['user_id' => $other->id, 'operation' => 'translation', 'prompt_tokens' => 999, 'completion_tokens' => 999, 'characters' => null]);
 
-    $component = Livewire::actingAs($user)->test(Profile::class);
+    $component = Livewire::actingAs($user)->test(ApiKeyForm::class);
     expect($component->instance()->usageStats)->toBeEmpty();
 });
 

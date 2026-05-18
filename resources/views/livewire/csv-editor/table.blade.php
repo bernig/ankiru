@@ -144,7 +144,6 @@
                     </flux:button>
                 @else
                     <flux:button title="{{ __('csv_editor.translate_with_chatgpt') }}" variant="ghost" x-show="($wire.csvRows[$store.mobileEdit.rowIndex]?.[0] ?? '').trim()" wire:loading.attr="disabled" wire:target="translateWithChatGpt" @click="$wire.translateWithChatGpt($store.mobileEdit.rowIndex)">
-
                         <flux:icon.loading class="size-4" wire:loading wire:target="translateWithChatGpt" />
                         <flux:icon.sparkles class="size-4" wire:loading.remove wire:target="translateWithChatGpt" />
                     </flux:button>

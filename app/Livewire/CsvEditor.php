@@ -10,6 +10,7 @@ use App\Livewire\Concerns\ManagesTranslation;
 use App\Livewire\Concerns\ManagesTtsAudio;
 use App\Models\CsvDraft;
 use App\Services\AnkiPackageExporterService;
+use App\Services\CreditService;
 use App\Services\MassOperationService;
 use App\Services\OpenAiTranslationService;
 use App\Services\RowGenerationService;
@@ -113,6 +114,8 @@ class CsvEditor extends Component
 
     protected RowGenerationService $rowGenerationService;
 
+    protected CreditService $creditService;
+
     /**
      * Called by Livewire before every action (mount and subsequent requests).
      */
@@ -123,6 +126,7 @@ class CsvEditor extends Component
         AnkiPackageExporterService $ankiExporterService,
         MassOperationService $massOperationService,
         RowGenerationService $rowGenerationService,
+        CreditService $creditService,
     ): void {
         $this->translationService = $translationService;
         $this->accentService = $accentService;
@@ -130,6 +134,7 @@ class CsvEditor extends Component
         $this->ankiExporterService = $ankiExporterService;
         $this->massOperationService = $massOperationService;
         $this->rowGenerationService = $rowGenerationService;
+        $this->creditService = $creditService;
     }
 
     public function mount(): void
@@ -576,8 +581,14 @@ class CsvEditor extends Component
      */
     private function apiKeyMissing(): bool
     {
-        if (auth()->user()?->openai_api_key) {
-            return false;
+        $user = auth()->user();
+
+        if ($user?->credits > 0) {
+            return false; // Les crédits ont la priorité
+        }
+
+        if ($user?->hasPersonalApiKey()) {
+            return false; // Clé personnelle en fallback
         }
 
         $this->dispatch('open-openai-key-setup');

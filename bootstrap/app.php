@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
             SetApplicationLocale::class,
             SetUserOpenAiKey::class,
         ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'stripe/webhook',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

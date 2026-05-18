@@ -3,6 +3,7 @@
 namespace App\Livewire\Concerns;
 
 use App\Models\ApiUsageLog;
+use App\Services\CreditService;
 use App\Services\RowGenerationService;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +15,7 @@ use Livewire\Attributes\Computed;
  * @property string $translationError
  * @property array<int, array<int, string>> $csvRows
  * @property RowGenerationService $rowGenerationService
+ * @property CreditService $creditService
  */
 trait ManagesRowGeneration
 {
@@ -109,6 +111,18 @@ trait ManagesRowGeneration
 
         $cost = $this->generationCostEstimate;
 
+        $user = Auth::user();
+
+        if ($user->usesPlatformCredits()) {
+            $estimatedCredits = $this->creditService->tokensToCredits($cost['inputTokens'], $cost['outputTokens']);
+            if (! $this->creditService->hasEnoughCredits($user, $estimatedCredits)) {
+                $this->translationError = __('csv_editor.error_insufficient_credits');
+                $this->dispatch('open-credits-shop');
+
+                return;
+            }
+        }
+
         $existingSourceTexts = $cost['willSendActualRows']
             ? collect($this->csvRows)
                 ->filter(fn ($row) => ! empty(trim($row[0] ?? '')))
@@ -144,6 +158,14 @@ trait ManagesRowGeneration
                 'prompt_tokens' => $result['promptTokens'],
                 'completion_tokens' => $result['completionTokens'],
             ]);
+
+            if ($user->usesPlatformCredits()) {
+                $this->creditService->deduct(
+                    $user,
+                    $this->creditService->tokensToCredits($result['promptTokens'], $result['completionTokens']),
+                );
+                $user->refresh();
+            }
 
             $this->generatedRows = $result['pairs'];
             $this->generateRowsPrompt = '';

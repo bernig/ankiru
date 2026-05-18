@@ -114,6 +114,7 @@ return [
     'error_csv_empty_or_malformed' => 'CSV-файл пуст или имеет неверный формат.',
     'error_audio_generation_failed' => 'Ошибка генерации аудио: :message',
     'error_rate_limit' => 'Слишком много запросов. Подождите немного перед новой попыткой.',
+    'error_insufficient_credits' => 'Недостаточно кредитов. Пополните баланс для продолжения.',
 
     // Режим практики
     'practice_mode' => 'Практика',

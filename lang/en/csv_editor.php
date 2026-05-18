@@ -123,6 +123,7 @@ return [
     'error_csv_empty_or_malformed' => 'The CSV file appears to be empty or malformed.',
     'error_audio_generation_failed' => 'Audio generation failed: :message',
     'error_rate_limit' => 'Too many requests. Please wait a moment before trying again.',
+    'error_insufficient_credits' => 'Insufficient credits. Top up your balance to continue.',
 
     // Test mode
     'practice_mode' => 'Test',

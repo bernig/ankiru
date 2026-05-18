@@ -79,6 +79,43 @@ namespace App\Models{
 /**
  * @property int $id
  * @property int $user_id
+ * @property string $pack_slug
+ * @property int $credits
+ * @property int $amount_cents
+ * @property string $currency
+ * @property string $stripe_session_id
+ * @property string|null $stripe_payment_intent_id
+ * @property string $status
+ * @property \Carbon\CarbonImmutable|null $credited_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \App\Models\User $user
+ * @method static \Database\Factories\CreditPurchaseFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase whereAmountCents($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase whereCreditedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase whereCredits($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase whereCurrency($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase wherePackSlug($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase whereStripePaymentIntentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase whereStripeSessionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase whereUserId($value)
+ * @noinspection PhpFullyQualifiedNameUsageInspection
+ * @noinspection PhpUnnecessaryFullyQualifiedNameInspection
+ */
+	class CreditPurchase extends \Eloquent {}
+}
+
+namespace App\Models{
+/**
+ * @property int $id
+ * @property int $user_id
  * @property string $original_file_name
  * @property array<array-key, mixed>|null $csv_rows
  * @property bool $has_csv_loaded
@@ -112,6 +149,7 @@ namespace App\Models{
  * @property \Carbon\CarbonImmutable|null $email_verified_at
  * @property string $password
  * @property string|null $openai_api_key
+ * @property int $credits
  * @property string|null $accent_color
  * @property bool $accent_bold
  * @property bool $accent_unicode
@@ -122,6 +160,8 @@ namespace App\Models{
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ApiUsageLog> $apiUsageLogs
  * @property-read int|null $api_usage_logs_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CreditPurchase> $creditPurchases
+ * @property-read int|null $credit_purchases_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CsvDraft> $csvDrafts
  * @property-read int|null $csv_drafts_count
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
@@ -134,6 +174,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereAccentColor($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereAccentUnicode($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereCredits($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmail($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailVerifiedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereId($value)

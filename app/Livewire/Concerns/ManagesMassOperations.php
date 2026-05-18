@@ -3,7 +3,9 @@
 namespace App\Livewire\Concerns;
 
 use App\Enums\OperationType;
+use App\Services\CreditService;
 use App\Services\MassOperationService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
@@ -18,6 +20,7 @@ use Livewire\Attributes\Computed;
  * @property array<int, array<int, string>> $csvRows
  * @property bool $hasCsvLoaded
  * @property MassOperationService $massOperationService
+ * @property CreditService $creditService
  */
 trait ManagesMassOperations
 {
@@ -138,6 +141,19 @@ trait ManagesMassOperations
             return;
         }
 
+        $user = Auth::user();
+
+        if ($user->usesPlatformCredits()) {
+            $estimate = $this->massOperationService->estimateStressBatchCost($this->csvRows);
+            $requiredCredits = $estimate['inputTokens'] + $estimate['outputTokens'];
+
+            if (! app(CreditService::class)->hasEnoughCredits($user, $requiredCredits)) {
+                $this->dispatch('open-credits-shop');
+
+                return;
+            }
+        }
+
         // Step 1: Deterministically fix bare ё in every row right now, before
         // any async job is dispatched.  This covers the common case where ё is
         // the only missing accent and no AI call is needed at all; the fix is
@@ -180,6 +196,20 @@ trait ManagesMassOperations
         if (! $this->hasCsvLoaded || $this->ttsBatchStatus === 'running') {
             return;
         }
+
+        $user = Auth::user();
+
+        if ($user->usesPlatformCredits()) {
+            $estimate = $this->massOperationService->estimateTtsBatchCost($this->csvRows);
+            $requiredCredits = app(CreditService::class)->ttsCharsToCredits($estimate['totalChars']);
+
+            if (! app(CreditService::class)->hasEnoughCredits($user, $requiredCredits)) {
+                $this->dispatch('open-credits-shop');
+
+                return;
+            }
+        }
+
         $sessionId = $this->getMassOpSessionId();
         $dispatched = $this->massOperationService->dispatchTtsBatch(
             $this->csvRows,

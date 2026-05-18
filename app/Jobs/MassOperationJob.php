@@ -6,6 +6,7 @@ use App\Enums\OperationType;
 use App\Events\MassOperationProgressEvent;
 use App\Models\ApiUsageLog;
 use App\Models\User;
+use App\Services\CreditService;
 use App\Services\OpenAiTranslationService;
 use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
@@ -171,6 +172,15 @@ class MassOperationJob implements ShouldQueue
                 'prompt_tokens' => $result['promptTokens'],
                 'completion_tokens' => $result['completionTokens'],
             ]);
+
+            $user = User::find($this->userId);
+
+            if ($user?->usesPlatformCredits()) {
+                app(CreditService::class)->deduct(
+                    $user,
+                    app(CreditService::class)->tokensToCredits($result['promptTokens'], $result['completionTokens']),
+                );
+            }
         }
     }
 
@@ -201,6 +211,15 @@ class MassOperationJob implements ShouldQueue
                     'operation' => 'tts',
                     'characters' => $charCount,
                 ]);
+
+                $user = User::find($this->userId);
+
+                if ($user?->usesPlatformCredits()) {
+                    app(CreditService::class)->deduct(
+                        $user,
+                        app(CreditService::class)->ttsCharsToCredits($charCount),
+                    );
+                }
             }
         }
     }
@@ -223,10 +242,9 @@ class MassOperationJob implements ShouldQueue
         }
 
         $user = User::find($this->userId);
-        $apiKey = $user?->openai_api_key;
 
-        if ($apiKey) {
-            config(['ai.providers.openai.key' => $apiKey]);
+        if ($user && $user->openai_api_key && ! $user->usesPlatformCredits()) {
+            config(['ai.providers.openai.key' => $user->openai_api_key]);
             app(AiManager::class)->forgetInstance();
         }
     }

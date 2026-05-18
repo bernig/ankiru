@@ -1,39 +1,24 @@
-<div x-on:open-openai-key-setup.window="$flux.modal('openai-key-setup').show()" x-on:openai-key-saved.window="$flux.modal('openai-key-setup').close()">
-    <flux:modal class="max-w-lg space-y-6" name="openai-key-setup">
-        <div class="space-y-2">
-            <flux:heading size="lg">{{ __('profile.openai_key_modal_title') }}</flux:heading>
-            <flux:text>{{ __('profile.openai_key_modal_description') }}</flux:text>
-        </div>
-
-        <div class="space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
-            <flux:text class="font-medium text-amber-900">{{ __('profile.openai_key_modal_how_to_get') }}</flux:text>
-            <ol class="list-inside list-decimal space-y-1 text-sm text-amber-800">
-                <li>{{ __('profile.openai_key_modal_step_1') }}</li>
-                <li>{{ __('profile.openai_key_modal_step_2') }}</li>
-                <li>{{ __('profile.openai_key_modal_step_3') }}</li>
-            </ol>
-            <div>
-                <flux:button href="https://platform.openai.com/api-keys" target="_blank" size="sm" icon:trailing="arrow-up-right">
-                    {{ __('profile.go_to_api_keys') }}
-                </flux:button>
+<div x-on:open-openai-key-setup.window="$flux.modal('openai-key-setup').show()">
+    <flux:modal class="max-w-md " name="openai-key-setup">
+        <div class="flex items-start gap-4">
+            <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/40">
+                <flux:icon name="sparkles" variant="outline" class="size-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div class="space-y-1">
+                <flux:heading size="lg">{{ __('profile.openai_key_modal_title') }}</flux:heading>
+                <flux:text>{{ __('profile.openai_key_modal_description') }}</flux:text>
             </div>
         </div>
 
-        <form class="space-y-4" wire:submit="saveApiKey">
-            <flux:field>
-                <flux:label>{{ __('profile.openai_api_key') }}</flux:label>
-                <flux:input type="password" wire:model="openai_api_key" placeholder="sk-..." viewable />
-                <flux:error name="openai_api_key" />
-            </flux:field>
-
-            <div class="flex justify-end gap-3">
-                <flux:modal.close>
-                    <flux:button class="rounded-full!" variant="subtle">{{ __('profile.openai_key_modal_later') }}</flux:button>
-                </flux:modal.close>
-                <flux:button class="rounded-full!" type="submit" variant="primary" icon="key">
-                    {{ __('profile.save') }}
+        <div class="flex justify-end gap-3 mt-6  sm:flex-row flex-col">
+            <flux:modal.close>
+                <flux:button class="w-full sm:w-auto" variant="ghost">{{ __('profile.openai_key_modal_later') }}</flux:button>
+            </flux:modal.close>
+            <flux:modal.close>
+                <flux:button class="w-full sm:w-auto" href="{{ route('credits.index') }}" variant="primary" icon="key" wire:navigate>
+                    {{ __('profile.openai_key_modal_cta') }}
                 </flux:button>
-            </div>
-        </form>
+            </flux:modal.close>
+        </div>
     </flux:modal>
 </div>
