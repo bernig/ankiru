@@ -14,6 +14,13 @@
         @php
             $faqSections = [
                 [
+                    'title' => __('faq.section_anki_title'),
+                    'icon' => 'rectangle-stack',
+                    'iconClass' => 'bg-blue-100 text-blue-600',
+                    'id' => 'anki-basics',
+                    'items' => [['q' => __('faq.q_what_is_anki'), 'a' => __('faq.a_what_is_anki')], ['q' => __('faq.q_download_anki'), 'a' => __('faq.a_download_anki')], ['q' => __('faq.q_need_anki'), 'a' => __('faq.a_need_anki')], ['q' => __('faq.q_import_apkg'), 'a' => __('faq.a_import_apkg')]],
+                ],
+                [
                     'title' => __('faq.section_ai_title'),
                     'icon' => 'sparkles',
                     'iconClass' => 'bg-purple-100 text-purple-600',
@@ -45,7 +52,7 @@
                 <flux:separator />
             @endif
 
-            <div class="space-y-4">
+            <div class="space-y-4" @isset($faqSection['id']) id="{{ $faqSection['id'] }}" @endisset>
                 {{-- Section heading --}}
                 <div class="flex items-center gap-3">
                     <div class="{{ $faqSection['iconClass'] }} flex size-8 shrink-0 items-center justify-center rounded-lg">
@@ -64,7 +71,7 @@
                             </button>
 
                             <div class="px-5 pb-4" x-show="isOpen" x-transition:enter="transition duration-150 ease-out" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition duration-100 ease-in" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1">
-                                <p class="text-sm leading-relaxed text-zinc-600">{{ $faqItem['a'] }}</p>
+                                <p class="text-sm leading-relaxed text-zinc-600">{!! $faqItem['a'] !!}</p>
                             </div>
                         </div>
                     @endforeach

@@ -188,6 +188,25 @@
                     </div>
                 @endforeach
             </div>
+
+            {{-- Anki callout --}}
+            <div class="rounded-2xl border border-blue-200 bg-blue-50/80 p-5">
+                <div class="flex items-start gap-3">
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                        <flux:icon.rectangle-stack class="size-5" />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm font-semibold text-blue-900">{{ __('welcome.anki_callout_title') }}</p>
+                        <p class="mt-1 text-sm leading-6 text-blue-800">{{ __('welcome.anki_callout_body') }}</p>
+                        <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+                            <a class="text-xs font-medium text-blue-700 underline-offset-2 hover:underline" href="https://apps.ankiweb.net" target="_blank" rel="noopener noreferrer">{{ __('welcome.anki_callout_desktop') }} ↗</a>
+                            <a class="text-xs font-medium text-blue-700 underline-offset-2 hover:underline" href="https://play.google.com/store/apps/details?id=com.ichi2.anki" target="_blank" rel="noopener noreferrer">{{ __('welcome.anki_callout_android') }} ↗</a>
+                            <a class="text-xs font-medium text-blue-700 underline-offset-2 hover:underline" href="https://apps.apple.com/us/app/ankimobile-flashcards/id373493387" target="_blank" rel="noopener noreferrer">{{ __('welcome.anki_callout_ios') }} ↗</a>
+                            <a class="text-xs font-medium text-blue-700 underline-offset-2 hover:underline" href="{{ route('faq') }}#anki-basics" wire:navigate>{{ __('welcome.anki_callout_learn_more') }} →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         {{-- Included tools --}}

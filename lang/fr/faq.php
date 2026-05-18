@@ -47,6 +47,21 @@ return [
     'q_data_privacy' => 'Mes données sont-elles partagées avec des tiers ?',
     'a_data_privacy' => 'Elles passent forcément par l\'API d\'OpenAI puisque c\'est le cœur du système. En revanche, aucune de vos données personnelles n\'est revendue ou partagée à d\'autres fins commerciales. Tout est détaillé dans notre politique de confidentialité.',
 
+    // Section bases Anki
+    'section_anki_title' => 'C\'est quoi Anki ?',
+
+    'q_what_is_anki' => 'Je ne connais pas Anki. C\'est quoi ?',
+    'a_what_is_anki' => 'Anki est une application de flashcards gratuite et open source, basée sur la répétition espacée — une méthode scientifiquement prouvée qui vous présente chaque carte juste avant que vous soyez sur le point de l\'oublier. Au lieu de tout réviser tous les jours, vous ne travaillez que ce qui en a vraiment besoin. Elle est très utilisée par les apprenants de langues, les étudiants en médecine, et tous ceux qui ont beaucoup de choses à mémoriser sur le long terme.',
+
+    'q_download_anki' => 'Où puis-je télécharger Anki ?',
+    'a_download_anki' => '<strong>Anki Desktop</strong> (Windows, macOS, Linux) est <a class="underline" href="https://apps.ankiweb.net" target="_blank" rel="noopener noreferrer">gratuit sur apps.ankiweb.net</a>. <strong>AnkiDroid</strong> pour Android est <a class="underline" href="https://play.google.com/store/apps/details?id=com.ichi2.anki" target="_blank" rel="noopener noreferrer">gratuit sur le Play Store</a>. <strong>AnkiMobile</strong> pour iPhone et iPad est <a class="underline" href="https://apps.apple.com/fr/app/ankimobile-flashcards/id373493387" target="_blank" rel="noopener noreferrer">disponible sur l\'App Store pour environ 30 €</a> — la seule version payante, dont les ventes financent les versions desktop et Android gratuites.',
+
+    'q_need_anki' => 'Faut-il installer Anki pour utiliser Ankiru ?',
+    'a_need_anki' => 'Non. Vous pouvez créer des cartes et les réviser directement avec le mode pratique intégré, sans rien installer. Anki (ou AnkiDroid) n\'est utile que si vous souhaitez synchroniser vos cartes sur votre téléphone avec le système de sync d\'Anki, ou étendre une collection Anki existante.',
+
+    'q_import_apkg' => 'Comment importer le fichier .apkg dans Anki ?',
+    'a_import_apkg' => 'Sur le bureau, il suffit de double-cliquer sur le fichier .apkg — Anki s\'ouvre et importe tout automatiquement. Vous pouvez aussi passer par <em>Fichier → Importer</em> depuis Anki. Sur AnkiDroid, transférez le fichier sur votre appareil et appuyez dessus pour l\'ouvrir avec AnkiDroid. Dans les deux cas, vos cartes et vos fichiers audio arrivent directement dans votre collection.',
+
     // Section Export
     'section_export_title' => 'Export Anki',
 

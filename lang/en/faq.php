@@ -47,6 +47,21 @@ return [
     'q_data_privacy' => 'Is my data shared with third parties?',
     'a_data_privacy' => 'Your phrases do have to be sent to OpenAI\'s API—that\'s just how the tool works. However, your personal data is never sold or shared with anyone else for marketing. You can check out our privacy policy for the full rundown.',
 
+    // Section Anki basics
+    'section_anki_title' => 'What is Anki?',
+
+    'q_what_is_anki' => 'I\'ve never heard of Anki. What is it?',
+    'a_what_is_anki' => 'Anki is a free, open-source flashcard app built around spaced repetition — a scientifically proven method that shows you each card just before you\'re about to forget it. Instead of reviewing everything every day, you only study what actually needs reviewing. It\'s widely used by language learners, medical students, and anyone who needs to retain a large volume of information for the long term.',
+
+    'q_download_anki' => 'Where can I download Anki?',
+    'a_download_anki' => '<strong>Anki Desktop</strong> (Windows, macOS, Linux) is <a class="underline" href="https://apps.ankiweb.net" target="_blank" rel="noopener noreferrer">free to download at apps.ankiweb.net</a>. <strong>AnkiDroid</strong> for Android is <a class="underline" href="https://play.google.com/store/apps/details?id=com.ichi2.anki" target="_blank" rel="noopener noreferrer">free on the Play Store</a>. <strong>AnkiMobile</strong> for iPhone and iPad is <a class="underline" href="https://apps.apple.com/us/app/ankimobile-flashcards/id373493387" target="_blank" rel="noopener noreferrer">a one-time $24.99 purchase on the App Store</a> — the only paid version, and its sales fund the free desktop and Android apps.',
+
+    'q_need_anki' => 'Do I need to install Anki to use Ankiru?',
+    'a_need_anki' => 'No. You can create cards and review them with the built-in practice mode without ever installing Anki. Anki (or AnkiDroid) only becomes necessary if you want to sync your cards to your phone with Anki\'s own system, or extend an existing Anki collection you already have.',
+
+    'q_import_apkg' => 'How do I import the .apkg file into Anki?',
+    'a_import_apkg' => 'On desktop, just double-click the .apkg file — Anki opens and imports everything automatically. You can also go to <em>File → Import</em> from inside Anki. On AnkiDroid, transfer the file to your device and tap it to open it with AnkiDroid. Either way, your cards and audio land directly in your collection.',
+
     // Section Export
     'section_export_title' => 'Anki export',
 
