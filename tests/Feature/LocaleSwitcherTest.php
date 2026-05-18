@@ -9,7 +9,7 @@ test('authenticated user sees language options in top menu', function () {
     $response = $this->actingAs($authenticatedUser)->get('/');
 
     $response->assertOk();
-    $response->assertSee(__('csv_editor.language_french'));
+    $response->assertSee(__('csv_editor.language_french', [], 'fr'));
     $response->assertSee(__('csv_editor.language_english', [], 'en'));
     $response->assertSee(__('csv_editor.language_russian', [], 'ru'));
 });
