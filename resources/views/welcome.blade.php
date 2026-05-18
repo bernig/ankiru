@@ -2,50 +2,6 @@
     <x-site-header />
 
     @php
-        $mainGoals = [
-            [
-                'icon' => 'document-text',
-                'iconClass' => 'bg-violet-100 text-violet-600',
-                'title' => __('welcome.goal_input_title'),
-                'description' => __('welcome.goal_input_description'),
-            ],
-            [
-                'icon' => 'speaker-wave',
-                'iconClass' => 'bg-sky-100 text-sky-600',
-                'title' => __('welcome.goal_pronunciation_title'),
-                'description' => __('welcome.goal_pronunciation_description'),
-            ],
-            [
-                'icon' => 'arrow-down-tray',
-                'iconClass' => 'bg-emerald-100 text-emerald-600',
-                'title' => __('welcome.goal_export_title'),
-                'description' => __('welcome.goal_export_description'),
-            ],
-        ];
-
-        $workflowSteps = [
-            [
-                'number' => '1',
-                'title' => __('welcome.workflow_step_1_title'),
-                'description' => __('welcome.workflow_step_1_description'),
-            ],
-            [
-                'number' => '2',
-                'title' => __('welcome.workflow_step_2_title'),
-                'description' => __('welcome.workflow_step_2_description'),
-            ],
-            [
-                'number' => '3',
-                'title' => __('welcome.workflow_step_3_title'),
-                'description' => __('welcome.workflow_step_3_description'),
-            ],
-            [
-                'number' => '4',
-                'title' => __('welcome.workflow_step_4_title'),
-                'description' => __('welcome.workflow_step_4_description'),
-            ],
-        ];
-
         $featureCards = [
             [
                 'icon' => 'sparkles',
@@ -86,7 +42,7 @@
         ];
     @endphp
 
-    <div class="mx-auto max-w-5xl space-y-20 py-12 sm:py-16">
+    <div class="mx-auto max-w-5xl space-y-16 py-12 sm:py-16">
         {{-- Hero --}}
         <section class="mx-auto max-w-3xl text-center">
             <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-sm font-medium text-violet-700">
@@ -120,12 +76,8 @@
                     </div>
 
                     <div>
-                        <p class="text-sm font-semibold text-emerald-900">
-                            {{ __('welcome.pricing_title') }}
-                        </p>
-                        <p class="mt-1 text-sm leading-6 text-emerald-800">
-                            {{ __('welcome.pricing_description') }}
-                        </p>
+                        <flux:heading class="text-emerald-900">{{ __('welcome.pricing_title') }}</flux:heading>
+                        <flux:text class="mt-2 text-emerald-800">{{ __('welcome.pricing_description') }}</flux:text>
                     </div>
                 </div>
             </div>
@@ -140,85 +92,11 @@
             </a>
         </section>
 
-        {{-- Main goals --}}
-        <section class="space-y-8">
-            <div class="mx-auto max-w-2xl text-center">
-                <h2 class="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
-                    {{ __('welcome.goals_title') }}
-                </h2>
-                <p class="mt-3 text-base leading-7 text-zinc-600">
-                    {{ __('welcome.goals_description') }}
-                </p>
-            </div>
-
-            <div class="grid gap-4 md:grid-cols-3">
-                @foreach ($mainGoals as $mainGoal)
-                    <div class="shadow-xs rounded-2xl border border-zinc-200 bg-white p-6">
-                        <div class="{{ $mainGoal['iconClass'] }} mb-4 flex size-11 items-center justify-center rounded-xl">
-                            <flux:icon class="size-5" :name="$mainGoal['icon']" />
-                        </div>
-
-                        <h3 class="mb-2 text-base font-semibold text-zinc-900">{{ $mainGoal['title'] }}</h3>
-                        <p class="text-sm leading-6 text-zinc-500">{{ $mainGoal['description'] }}</p>
-                    </div>
-                @endforeach
-            </div>
-        </section>
-
-        {{-- Workflow --}}
-        <section class="space-y-8">
-            <div class="mx-auto max-w-2xl text-center">
-                <h2 class="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
-                    {{ __('welcome.workflow_title') }}
-                </h2>
-                <p class="mt-3 text-base leading-7 text-zinc-600">
-                    {{ __('welcome.workflow_description') }}
-                </p>
-            </div>
-
-            <div class="grid gap-4 sm:grid-cols-2">
-                @foreach ($workflowSteps as $workflowStep)
-                    <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-6">
-                        <div class="mb-4 flex size-10 items-center justify-center rounded-full bg-zinc-900 text-sm font-semibold text-white">
-                            {{ $workflowStep['number'] }}
-                        </div>
-
-                        <h3 class="mb-2 text-base font-semibold text-zinc-900">{{ $workflowStep['title'] }}</h3>
-                        <p class="text-sm leading-6 text-zinc-600">{{ $workflowStep['description'] }}</p>
-                    </div>
-                @endforeach
-            </div>
-
-            {{-- Anki callout --}}
-            <div class="rounded-2xl border border-blue-200 bg-blue-50/80 p-5">
-                <div class="flex items-start gap-3">
-                    <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
-                        <flux:icon.rectangle-stack class="size-5" />
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-sm font-semibold text-blue-900">{{ __('welcome.anki_callout_title') }}</p>
-                        <p class="mt-1 text-sm leading-6 text-blue-800">{{ __('welcome.anki_callout_body') }}</p>
-                        <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
-                            <a class="text-xs font-medium text-blue-700 underline-offset-2 hover:underline" href="https://apps.ankiweb.net" target="_blank" rel="noopener noreferrer">{{ __('welcome.anki_callout_desktop') }} ↗</a>
-                            <a class="text-xs font-medium text-blue-700 underline-offset-2 hover:underline" href="https://play.google.com/store/apps/details?id=com.ichi2.anki" target="_blank" rel="noopener noreferrer">{{ __('welcome.anki_callout_android') }} ↗</a>
-                            <a class="text-xs font-medium text-blue-700 underline-offset-2 hover:underline" href="https://apps.apple.com/us/app/ankimobile-flashcards/id373493387" target="_blank" rel="noopener noreferrer">{{ __('welcome.anki_callout_ios') }} ↗</a>
-                            <a class="text-xs font-medium text-blue-700 underline-offset-2 hover:underline" href="{{ route('faq') }}#anki-basics" wire:navigate>{{ __('welcome.anki_callout_learn_more') }} →</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        {{-- Included tools --}}
+        {{-- Fonctionnalités --}}
         <section class="space-y-8 pb-4">
-            <div class="mx-auto max-w-2xl text-center">
-                <h2 class="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
-                    {{ __('welcome.features_title') }}
-                </h2>
-                <p class="mt-3 text-base leading-7 text-zinc-600">
-                    {{ __('welcome.features_description') }}
-                </p>
-            </div>
+            <h2 class="text-center text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+                {{ __('welcome.features_title') }}
+            </h2>
 
             <div class="grid gap-4 sm:grid-cols-2">
                 @foreach ($featureCards as $featureCard)
@@ -233,5 +111,40 @@
                 @endforeach
             </div>
         </section>
+
+        {{-- Anki callout --}}
+        <div class="rounded-2xl border border-blue-200 bg-blue-50/80 p-5">
+            <div class="flex items-start gap-3">
+                <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                    <flux:icon.question-mark-circle class="size-5" />
+                </div>
+                <div class="min-w-0 flex-1">
+                    <flux:heading class="text-blue-900">{{ __('welcome.anki_callout_title') }}</flux:heading>
+                    <flux:text class="mt-2 text-blue-800">{{ __('welcome.anki_callout_body') }}</flux:text>
+
+                    <div class="my-4 flex flex-wrap gap-x-4 gap-y-2">
+                        <flux:link class="text-xs text-blue-700" href="https://apps.ankiweb.net" target="_blank" rel="noopener noreferrer">
+                            {{ __('welcome.anki_callout_desktop') }}
+                            <flux:icon.arrow-up-right class="inline size-3" />
+                        </flux:link>
+                        <flux:link class="text-xs text-blue-700" href="https://play.google.com/store/apps/details?id=com.ichi2.anki" target="_blank" rel="noopener noreferrer">
+                            {{ __('welcome.anki_callout_android') }}
+                            <flux:icon.arrow-up-right class="inline size-3" />
+                        </flux:link>
+                        <flux:link class="text-xs text-blue-700" href="https://apps.apple.com/us/app/ankimobile-flashcards/id373493387" target="_blank" rel="noopener noreferrer">
+                            {{ __('welcome.anki_callout_ios') }}
+                            <flux:icon.arrow-up-right class="inline size-3" />
+                        </flux:link>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <flux:link class="text-sm text-blue-700" href="{{ route('faq') }}#anki-basics" variant="ghost" rel="noopener noreferrer" wire:navigate>
+                            {{ __('welcome.anki_callout_learn_more') }}
+                            <flux:icon.arrow-right class="inline size-4" />
+                        </flux:link>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </x-layout>

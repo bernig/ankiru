@@ -3,8 +3,8 @@
 return [
     'seo_description' => 'Turn your own Russian phrases into Anki cards with stress marks, translations, and audio. Free to use: just bring your OpenAI API key.',
     'hero_badge' => 'For people who build their own Russian Anki decks',
-    'hero_title' => 'Turn the phrases you actually use into perfect Russian Anki cards',
-    'hero_description' => 'Anki is much more effective when you learn from your own personal material. This app helps you turn that material into high-quality cards with Russian text, stress marks, and audio, ready to review right in the app or export to Anki.',
+    'hero_title' => 'Build Russian Anki cards with stress marks and audio',
+    'hero_description' => 'AI handles the Russian translation, stress marks, and audio generation. Export to .apkg for Anki or review directly in the app.',
     'pricing_title' => 'Free to use, pay-at-cost AI',
     'pricing_description' => 'The app itself is 100% free. To use the AI features, you simply plug in your own OpenAI API key. No markups, no subscriptions: you pay exactly for what you use.',
     'cta_register' => 'Create an account',
@@ -43,8 +43,8 @@ return [
     'feature_generation_title' => 'Phrase generation',
     'feature_generation_description' => 'Describe a topic, pick how many pairs you need, and the AI generates phrases in your language with their Russian translation and stress marks.',
 
-    'feature_translation_title' => 'Translation drafts',
-    'feature_translation_description' => 'Quickly generate a first Russian draft for your phrases, ready to be polished with your own words.',
+    'feature_translation_title' => 'Automatic translation',
+    'feature_translation_description' => 'Translate your phrases into Russian in one click, with stress marks already placed.',
 
     'feature_stress_title' => 'Stress mark placement',
     'feature_stress_description' => 'The AI adds stress marks so your cards always teach the correct pronunciation.',
@@ -55,8 +55,8 @@ return [
     'feature_export_title' => 'Instant export',
     'feature_export_description' => 'Create an .apkg file containing your notes and audio with a single click, ready to be added to Anki.',
 
-    'feature_practice_title' => 'Built-in spaced repetition',
-    'feature_practice_description' => 'Review your cards without leaving the app. The SM-2 algorithm schedules each card at the right interval: you only review what needs reviewing, nothing more.',
+    'feature_practice_title' => 'Built-in test mode',
+    'feature_practice_description' => 'Test your deck directly in the app. Cards are shuffled, and you flip each one to reveal the Russian translation and listen to the audio.',
 
     'anki_callout_title' => 'New to Anki?',
     'anki_callout_body' => 'Anki is a free spaced repetition flashcard app. Export your cards from Ankiru as a .apkg file and import them into Anki, or just review them directly in the app, no installation required.',

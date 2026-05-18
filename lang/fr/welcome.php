@@ -3,8 +3,8 @@
 return [
     'seo_description' => 'Transformez vos phrases russes en cartes Anki avec accents toniques, traductions et audio. Gratuit : il suffit d\'avoir votre clé API OpenAI.',
     'hero_badge' => 'Pour ceux qui créent leurs propres paquets Anki en russe',
-    'hero_title' => 'Partez de vos propres phrases et transformez-les en parfaites cartes Anki pour le russe',
-    'hero_description' => 'Anki est bien plus efficace quand on apprend avec ses propres phrases. Cette application vous aide à en faire des cartes de qualité : texte russe, accents toniques, audio. Révisez-les ensuite directement dans l\'app ou exportez-les vers Anki.',
+    'hero_title' => 'Créez des cartes Anki russes avec accents toniques et audio',
+    'hero_description' => 'L\'IA se charge de la traduction russe, des accents toniques et de l\'audio. Exportez en .apkg pour Anki ou révisez directement dans l\'application.',
     'pricing_title' => 'Utilisation gratuite, coûts de l\'IA à prix coûtant',
     'pricing_description' => 'L\'application en elle-même est 100 % gratuite. Pour les fonctionnalités IA, vous renseignez simplement votre propre clé API OpenAI. Pas de surcoût ni d\'abonnement : vous payez exactement ce que vous consommez.',
     'cta_register' => 'Créer un compte',
@@ -43,8 +43,8 @@ return [
     'feature_generation_title' => 'Génération de phrases',
     'feature_generation_description' => 'Décrivez un thème, choisissez le nombre de paires, et l\'IA génère des phrases dans votre langue avec leur traduction russe et les accents toniques.',
 
-    'feature_translation_title' => 'Brouillons de traductions',
-    'feature_translation_description' => 'Générez rapidement une première version russe pour vos phrases, à retoucher avec vos propres mots.',
+    'feature_translation_title' => 'Traduction automatique',
+    'feature_translation_description' => 'Traduisez vos phrases en russe d\'un clic, avec les accents toniques déjà placés.',
 
     'feature_stress_title' => 'Ajout des accents toniques',
     'feature_stress_description' => 'L\'IA place les accents toniques pour que vos cartes enseignent toujours la bonne prononciation.',
@@ -55,8 +55,8 @@ return [
     'feature_export_title' => 'Export immédiat',
     'feature_export_description' => 'Créez d\'un simple clic un fichier .apkg contenant les notes et l\'audio, prêt à être ajouté à votre profil Anki.',
 
-    'feature_practice_title' => 'Répétition espacée intégrée',
-    'feature_practice_description' => 'Révisez vos cartes sans quitter l\'application. L\'algorithme SM-2 planifie chaque carte au bon intervalle : vous ne révisez que ce qui en a besoin, ni plus ni moins.',
+    'feature_practice_title' => 'Mode test intégré',
+    'feature_practice_description' => 'Testez votre deck directement dans l\'application. Les cartes sont mélangées, vous retournez chacune pour voir la traduction russe et écouter l\'audio.',
 
     'anki_callout_title' => 'Vous ne connaissez pas Anki ?',
     'anki_callout_body' => 'Anki est une application de flashcards gratuite basée sur la répétition espacée. Exportez vos cartes depuis Ankiru en fichier .apkg et importez-les dans Anki, ou révisez-les directement dans l\'application, sans rien installer.',

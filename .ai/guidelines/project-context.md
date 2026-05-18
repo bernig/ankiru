@@ -23,6 +23,7 @@ This is a web-based Anki flashcard creation tool specialized for French → Russ
 5. **Mass stress correction** → `MassOperationService::dispatchStressBatch()` dispatches one `MassOperationJob` per row needing correction → `RussianStressCorrectorAgent` (gpt-5.4, temperature 0) reviews and corrects stress tags.
 6. **Mass TTS generation** → `MassOperationService::dispatchTtsBatch()` dispatches one `MassOperationJob` per row without cached audio → `RussianTextToSpeechService` generates and caches the MP3.
 7. **Export** → `.csv` download (accent style applied: color, bold, unicode combining accent), single-deck `.apkg`, or multi-deck `.apkg` collection (all user drafts combined).
+8. **Test mode** → `ManagesTestMode` shuffles all rows with non-empty source and Russian text into a queue, then lets the user flip each card (front = source, back = Russian + audio). No SM-2, no score tracking.
 
 ## Architecture notes
 
@@ -32,6 +33,7 @@ This is a web-based Anki flashcard creation tool specialized for French → Russ
   - `ManagesRowGeneration` — AI row generation modal
   - `ManagesTranslation` — single-cell and single-row translation
   - `ManagesTtsAudio` — TTS modal, individual audio generation/deletion
+  - `ManagesTestMode` — simple test mode: shuffles all non-empty rows, shows source text, user flips to reveal Russian + audio, advances to next card. No spaced repetition, no progress persistence.
 - Services are injected in `boot()` (not `__construct`) because Livewire does not serialize protected properties between requests. Never move them to the constructor.
 - Mass operation progress is tracked in Laravel Cache under keys `mass_op:{sessionId}:{operationType}:{counter}` (e.g. `mass_op:abc123:tts:processed`). The session ID is a per-batch UUID generated at dispatch time.
 - TTS audio is stored on the `local` disk (not `public`). It is embedded into `.apkg` exports as binary media entries.
