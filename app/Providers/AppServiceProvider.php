@@ -2,14 +2,11 @@
 
 namespace App\Providers;
 
-use App\Listeners\SendNewUserNotification;
 use Carbon\CarbonImmutable;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -30,7 +27,6 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureRateLimiters();
-        $this->configureEventListeners();
     }
 
     /**
@@ -72,10 +68,5 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('tts-generation', function (Request $request) {
             return Limit::perMinute(10)->by($request->user()?->id ?? session()->getId());
         });
-    }
-
-    protected function configureEventListeners(): void
-    {
-        Event::listen(Registered::class, SendNewUserNotification::class);
     }
 }
