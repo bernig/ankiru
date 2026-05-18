@@ -143,27 +143,6 @@ class CsvEditor extends Component
     }
 
     /**
-     * Persist the user's accent style preference (color + bold) and update
-     * the local Livewire state so the next CSV export uses the new values.
-     */
-    public function saveAccentStyle(?string $color, bool $bold, bool $unicode = false): void
-    {
-        if ($color !== null && ! preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
-            return;
-        }
-
-        $this->accentColor = $color;
-        $this->accentBold = $bold;
-        $this->accentUnicode = $unicode;
-
-        auth()->user()->update([
-            'accent_color' => $color,
-            'accent_bold' => $bold,
-            'accent_unicode' => $unicode,
-        ]);
-    }
-
-    /**
      * Livewire lifecycle hook: called automatically after uploadedCsvFile is set.
      * Enables auto-upload behaviour without a submit button.
      */

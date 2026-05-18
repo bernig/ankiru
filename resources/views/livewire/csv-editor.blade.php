@@ -14,7 +14,6 @@
         @include('livewire.csv-editor.tts-modal')
         @include('livewire.csv-editor.bulk-actions-modal')
         @include('livewire.csv-editor.collection-export-modal')
-        @include('livewire.csv-editor.accent-style-modal')
         @include('livewire.csv-editor.generate-rows-modal')
         @include('livewire.csv-editor.test-mode-modal')
     @else

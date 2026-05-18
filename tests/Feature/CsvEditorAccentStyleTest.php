@@ -18,42 +18,13 @@ test('mount loads accent style from the authenticated user', function (): void {
         ->assertSet('accentBold', false);
 });
 
-test('saveAccentStyle persists color and bold to the database', function (): void {
+test('mount loads accent_unicode from the authenticated user', function (): void {
     /** @var User $user */
-    $user = User::factory()->create();
+    $user = User::factory()->create(['accent_unicode' => true]);
 
     Livewire::actingAs($user)
         ->test(CsvEditor::class)
-        ->call('saveAccentStyle', '#1d4ed8', true);
-
-    $user->refresh();
-    expect($user->accent_color)->toBe('#1d4ed8')
-        ->and($user->accent_bold)->toBeTrue();
-});
-
-test('saveAccentStyle accepts null color for bold-only style', function (): void {
-    /** @var User $user */
-    $user = User::factory()->create(['accent_color' => '#ff0000']);
-
-    Livewire::actingAs($user)
-        ->test(CsvEditor::class)
-        ->call('saveAccentStyle', null, true);
-
-    $user->refresh();
-    expect($user->accent_color)->toBeNull()
-        ->and($user->accent_bold)->toBeTrue();
-});
-
-test('saveAccentStyle ignores invalid hex color strings', function (): void {
-    /** @var User $user */
-    $user = User::factory()->create(['accent_color' => '#d97706']);
-
-    Livewire::actingAs($user)
-        ->test(CsvEditor::class)
-        ->call('saveAccentStyle', 'not-a-color', true);
-
-    $user->refresh();
-    expect($user->accent_color)->toBe('#d97706');
+        ->assertSet('accentUnicode', true);
 });
 
 test('csv export wraps stressed vowels with font and bold tags when color and bold are set', function (): void {
@@ -89,27 +60,6 @@ test('csv export wraps stressed vowels with font tag only when color is set and 
     // fputcsv doubles quote characters inside quoted fields.
     expect($content)->toContain('<font color=""#0000ff"">о</font>')
         ->and($content)->not->toContain('<b>');
-});
-
-test('saveAccentStyle persists unicode mode to the database', function (): void {
-    /** @var User $user */
-    $user = User::factory()->create(['accent_unicode' => false]);
-
-    Livewire::actingAs($user)
-        ->test(CsvEditor::class)
-        ->call('saveAccentStyle', null, true, true);
-
-    $user->refresh();
-    expect($user->accent_unicode)->toBeTrue();
-});
-
-test('mount loads accent_unicode from the authenticated user', function (): void {
-    /** @var User $user */
-    $user = User::factory()->create(['accent_unicode' => true]);
-
-    Livewire::actingAs($user)
-        ->test(CsvEditor::class)
-        ->assertSet('accentUnicode', true);
 });
 
 test('csv export replaces stressed vowels with combining acute accent in unicode mode', function (): void {

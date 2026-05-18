@@ -90,6 +90,49 @@
         </form>
     </flux:card>
 
+    {{-- Style des accents --}}
+    <flux:card class="space-y-6">
+        <div class="space-y-2">
+            <flux:heading size="lg">{{ __('profile.accent_style') }}</flux:heading>
+            <flux:text>{{ __('profile.accent_style_description') }}</flux:text>
+        </div>
+
+        <div class="space-y-5" x-data="{
+            color: '',
+            bold: true,
+            unicode: false,
+            get noneActive() { return !this.color && !this.bold && !this.unicode; },
+            init() {
+                this.color = $wire.accentColor || '';
+                this.bold = $wire.accentBold;
+                this.unicode = $wire.accentUnicode;
+            },
+        }">
+            <flux:switch wire:ignore :label="__('profile.accent_unicode')" :description="__('profile.accent_unicode_description')" x-model="unicode" />
+
+            <div class="flex flex-col gap-2">
+                <flux:label>{{ __('profile.accent_color') }}</flux:label>
+                <flux:color-picker type="button" clearable wire:ignore x-model="color" />
+            </div>
+
+            <flux:switch wire:ignore :label="__('profile.accent_bold')" x-model="bold" />
+
+            <flux:callout x-show="noneActive" variant="warning" icon="eye-slash">
+                <flux:callout.text>{{ __('profile.accent_none_note') }}</flux:callout.text>
+            </flux:callout>
+
+            <div class="flex items-center gap-4">
+                <flux:button class="rounded-full!" icon="check" variant="primary" x-on:click="$wire.saveAccentStyle(color || null, bold, unicode)">
+                    {{ __('profile.save') }}
+                </flux:button>
+
+                @if ($accentStyleSaved)
+                    <flux:text class="text-green-600">{{ __('profile.saved') }}</flux:text>
+                @endif
+            </div>
+        </div>
+    </flux:card>
+
     {{-- Clé API OpenAI --}}
     <flux:card class="space-y-6">
         <div class="space-y-2">

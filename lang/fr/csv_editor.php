@@ -97,16 +97,6 @@ return [
     'bulk_warning_queue' => "Le driver de file d'attente est réglé sur 'sync'. Les traitements groupés bloqueront la requête au lieu de s'exécuter en arrière-plan.",
     'bulk_warning_broadcast' => "Le driver de broadcast est réglé sur 'log'. Les mises à jour en temps réel ne seront pas disponibles.",
 
-    // Style des accents
-    'accent_style' => 'Style des accents',
-    'accent_style_title' => 'Style des lettres accentuées',
-    'accent_color' => 'Couleur',
-    'accent_bold' => 'Gras',
-    'accent_none_note' => 'Aucun style actif : la position de l\'accent est conservée dans les données mais non visible à l\'écran.',
-    'accent_unicode' => 'Accent combinant (á, é, о́…)',
-    'accent_unicode_description' => 'Remplace la voyelle accentuée par sa version combinée avec l\'accent aigu.',
-    'accent_style_save' => 'Appliquer',
-
     // Génération de lignes
     'generate_rows_button' => 'Générer des lignes avec l\'IA',
     'generate_rows_title' => 'Générer des lignes',

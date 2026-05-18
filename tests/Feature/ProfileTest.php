@@ -205,6 +205,69 @@ test('le contexte d\'apprentissage est limité à 2000 caractères', function ()
         ->assertHasErrors(['learning_context']);
 });
 
+// ── Style des accents ─────────────────────────────────────────────────────────
+test('le style d\'accent est chargé au montage du composant profil', function (): void {
+    $user = User::factory()->create([
+        'accent_color' => '#ff0000',
+        'accent_bold' => false,
+        'accent_unicode' => true,
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Profile::class)
+        ->assertSet('accentColor', '#ff0000')
+        ->assertSet('accentBold', false)
+        ->assertSet('accentUnicode', true);
+});
+
+test('saveAccentStyle enregistre la couleur et le gras en base', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test(Profile::class)
+        ->call('saveAccentStyle', '#1d4ed8', true)
+        ->assertSet('accentStyleSaved', true);
+
+    $user->refresh();
+    expect($user->accent_color)->toBe('#1d4ed8')
+        ->and($user->accent_bold)->toBeTrue();
+});
+
+test('saveAccentStyle accepte null pour couleur uniquement gras', function (): void {
+    $user = User::factory()->create(['accent_color' => '#ff0000']);
+
+    Livewire::actingAs($user)
+        ->test(Profile::class)
+        ->call('saveAccentStyle', null, true);
+
+    $user->refresh();
+    expect($user->accent_color)->toBeNull()
+        ->and($user->accent_bold)->toBeTrue();
+});
+
+test('saveAccentStyle ignore les couleurs hexadécimales invalides', function (): void {
+    $user = User::factory()->create(['accent_color' => '#d97706']);
+
+    Livewire::actingAs($user)
+        ->test(Profile::class)
+        ->call('saveAccentStyle', 'not-a-color', true);
+
+    $user->refresh();
+    expect($user->accent_color)->toBe('#d97706');
+});
+
+test('saveAccentStyle enregistre le mode unicode en base', function (): void {
+    $user = User::factory()->create(['accent_unicode' => false]);
+
+    Livewire::actingAs($user)
+        ->test(Profile::class)
+        ->call('saveAccentStyle', null, true, true)
+        ->assertSet('accentStyleSaved', true);
+
+    $user->refresh();
+    expect($user->accent_unicode)->toBeTrue();
+});
+
 test('le middleware injecte la clé API de l\'utilisateur dans la config', function () {
     $userKey = 'sk-user-test-cle-api-valide-de-plus-de-20-caracteres';
     $user = User::factory()->create(['openai_api_key' => $userKey]);

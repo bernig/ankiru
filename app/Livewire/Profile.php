@@ -28,6 +28,12 @@ class Profile extends Component
 
     public string $learning_context = '';
 
+    public ?string $accentColor = null;
+
+    public bool $accentBold = true;
+
+    public bool $accentUnicode = false;
+
     public bool $profileSaved = false;
 
     public bool $passwordSaved = false;
@@ -36,12 +42,17 @@ class Profile extends Component
 
     public bool $learningContextSaved = false;
 
+    public bool $accentStyleSaved = false;
+
     public function mount(): void
     {
         $user = Auth::user();
         $this->name = $user->name;
         $this->email = $user->email;
         $this->learning_context = $user->learning_context ?? '';
+        $this->accentColor = $user->accent_color;
+        $this->accentBold = (bool) ($user->accent_bold ?? true);
+        $this->accentUnicode = (bool) ($user->accent_unicode ?? false);
     }
 
     #[Computed]
@@ -158,6 +169,26 @@ class Profile extends Component
         $this->apiKeySaved = false;
 
         unset($this->hasOpenAiKey);
+    }
+
+    public function saveAccentStyle(?string $color, bool $bold, bool $unicode = false): void
+    {
+        if ($color !== null && ! preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
+            return;
+        }
+
+        $this->accentStyleSaved = false;
+        $this->accentColor = $color;
+        $this->accentBold = $bold;
+        $this->accentUnicode = $unicode;
+
+        Auth::user()->update([
+            'accent_color' => $color,
+            'accent_bold' => $bold,
+            'accent_unicode' => $unicode,
+        ]);
+
+        $this->accentStyleSaved = true;
     }
 
     public function saveLearningContext(): void

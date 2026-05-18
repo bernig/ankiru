@@ -97,16 +97,6 @@ return [
     'bulk_warning_queue' => "Queue driver is set to 'sync'. Bulk jobs will block the request instead of running in the background.",
     'bulk_warning_broadcast' => "Broadcast driver is set to 'log'. Real-time progress updates will not be available.",
 
-    // Accent style
-    'accent_style' => 'Accent style',
-    'accent_style_title' => 'Accented Letters Style',
-    'accent_color' => 'Color',
-    'accent_bold' => 'Bold',
-    'accent_none_note' => 'No style active: the accent position is preserved in the data but not visible on screen.',
-    'accent_unicode' => 'Combining accent (á, é, о́…)',
-    'accent_unicode_description' => 'Replaces the stressed vowel with its combining acute accent version.',
-    'accent_style_save' => 'Apply',
-
     // Row generation
     'generate_rows_button' => 'Generate rows with AI',
     'generate_rows_title' => 'Generate rows',
