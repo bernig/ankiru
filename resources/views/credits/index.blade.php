@@ -4,7 +4,7 @@
     <div class="mx-auto max-w-5xl py-8">
 
         {{-- Page header --}}
-        <div class="mx-auto max-w-lg mb-10 space-y-2">
+        <div class="mx-auto mb-10 max-w-lg space-y-2">
             <flux:heading size="xl">{{ __('credits.page_title') }}</flux:heading>
             <flux:text class="max-w-xl text-base text-zinc-500">{{ __('credits.page_intro') }}</flux:text>
         </div>

@@ -140,7 +140,7 @@
                 <flux:heading size="lg">{{ __('profile.openai_api_key') }}</flux:heading>
                 <flux:text>{{ __('profile.openai_api_key_moved') }}</flux:text>
             </div>
-            <flux:button href="{{ route('credits.index') }}" icon:trailing="arrow-right" variant="primary" wire:navigate>
+            <flux:button class="rounded-full!" href="{{ route('credits.index') }}" icon:trailing="arrow-right" variant="primary" wire:navigate>
                 {{ __('credits.nav_credits') }}
             </flux:button>
         </div>

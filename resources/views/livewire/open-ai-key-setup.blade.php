@@ -1,8 +1,8 @@
 <div x-on:open-openai-key-setup.window="$flux.modal('openai-key-setup').show()">
-    <flux:modal class="max-w-md " name="openai-key-setup">
+    <flux:modal class="max-w-md" name="openai-key-setup">
         <div class="flex items-start gap-4">
             <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/40">
-                <flux:icon name="sparkles" variant="outline" class="size-5 text-purple-600 dark:text-purple-400" />
+                <flux:icon class="size-5 text-purple-600 dark:text-purple-400" name="sparkles" variant="outline" />
             </div>
             <div class="space-y-1">
                 <flux:heading size="lg">{{ __('profile.openai_key_modal_title') }}</flux:heading>
@@ -10,7 +10,7 @@
             </div>
         </div>
 
-        <div class="flex justify-end gap-3 mt-6  sm:flex-row flex-col">
+        <div class="mt-6 flex flex-col justify-end gap-3 sm:flex-row">
             <flux:modal.close>
                 <flux:button class="rounded-full! w-full sm:w-auto" variant="ghost">{{ __('profile.openai_key_modal_later') }}</flux:button>
             </flux:modal.close>
