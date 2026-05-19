@@ -40,7 +40,7 @@
                 <flux:error name="message" />
             </flux:field>
 
-            <flux:button type="submit" icon="paper-airplane" variant="primary" wire:loading.attr="disabled">
+            <flux:button class="rounded-full!" type="submit" icon="paper-airplane" variant="primary" wire:loading.attr="disabled">
                 <span wire:loading.remove>{{ __('contact.send') }}</span>
                 <span wire:loading>{{ __('contact.sending') }}</span>
             </flux:button>
