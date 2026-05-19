@@ -12,13 +12,12 @@
 
         <div class="flex justify-end gap-3 mt-6  sm:flex-row flex-col">
             <flux:modal.close>
-                <flux:button class="w-full sm:w-auto" variant="ghost">{{ __('profile.openai_key_modal_later') }}</flux:button>
+                <flux:button class="rounded-full! w-full sm:w-auto" variant="ghost">{{ __('profile.openai_key_modal_later') }}</flux:button>
             </flux:modal.close>
-            <flux:modal.close>
-                <flux:button class="w-full sm:w-auto" href="{{ route('credits.index') }}" variant="primary" icon="key" wire:navigate>
-                    {{ __('profile.openai_key_modal_cta') }}
-                </flux:button>
-            </flux:modal.close>
+
+            <flux:button class="rounded-full! w-full sm:w-auto" href="{{ route('credits.index') }}" icon:variant="outline" variant="primary" icon="key" wire:navigate>
+                {{ __('profile.openai_key_modal_cta') }}
+            </flux:button>
         </div>
     </flux:modal>
 </div>
