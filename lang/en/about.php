@@ -26,8 +26,8 @@ return [
     'how_practice_title' => 'Built-in practice mode',
     'how_practice_body' => 'The practice mode lets you review your cards without opening Anki. It uses the SM-2 spaced repetition algorithm: the more easily you recall a card, the longer the app waits before showing it again. Your progress is stored per deck so you can pick up exactly where you left off.',
 
-    'key_title' => 'Why do you need your own API key?',
-    'key_paragraph_1' => 'The app is free, but the AI is not. Instead of charging a monthly subscription or selling marked-up credits, I just ask you to plug in your own OpenAI key.',
-    'key_paragraph_2' => 'This means no middlemen. You pay OpenAI exactly for what you use. For standard personal use (dozens of phrases and audios), your bill will literally be a few cents.',
-    'key_paragraph_3' => 'Your key is securely encrypted in the database. It is never exposed, and you can delete it from your profile anytime.',
+    'key_title' => 'Your own API key, or platform credits',
+    'key_paragraph_1' => 'The app is free, but AI is not. The first option: plug in your own OpenAI key. You pay OpenAI directly for exactly what you use, with no markup or middlemen. For standard personal use, your bill will literally be a few cents.',
+    'key_paragraph_2' => 'Coming soon: a second option. You\'ll be able to buy credit packs directly on the platform, without needing to create an OpenAI account or manage an API key yourself.',
+    'key_paragraph_3' => 'Either way, your data stays protected. API keys are stored encrypted and are never exposed. You can update or delete yours from your profile anytime.',
 ];

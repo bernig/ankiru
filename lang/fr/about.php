@@ -26,8 +26,8 @@ return [
     'how_practice_title' => 'Mode pratique intégré',
     'how_practice_body' => 'Le mode pratique vous permet de réviser vos cartes sans ouvrir Anki. Il utilise l\'algorithme de répétition espacée SM-2 : plus une carte est bien maîtrisée, plus l\'intervalle avant la prochaine révision est long. Votre progression est sauvegardée par fichier, vous pouvez reprendre à tout moment exactement là où vous vous étiez arrêté.',
 
-    'key_title' => 'Pourquoi devez-vous fournir votre propre clé API ?',
-    'key_paragraph_1' => 'Le site est gratuit, mais l\'IA ne l\'est pas. Au lieu de vous faire payer un abonnement ou d\'acheter des crédits avec une marge, j\'ai choisi de vous laisser brancher votre propre clé OpenAI.',
-    'key_paragraph_2' => 'Résultat : aucun intermédiaire. Vous payez directement OpenAI pour ce que vous consommez. Pour vous donner une idée, un usage personnel normal (des dizaines de phrases et d\'audios) coûte littéralement quelques centimes d\'euros.',
-    'key_paragraph_3' => 'La clé est évidemment chiffrée dans la base de données, n\'est jamais exposée, et vous pouvez la supprimer de votre profil quand vous voulez.',
+    'key_title' => 'Clé API personnelle ou crédits plateforme',
+    'key_paragraph_1' => 'Le site est gratuit, mais l\'IA ne l\'est pas. La première option : brancher votre propre clé OpenAI. Vous payez directement OpenAI pour ce que vous consommez, sans marge ni intermédiaire. Pour vous donner une idée, un usage quotidien normal coûte quelques centimes d\'euros.',
+    'key_paragraph_2' => 'Bientôt disponible : une seconde option. Vous pourrez acheter des packs de crédits directement sur la plateforme, sans avoir à créer un compte OpenAI ni à gérer de clé API.',
+    'key_paragraph_3' => 'Dans les deux cas, vos données restent protégées. La clé API est chiffrée dans la base de données et n\'est jamais exposée. Vous pouvez la modifier ou la supprimer depuis votre profil à tout moment.',
 ];

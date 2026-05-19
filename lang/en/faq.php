@@ -24,7 +24,10 @@ return [
     'section_api_title' => 'API Key & costs',
 
     'q_why_own_key' => 'Why do I need to bring my own OpenAI API key?',
-    'a_why_own_key' => 'The app itself is free to use, but querying OpenAI\'s API costs money. Instead of charging a subscription or marking up the price of credits, I figured it\'d be fairer to let you plug in your own key. That way, you only pay OpenAI for exactly what you use.',
+    'a_why_own_key' => 'The app is free, but calling OpenAI\'s API costs money. The current option: plug in your own OpenAI key. You only pay for exactly what you use, with no markup. An alternative is coming soon: credit packs you can buy directly on the platform, no OpenAI account needed.',
+
+    'q_platform_credits' => 'Do I have to set up an OpenAI API key?',
+    'a_platform_credits' => 'For now, yes. But an alternative is coming soon: credit packs you can buy directly on the platform. You\'ll be able to use all AI features without ever creating an OpenAI account.',
 
     'q_cost_estimate' => 'How much does it actually cost?',
     'a_cost_estimate' => 'For normal daily use (generating a few dozen phrases and audios), you\'re looking at pennies. Generating text and fixing stress marks costs almost nothing. Text-to-speech is a bit pricier, but still very cheap. Either way, you\'ll always see a cost estimate before running bulk operations.',

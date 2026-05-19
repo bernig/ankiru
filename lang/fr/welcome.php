@@ -5,8 +5,8 @@ return [
     'hero_badge' => 'Pour ceux qui créent leurs propres paquets Anki en russe',
     'hero_title' => 'Créez des cartes Anki russes avec accents toniques et audio',
     'hero_description' => 'L\'IA se charge de la traduction russe, des accents toniques et de l\'audio. Exportez en .apkg pour Anki ou révisez directement dans l\'application.',
-    'pricing_title' => 'Utilisation gratuite, coûts de l\'IA à prix coûtant',
-    'pricing_description' => 'L\'application en elle-même est 100 % gratuite. Pour les fonctionnalités IA, vous renseignez simplement votre propre clé API OpenAI. Pas de surcoût ni d\'abonnement : vous payez exactement ce que vous consommez.',
+    'pricing_title' => 'Clé API personnelle ou crédits plateforme',
+    'pricing_description' => 'L\'application est 100 % gratuite. Pour les fonctionnalités IA, deux options : branchez votre propre clé API OpenAI (vous payez directement OpenAI, sans surcoût), ou, bientôt disponible, achetez des crédits directement sur la plateforme, sans créer de compte OpenAI.',
     'cta_register' => 'Créer un compte',
     'cta_login' => 'Se connecter',
 

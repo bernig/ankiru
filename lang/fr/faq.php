@@ -24,7 +24,10 @@ return [
     'section_api_title' => 'Clé API & coûts',
 
     'q_why_own_key' => 'Pourquoi dois-je fournir ma propre clé API OpenAI ?',
-    'a_why_own_key' => 'L\'application est gratuite, mais interroger l\'API d\'OpenAI coûte un peu d\'argent. Plutôt que d\'imposer un abonnement ou de revendre des crédits en prenant une marge, je préfère vous laisser utiliser votre propre clé. Comme ça, vous ne payez à OpenAI que ce que vous consommez.',
+    'a_why_own_key' => 'L\'application est gratuite, mais interroger l\'API d\'OpenAI coûte de l\'argent. La solution actuelle : utiliser votre propre clé OpenAI. Vous ne payez que ce que vous consommez, sans surcoût. Une alternative arrive bientôt : des packs de crédits achetables directement sur la plateforme, sans avoir à créer un compte OpenAI.',
+
+    'q_platform_credits' => 'Dois-je forcément avoir une clé API OpenAI ?',
+    'a_platform_credits' => 'Pour le moment, oui. Mais une alternative arrive bientôt : des packs de crédits achetables directement sur la plateforme. Vous pourrez alors profiter de toutes les fonctionnalités IA sans configurer de compte OpenAI.',
 
     'q_cost_estimate' => 'Combien ça coûte en pratique ?',
     'a_cost_estimate' => 'Pour un usage quotidien (quelques dizaines de phrases et d\'audios), ça se chiffre en centimes. Le texte et la correction d\'accents ne coûtent presque rien. La génération audio est un poil plus chère, mais ça reste très modeste. De toute façon, vous avez toujours une estimation avant de lancer un traitement par lots.',

@@ -5,8 +5,8 @@ return [
     'hero_badge' => 'For people who build their own Russian Anki decks',
     'hero_title' => 'Build Russian Anki cards with stress marks and audio',
     'hero_description' => 'AI handles the Russian translation, stress marks, and audio generation. Export to .apkg for Anki or review directly in the app.',
-    'pricing_title' => 'Free to use, pay-at-cost AI',
-    'pricing_description' => 'The app itself is 100% free. To use the AI features, you simply plug in your own OpenAI API key. No markups, no subscriptions: you pay exactly for what you use.',
+    'pricing_title' => 'Bring your own API key, or buy platform credits',
+    'pricing_description' => 'The app itself is 100% free. For AI features, you have two options: plug in your own OpenAI API key (you pay OpenAI directly, no markup), or, coming soon, buy credit packs on the platform without needing an OpenAI account.',
     'cta_register' => 'Create an account',
     'cta_login' => 'Sign in',
 
