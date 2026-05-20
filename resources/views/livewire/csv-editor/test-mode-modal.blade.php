@@ -19,12 +19,9 @@
                 }
             },
             init() {
-                this.$wire.$watch('testCardFlipped', (flipped) => {
-                    if (flipped && this.$wire.testAutoplay) {
-                        const url = this.$wire.testCardAudioUrls[this.$wire.testQueue[this.$wire.testQueuePosition]];
-                        if (url) {
-                            this.$nextTick(() => window.playAudioWhenReady(document.getElementById('test-audio')));
-                        }
+                this.$wire.$watch('testCardAudioUrl', (url) => {
+                    if (url && this.$wire.testCardFlipped && this.$wire.testAutoplay) {
+                        this.$nextTick(() => window.playAudioWhenReady(document.getElementById('test-audio')));
                     }
                 });
             },
