@@ -37,6 +37,13 @@ trait ManagesTestMode
     /** Whether TTS audio is currently being generated for the current card. */
     public bool $testAudioGenerating = false;
 
+    /**
+     * Pre-computed audio URLs for all cards in the queue, indexed by row index.
+     *
+     * @var array<int, string|null>
+     */
+    public array $testCardAudioUrls = [];
+
     public function openTestMode(): void
     {
         if ($this->activeDraftId === 0) {
@@ -58,26 +65,6 @@ trait ManagesTestMode
         $this->testModeOpen = false;
     }
 
-    public function flipTestCard(): void
-    {
-        $this->testCardFlipped = true;
-        $this->testCardAudioUrl = $this->resolveTestCardAudioUrl();
-    }
-
-    public function nextTestCard(): void
-    {
-        $this->testCardFlipped = false;
-        $this->testCardAudioUrl = null;
-
-        $nextPosition = $this->testQueuePosition + 1;
-
-        if ($nextPosition >= count($this->testQueue)) {
-            $this->testSessionDone = true;
-        } else {
-            $this->testQueuePosition = $nextPosition;
-        }
-    }
-
     public function generateTestCardAudio(): void
     {
         $rowIndex = $this->testQueue[$this->testQueuePosition] ?? null;
@@ -90,7 +77,9 @@ trait ManagesTestMode
 
         try {
             $this->generateTtsAudio($rowIndex);
-            $this->testCardAudioUrl = $this->resolveTestCardAudioUrl();
+            $url = $this->buildAudioUrl($this->csvRows[$rowIndex][1] ?? '');
+            $this->testCardAudioUrl = $url;
+            $this->testCardAudioUrls[$rowIndex] = $url;
         } finally {
             $this->testAudioGenerating = false;
         }
@@ -105,23 +94,13 @@ trait ManagesTestMode
         $this->testCardAudioUrl = null;
     }
 
-    private function resolveTestCardAudioUrl(): ?string
+    private function buildAudioUrl(string $russianText): ?string
     {
-        $rowIndex = $this->testQueue[$this->testQueuePosition] ?? null;
-
-        if ($rowIndex === null) {
-            return null;
-        }
-
-        $russianText = $this->csvRows[$rowIndex][1] ?? '';
-
         if (empty(trim($russianText)) || ! $this->ttsService->audioFileExists($russianText)) {
             return null;
         }
 
-        $hash = $this->ttsService->buildFilenameHash($russianText);
-
-        return route('tts.serve', $hash).'?v='.time();
+        return route('tts.serve', $this->ttsService->buildFilenameHash($russianText));
     }
 
     private function buildTestQueue(): void
@@ -139,5 +118,11 @@ trait ManagesTestMode
 
         shuffle($cards);
         $this->testQueue = array_values($cards);
+
+        $audioUrls = [];
+        foreach ($this->testQueue as $rowIndex) {
+            $audioUrls[$rowIndex] = $this->buildAudioUrl($this->csvRows[$rowIndex][1] ?? '');
+        }
+        $this->testCardAudioUrls = $audioUrls;
     }
 }
