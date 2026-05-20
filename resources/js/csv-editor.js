@@ -455,7 +455,7 @@ window.playAudioWhenReady = function (el) {
     if (el.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
         el.play().catch(() => {});
     } else {
-        el.addEventListener('canplay', () => el.play().catch(() => {}), { once: true });
+        el.addEventListener('canplaythrough', () => el.play().catch(() => {}), { once: true });
     }
 };
 
