@@ -80,6 +80,9 @@ trait ManagesTestMode
             $url = $this->buildAudioUrl($this->csvRows[$rowIndex][1] ?? '');
             $this->testCardAudioUrl = $url;
             $this->testCardAudioUrls[$rowIndex] = $url;
+            if ($url) {
+                $this->dispatch('test-card-audio-ready');
+            }
         } finally {
             $this->testAudioGenerating = false;
         }

@@ -7,6 +7,9 @@
         flip() {
                 $wire.testCardFlipped = true;
                 $wire.testCardAudioUrl = $wire.testCardAudioUrls[$wire.testQueue[$wire.testQueuePosition]] ?? null;
+                if ($wire.testCardAudioUrl && $wire.testAutoplay) {
+                    this.$nextTick(() => window.playAudioWhenReady(document.getElementById('test-audio')));
+                }
             },
             next() {
                 $wire.testCardFlipped = false;
@@ -19,14 +22,17 @@
                 }
             },
             init() {
-                this.$wire.$watch('testCardFlipped', (flipped) => {
-                    if (flipped && this.$wire.testAutoplay) {
-                        const url = this.$wire.testCardAudioUrls[this.$wire.testQueue[this.$wire.testQueuePosition]];
-                        if (url) {
-                            this.$nextTick(() => window.playAudioWhenReady(document.getElementById('test-audio')));
+                const unsub = this.$wire.$on('test-card-audio-ready', () => {
+                    if (this.$wire.testAutoplay) {
+                        const el = document.getElementById('test-audio');
+                        const url = this.$wire.testCardAudioUrl;
+                        if (el && url) {
+                            el.src = url;
+                            window.playAudioWhenReady(el);
                         }
                     }
                 });
+                this.$cleanup(unsub);
             },
     }" @keydown.space.window.prevent="
             if ($wire.testModeOpen && !$wire.testSessionDone && !$wire.testCardFlipped && $wire.testQueue.length > 0) {
