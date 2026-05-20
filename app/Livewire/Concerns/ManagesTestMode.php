@@ -34,6 +34,9 @@ trait ManagesTestMode
     /** Whether audio autoplays when a card is flipped. */
     public bool $testAutoplay = true;
 
+    /** Whether TTS audio is currently being generated for the current card. */
+    public bool $testAudioGenerating = false;
+
     public function openTestMode(): void
     {
         if ($this->activeDraftId === 0) {
@@ -72,6 +75,24 @@ trait ManagesTestMode
             $this->testSessionDone = true;
         } else {
             $this->testQueuePosition = $nextPosition;
+        }
+    }
+
+    public function generateTestCardAudio(): void
+    {
+        $rowIndex = $this->testQueue[$this->testQueuePosition] ?? null;
+
+        if ($rowIndex === null) {
+            return;
+        }
+
+        $this->testAudioGenerating = true;
+
+        try {
+            $this->generateTtsAudio($rowIndex);
+            $this->testCardAudioUrl = $this->resolveTestCardAudioUrl();
+        } finally {
+            $this->testAudioGenerating = false;
         }
     }
 

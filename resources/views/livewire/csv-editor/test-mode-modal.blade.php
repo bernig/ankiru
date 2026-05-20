@@ -79,6 +79,9 @@
                             <audio class="mt-1 w-full max-w-xs rounded" id="test-audio" src="{{ $testCardAudioUrl }}" controls lang="ru"></audio>
                         @else
                             <audio class="hidden" id="test-audio"></audio>
+                            <flux:button class="rounded-full!" icon="speaker-wave" icon:variant="outline" size="sm" variant="primary" wire:click="generateTestCardAudio" wire:loading.attr="disabled" wire:target="generateTestCardAudio">
+                                {{ __('csv_editor.generate_audio') }}
+                            </flux:button>
                         @endif
                     </div>
                 @else
