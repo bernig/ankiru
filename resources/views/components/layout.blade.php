@@ -65,19 +65,14 @@
                     </flux:callout.link>
                 </flux:callout.text>
             </flux:callout>
-            <div class="flex flex-wrap items-center justify-center gap-2 text-sm text-zinc-700">
-                <a class="hover:text-zinc-900" href="{{ route('about') }}" wire:navigate>{{ __('about.title') }}</a>
-                <flux:separator vertical />
-                <a class="hover:text-zinc-900" href="{{ route('faq') }}" wire:navigate>{{ __('faq.title') }}</a>
-                <flux:separator vertical />
-                <a class="hover:text-zinc-900" href="{{ route('contact') }}" wire:navigate>{{ __('contact.title') }}</a>
-                <flux:separator vertical />
-                <a class="hover:text-zinc-900" href="{{ route('legal.mentions') }}" wire:navigate>{{ __('legal.mentions_title') }}</a>
-                <flux:separator vertical />
-                <a class="hover:text-zinc-900" href="{{ route('legal.privacy') }}" wire:navigate>{{ __('legal.privacy_title') }}</a>
-                <flux:separator vertical />
-                <a class="showHideToggleCookiePreferencesModal cursor-pointer hover:text-zinc-900">{{ __('cookie_consent.manage_preferences') }}</a>
-            </div>
+            <nav class="sm:divide-taupe-300 flex flex-col items-center gap-y-3 text-sm text-zinc-700 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-y-2 sm:divide-x">
+                <a class="hover:text-zinc-900 sm:px-3" href="{{ route('about') }}" wire:navigate>{{ __('about.title') }}</a>
+                <a class="hover:text-zinc-900 sm:px-3" href="{{ route('faq') }}" wire:navigate>{{ __('faq.title') }}</a>
+                <a class="hover:text-zinc-900 sm:px-3" href="{{ route('contact') }}" wire:navigate>{{ __('contact.title') }}</a>
+                <a class="hover:text-zinc-900 sm:px-3" href="{{ route('legal.mentions') }}" wire:navigate>{{ __('legal.mentions_title') }}</a>
+                <a class="hover:text-zinc-900 sm:px-3" href="{{ route('legal.privacy') }}" wire:navigate>{{ __('legal.privacy_title') }}</a>
+                <a class="showHideToggleCookiePreferencesModal cursor-pointer hover:text-zinc-900 sm:px-3">{{ __('cookie_consent.manage_preferences') }}</a>
+            </nav>
             @if (config('app.debug'))
                 <livewire:debug-ai-error-switch />
             @endif
