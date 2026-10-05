@@ -271,6 +271,26 @@ test('saveAccentStyle enregistre le mode unicode en base', function (): void {
     expect($user->accent_unicode)->toBeTrue();
 });
 
+// ── Visite guidée ────────────────────────────────────────────────────────────
+
+test('restartTour réinitialise la progression du tour et redirige vers l\'éditeur', function (): void {
+    $user = User::factory()->create([
+        'tour_completed_at' => now(),
+        'tour_new_file_tip_seen_at' => now(),
+        'tour_first_row_tip_seen_at' => now(),
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Profile::class)
+        ->call('restartTour')
+        ->assertRedirect(route('csv-editor'));
+
+    $user->refresh();
+    expect($user->tour_completed_at)->toBeNull()
+        ->and($user->tour_new_file_tip_seen_at)->toBeNull()
+        ->and($user->tour_first_row_tip_seen_at)->toBeNull();
+});
+
 test('le middleware injecte la clé API de l\'utilisateur dans la config', function () {
     $userKey = 'sk-user-test-cle-api-valide-de-plus-de-20-caracteres';
     $user = User::factory()->create(['openai_api_key' => $userKey]);

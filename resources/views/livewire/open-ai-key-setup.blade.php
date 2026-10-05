@@ -1,5 +1,5 @@
 <div x-on:open-openai-key-setup.window="$flux.modal('openai-key-setup').show()">
-    <flux:modal class="max-w-md" name="openai-key-setup">
+    <flux:modal class="min-w-0 max-w-md" name="openai-key-setup">
         <div class="flex items-start gap-4">
             <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/40">
                 <flux:icon class="size-5 text-purple-600 dark:text-purple-400" name="sparkles" variant="outline" />

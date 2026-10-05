@@ -50,4 +50,8 @@ return [
     'openai_key_modal_description' => 'Pour utiliser les fonctions IA (traduction, correction, synthèse vocale), configurez votre clé API OpenAI ou achetez des crédits.',
     'openai_key_modal_later' => 'Plus tard',
     'openai_key_modal_cta' => 'Configurer l\'accès IA',
+
+    'tour_title' => 'Visite guidée',
+    'tour_description' => 'Relancez la visite guidée de l\'éditeur pour redécouvrir les fonctionnalités principales.',
+    'tour_restart_button' => 'Redémarrer la visite guidée',
 ];

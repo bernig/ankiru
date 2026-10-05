@@ -96,6 +96,9 @@ class User extends Authenticatable implements MustVerifyEmail
             'accent_bold' => 'boolean',
             'accent_unicode' => 'boolean',
             'is_admin' => 'boolean',
+            'tour_completed_at' => 'datetime',
+            'tour_new_file_tip_seen_at' => 'datetime',
+            'tour_first_row_tip_seen_at' => 'datetime',
         ];
     }
 }

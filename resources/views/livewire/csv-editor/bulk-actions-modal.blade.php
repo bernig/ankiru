@@ -12,7 +12,7 @@
       1. Previous-run summary - shown only when status === 'done'
       2. Current estimates + precise run button, or an all-done checkmark
 --}}
-<flux:modal class="md:w-xl" name="bulk-actions" :dismissible="$stressBatchStatus !== 'running' && $ttsBatchStatus !== 'running'">
+<flux:modal class="min-w-0 md:w-xl" name="bulk-actions" :dismissible="$stressBatchStatus !== 'running' && $ttsBatchStatus !== 'running'">
     <div class="flex flex-col gap-6">
 
         <flux:heading size="lg">{{ __('csv_editor.bulk_actions') }}</flux:heading>

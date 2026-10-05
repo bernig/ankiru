@@ -1,4 +1,5 @@
 import './csv-editor.js';
+import './tour.js';
 
 
 /**

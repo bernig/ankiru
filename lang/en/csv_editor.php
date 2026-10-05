@@ -24,10 +24,14 @@ return [
     'language_english' => 'English',
     'language_russian' => 'Russian',
     'logout' => 'Logout',
+    'confirm_rename' => 'Confirm rename',
+    'cancel_rename' => 'Cancel rename',
+    'open_menu' => 'Open menu',
 
     // Search
     'search_placeholder' => 'Search…',
     'no_search_results' => 'No rows match your search.',
+    'clear_search' => 'Clear search',
 
     // Table
     'no_rows_yet' => 'No rows yet. Click "Add row" to add one.',
@@ -55,6 +59,7 @@ return [
     'no_audio_yet' => 'No audio file generated yet for this phrase.',
     'regenerate' => 'Regenerate',
     'generate_audio' => 'Generate Audio',
+    'delete_audio' => 'Delete this audio',
     'close' => 'Close',
 
     // Upload panel
@@ -135,4 +140,28 @@ return [
     'practice_empty' => 'No cards to test',
     'practice_empty_description' => 'Fill in both columns of at least one card to get started.',
     'practice_autoplay_tooltip' => 'Auto-play audio on flip',
+
+    // Guided tour
+    'tour_skip' => 'Skip',
+    'tour_previous' => 'Previous',
+    'tour_next' => 'Next',
+    'tour_finish' => 'Finish',
+    'tour_file_menu_title' => 'Your files',
+    'tour_file_menu_text' => 'Rename, duplicate or delete the active file, and switch between decks here.',
+    'tour_search_title' => 'Search',
+    'tour_search_text' => 'Quickly filter your cards by text.',
+    'tour_legend_title' => 'Visual cues',
+    'tour_legend_text' => 'These badges flag cards whose stress mark needs checking or whose audio is missing. Click one to filter the list.',
+    'tour_practice_title' => 'Practice mode',
+    'tour_practice_text' => 'Review your cards flashcard-style: the source side first, then the translation and audio on click.',
+    'tour_add_row_title' => 'Add cards',
+    'tour_add_row_text' => 'Add a card manually, or let AI generate several at once on a given topic.',
+    'tour_bulk_title' => 'Bulk actions',
+    'tour_bulk_text' => 'Fix stress marks or generate missing audio for every card in one click.',
+    'tour_export_title' => 'Export',
+    'tour_export_text' => 'Download your cards as CSV, or as an Anki package (.apkg) ready to import into Anki Desktop or AnkiDroid.',
+    'tour_new_file_tip_title' => 'Where to start?',
+    'tour_new_file_tip_text' => 'Add a first card manually, or let AI generate several on a given topic.',
+    'tour_first_row_tip_title' => 'Your first card',
+    'tour_first_row_tip_text' => 'Hover this card (or open it on mobile) to translate it, fix the stress mark, or generate its audio.',
 ];

@@ -1,4 +1,4 @@
-<flux:modal class="md:w-xl" name="tts-player" x-on:close="
+<flux:modal class="min-w-0 md:w-xl" name="tts-player" x-on:close="
         ttsModalOpen = false;
         ttsModalAudioSrc = null;
         const player = document.getElementById('tts-modal-audio');
@@ -32,7 +32,7 @@
             <flux:spacer />
 
             <div class="flex gap-2" x-show="ttsModal.rowIndex >= 0 && ttsModal.audioExists">
-                <flux:button class="hover:bg-red-50! text-red-600! hover:text-red-700! rounded-full!" variant="subtle" icon:variant="outline" icon="trash" @click="$wire.deleteTtsAudio(ttsModal.rowIndex)" wire:loading.attr="disabled" wire:target="deleteTtsAudio" x-bind:disabled="$wire.ttsBatchStatus === 'running'" />
+                <flux:button class="hover:bg-red-50! text-red-600! hover:text-red-700! rounded-full!" title="{{ __('csv_editor.delete_audio') }}" variant="subtle" icon:variant="outline" icon="trash" @click="$wire.deleteTtsAudio(ttsModal.rowIndex)" wire:loading.attr="disabled" wire:target="deleteTtsAudio" x-bind:disabled="$wire.ttsBatchStatus === 'running'" />
 
                 <flux:button class="rounded-full!" @click="$wire.refreshTtsAudio(ttsModal.rowIndex)" wire:loading.attr="disabled" wire:target="refreshTtsAudio" variant="primary" x-bind:disabled="$wire.ttsBatchStatus === 'running'">
                     <span wire:loading wire:target="refreshTtsAudio"><flux:icon.arrow-path class="size-4 animate-spin" /></span>

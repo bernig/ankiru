@@ -1,4 +1,4 @@
-<flux:modal class="md:w-96" name="collection-export">
+<flux:modal class="min-w-0 md:w-96" name="collection-export">
     <div class="flex flex-col gap-6">
         <flux:heading size="lg">{{ __('csv_editor.collection_name_modal_title') }}</flux:heading>
 

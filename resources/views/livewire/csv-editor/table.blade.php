@@ -4,7 +4,7 @@
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-zinc-100 pb-3 dark:border-zinc-700/50">
 
         {{-- Toggle buttons - always visible --}}
-        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-400 dark:text-zinc-500">
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-400 dark:text-zinc-500" data-tour="legend">
             <button class="{{ $filterAccentNeeded ? 'bg-amber-50 ring-1 ring-amber-300 text-amber-700 dark:bg-amber-900/30 dark:ring-amber-700 dark:text-amber-300' : '' }} flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 transition-colors hover:bg-amber-50 dark:hover:bg-amber-900/20" title="{{ __('csv_editor.filter_click_to_activate') }}" wire:click="$toggle('filterAccentNeeded')">
                 <span class="inline-block size-3 shrink-0 rounded-sm bg-amber-200 dark:bg-amber-900/50"></span>
                 <span>{{ __('csv_editor.legend_accent_needed') }}</span>
@@ -23,7 +23,7 @@
 
         <flux:spacer />
 
-        <flux:button class="rounded-full!" size="sm" icon="play" variant="primary" color="purple" wire:click="openTestMode" wire:loading.attr="disabled" wire:target="openTestMode">
+        <flux:button class="rounded-full!" data-tour="practice-mode" size="sm" icon="play" variant="primary" color="purple" wire:click="openTestMode" wire:loading.attr="disabled" wire:target="openTestMode">
             <flux:icon.loading class="size-4" wire:loading wire:target="openTestMode" />
             <span wire:loading.remove wire:target="openTestMode">{{ __('csv_editor.practice_mode') }}</span>
         </flux:button>
@@ -61,7 +61,7 @@
 
                     @include('livewire.csv-editor.table-row')
                 @empty
-                    <flux:table.row class="max-sm:block">
+                    <flux:table.row class="max-sm:block" wire:key="empty-state-row">
                         <flux:table.cell class="text-center" class="text-center max-sm:block max-sm:w-full" colspan="4">
                             {{ $searchQuery !== '' || $filterAccentNeeded || $filterNoAudio ? __('csv_editor.no_search_results') : __('csv_editor.no_rows_yet') }}
                         </flux:table.cell>
@@ -82,7 +82,7 @@
     {{-- ── Footer toolbar ── --}}
     <div class="mx-auto mb-0 mt-4 flex w-full flex-col items-center gap-3" x-show="!$store.csvSearch.active">
 
-        <div class="mb-4 flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
+        <div class="mb-4 flex flex-col items-center gap-2 sm:flex-row sm:gap-3" data-tour="add-row">
             <flux:button class="rounded-full!" wire:click="addRow" icon="plus" variant="primary">
                 {{ __('csv_editor.add_row') }}
             </flux:button>
@@ -162,7 +162,7 @@
             </flux:button.group>
 
             <div class="flex items-center justify-between border-t border-zinc-100 pt-3 dark:border-zinc-700">
-                <flux:button square icon="trash" icon:variant="outline" variant="danger" @click="($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim() ? $dispatch('request-delete-row', { rowIndex: $store.mobileEdit.rowIndex }) : ($wire.deleteRow($store.mobileEdit.rowIndex), $flux.modal('mobile-edit').close())" />
+                <flux:button square icon="trash" icon:variant="outline" variant="danger" title="{{ __('csv_editor.delete_row') }}" @click="($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim() ? $dispatch('request-delete-row', { rowIndex: $store.mobileEdit.rowIndex }) : ($wire.deleteRow($store.mobileEdit.rowIndex), $flux.modal('mobile-edit').close())" />
                 <flux:modal.close>
                     <flux:button variant="filled" icon="check">{{ __('csv_editor.close') }}</flux:button>
                 </flux:modal.close>
@@ -173,7 +173,7 @@
 
     {{-- ── Delete row confirmation modal ── --}}
     <div x-data="{ pendingDeleteRowIndex: -1 }" x-on:request-delete-row.window="pendingDeleteRowIndex = $event.detail.rowIndex; $nextTick(() => $flux.modal('delete-row-confirm').show())">
-        <flux:modal class="md:w-sm" name="delete-row-confirm">
+        <flux:modal class="min-w-0 md:w-sm" name="delete-row-confirm">
             <div class="flex flex-col gap-5">
                 <flux:heading size="lg">{{ __('csv_editor.delete_row') }}</flux:heading>
                 <flux:text>{{ __('csv_editor.delete_row_confirm') }}</flux:text>

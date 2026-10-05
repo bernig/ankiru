@@ -12,7 +12,7 @@
         silently hidden.
 --}}
 @if ($stressBatchStatus !== 'idle' || $ttsBatchStatus !== 'idle')
-    <div class="fixed bottom-4 right-4 z-50 w-72 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900" x-data="{ dismissed: false }" x-effect="if ($wire.stressBatchStatus === 'running' || $wire.ttsBatchStatus === 'running') dismissed = false" x-show="! dismissed" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-y-4 opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-4 opacity-0">
+    <div class="fixed inset-x-4 bottom-4 z-50 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl sm:inset-x-auto sm:right-4 sm:w-72 dark:border-zinc-700 dark:bg-zinc-900" x-data="{ dismissed: false }" x-effect="if ($wire.stressBatchStatus === 'running' || $wire.ttsBatchStatus === 'running') dismissed = false" x-show="! dismissed" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-y-4 opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-4 opacity-0">
 
         {{-- Widget header row --}}
         <div class="flex items-center justify-between border-b border-zinc-100 px-3 py-2 dark:border-zinc-800">
@@ -27,7 +27,7 @@
                 </button>
 
                 {{-- Dismiss button - only available when nothing is running --}}
-                <button class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300" type="button" aria-label="{{ __('csv_editor.bulk_widget_dismiss') }}" x-show="$wire.stressBatchStatus !== 'running' && $wire.ttsBatchStatus !== 'running'" x-on:click="dismissed = true">
+                <button class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300" type="button" title="{{ __('csv_editor.bulk_widget_dismiss') }}" aria-label="{{ __('csv_editor.bulk_widget_dismiss') }}" x-show="$wire.stressBatchStatus !== 'running' && $wire.ttsBatchStatus !== 'running'" x-on:click="dismissed = true">
                     <flux:icon.x-mark class="size-3.5" />
                 </button>
             </div>
@@ -50,7 +50,7 @@
                                 <span class="text-xs tabular-nums text-zinc-400">
                                     {{ $stressBatchProgress }}&thinsp;/&thinsp;{{ $stressBatchTotal }}
                                 </span>
-                                <button class="text-zinc-400 hover:text-red-500" type="button" aria-label="{{ __('csv_editor.bulk_cancel') }}" wire:click="cancelStressBatch">
+                                <button class="text-zinc-400 hover:text-red-500" type="button" title="{{ __('csv_editor.bulk_cancel') }}" aria-label="{{ __('csv_editor.bulk_cancel') }}" wire:click="cancelStressBatch">
                                     <flux:icon.stop class="size-3.5" />
                                 </button>
                             </div>
@@ -96,7 +96,7 @@
                                 <span class="text-xs tabular-nums text-zinc-400">
                                     {{ $ttsBatchProgress }}&thinsp;/&thinsp;{{ $ttsBatchTotal }}
                                 </span>
-                                <button class="text-zinc-400 hover:text-red-500" type="button" aria-label="{{ __('csv_editor.bulk_cancel') }}" wire:click="cancelTtsBatch">
+                                <button class="text-zinc-400 hover:text-red-500" type="button" title="{{ __('csv_editor.bulk_cancel') }}" aria-label="{{ __('csv_editor.bulk_cancel') }}" wire:click="cancelTtsBatch">
                                     <flux:icon.stop class="size-3.5" />
                                 </button>
                             </div>

@@ -63,7 +63,7 @@
 
         {{-- Mobile hamburger --}}
         <flux:modal.trigger class="sm:hidden" name="mobile-menu">
-            <flux:button square variant="ghost">
+            <flux:button square variant="ghost" title="{{ __('csv_editor.open_menu') }}" aria-label="{{ __('csv_editor.open_menu') }}">
                 <flux:icon name="bars-3" />
             </flux:button>
         </flux:modal.trigger>

@@ -16,6 +16,7 @@
         @include('livewire.csv-editor.collection-export-modal')
         @include('livewire.csv-editor.generate-rows-modal')
         @include('livewire.csv-editor.test-mode-modal')
+        @include('livewire.csv-editor.tour-overlay')
     @else
         @include('livewire.csv-editor.upload-panel')
     @endif

@@ -2,11 +2,12 @@
     $totalCards = count($testQueue);
 @endphp
 
-<flux:modal class="md:w-2xl" name="test-mode" x-on:open-test-mode.window="$flux.modal('test-mode').show()" x-on:close="$wire.closeTestMode()" closable>
+<flux:modal class="min-w-0 md:w-2xl" name="test-mode" x-on:open-test-mode.window="$flux.modal('test-mode').show()" x-on:close="$wire.closeTestMode()" closable>
     <div class="flex flex-col gap-5" x-data="{
         flip() {
                 $wire.testCardFlipped = true;
                 $wire.testCardAudioUrl = $wire.testCardAudioUrls[$wire.testQueue[$wire.testQueuePosition]] ?? null;
+
                 if ($wire.testCardAudioUrl && $wire.testAutoplay) {
                     this.$nextTick(() => window.playAudioWhenReady(document.getElementById('test-audio')));
                 }
@@ -14,7 +15,9 @@
             next() {
                 $wire.testCardFlipped = false;
                 $wire.testCardAudioUrl = null;
+
                 const nextPos = $wire.testQueuePosition + 1;
+
                 if (nextPos >= $wire.testQueue.length) {
                     $wire.testSessionDone = true;
                 } else {
@@ -22,17 +25,24 @@
                 }
             },
             init() {
-                const unsub = this.$wire.$on('test-card-audio-ready', () => {
+                const handler = () => {
                     if (this.$wire.testAutoplay) {
                         const el = document.getElementById('test-audio');
                         const url = this.$wire.testCardAudioUrl;
+
                         if (el && url) {
                             el.src = url;
                             window.playAudioWhenReady(el);
                         }
                     }
+                };
+
+                const componentEl = this.$wire.$el;
+                componentEl.addEventListener('test-card-audio-ready', handler);
+
+                window.Alpine.onElRemoved(this.$el, () => {
+                    componentEl.removeEventListener('test-card-audio-ready', handler);
                 });
-                this.$cleanup(unsub);
             },
     }" @keydown.space.window.prevent="
             if ($wire.testModeOpen && !$wire.testSessionDone && !$wire.testCardFlipped && $wire.testQueue.length > 0) {

@@ -2,7 +2,7 @@
     $cost = $this->generationCostEstimate;
 @endphp
 
-<flux:modal class="md:w-2xl" name="generate-rows" scroll="body" x-on:open-generate-rows-modal.window="$flux.modal('generate-rows').show()" x-on:close="$wire.generateRowsReset()">
+<flux:modal class="min-w-0 md:w-2xl" name="generate-rows" scroll="body" x-on:open-generate-rows-modal.window="$flux.modal('generate-rows').show()" x-on:close="$wire.generateRowsReset()">
     <div class="flex flex-col gap-5">
 
         @if ($generatedRows !== [])

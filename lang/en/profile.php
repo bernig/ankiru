@@ -50,4 +50,8 @@ return [
     'openai_key_modal_description' => 'To use AI features (translation, correction, text-to-speech), set up your OpenAI API key or purchase credits.',
     'openai_key_modal_later' => 'Later',
     'openai_key_modal_cta' => 'Set up AI access',
+
+    'tour_title' => 'Guided tour',
+    'tour_description' => 'Restart the editor\'s guided tour to rediscover the main features.',
+    'tour_restart_button' => 'Restart guided tour',
 ];

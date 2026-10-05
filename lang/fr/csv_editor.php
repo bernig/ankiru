@@ -26,10 +26,14 @@ return [
     'logout' => 'Se déconnecter',
     'source_column' => 'Texte source',
     'russian_column' => 'Texte russe',
+    'confirm_rename' => 'Valider le renommage',
+    'cancel_rename' => 'Annuler le renommage',
+    'open_menu' => 'Ouvrir le menu',
 
     // Recherche
     'search_placeholder' => 'Rechercher…',
     'no_search_results' => 'Aucune ligne ne correspond à votre recherche.',
+    'clear_search' => 'Effacer la recherche',
 
     // Tableau
     'no_rows_yet' => "Aucune ligne pour l'instant. Cliquez sur « Ajouter une ligne » pour en créer une.",
@@ -55,6 +59,7 @@ return [
     'no_audio_yet' => 'Aucun fichier audio généré pour cette phrase.',
     'regenerate' => 'Régénérer',
     'generate_audio' => "Générer l'audio",
+    'delete_audio' => 'Supprimer cet audio',
     'close' => 'Fermer',
 
     // Panneau d'import
@@ -135,4 +140,28 @@ return [
     'practice_empty' => 'Aucune carte à tester',
     'practice_empty_description' => 'Remplissez les deux colonnes d\'au moins une carte pour commencer.',
     'practice_autoplay_tooltip' => 'Lecture automatique au retournement',
+
+    // Visite guidée
+    'tour_skip' => 'Passer',
+    'tour_previous' => 'Précédent',
+    'tour_next' => 'Suivant',
+    'tour_finish' => 'Terminer',
+    'tour_file_menu_title' => 'Vos fichiers',
+    'tour_file_menu_text' => "Renommez, dupliquez ou supprimez le fichier actif, et passez d'un deck à l'autre ici.",
+    'tour_search_title' => 'Rechercher',
+    'tour_search_text' => 'Filtrez rapidement vos cartes par texte.',
+    'tour_legend_title' => 'Repères visuels',
+    'tour_legend_text' => "Ces badges indiquent les cartes dont l'accent tonique est à vérifier ou dont l'audio manque. Cliquez dessus pour filtrer la liste.",
+    'tour_practice_title' => 'Mode test',
+    'tour_practice_text' => 'Révisez vos cartes façon flashcards : la face source, puis la traduction et l\'audio au clic.',
+    'tour_add_row_title' => 'Ajouter des cartes',
+    'tour_add_row_text' => "Ajoutez une carte manuellement, ou laissez l'IA en générer plusieurs à la fois sur un thème donné.",
+    'tour_bulk_title' => 'Actions groupées',
+    'tour_bulk_text' => 'Corrigez les accents toniques ou générez les audios manquants pour toutes les cartes en un clic.',
+    'tour_export_title' => 'Exporter',
+    'tour_export_text' => 'Téléchargez vos cartes en CSV, ou en paquet Anki (.apkg) prêt à importer dans Anki Desktop ou AnkiDroid.',
+    'tour_new_file_tip_title' => 'Par où commencer ?',
+    'tour_new_file_tip_text' => "Ajoutez une première carte manuellement, ou laissez l'IA en générer plusieurs sur un thème donné.",
+    'tour_first_row_tip_title' => 'Votre première carte',
+    'tour_first_row_tip_text' => 'Survolez cette carte (ou ouvrez-la sur mobile) pour la traduire, corriger l\'accent tonique ou générer son audio.',
 ];

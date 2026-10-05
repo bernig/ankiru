@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -112,6 +113,25 @@ class Profile extends Component
         Auth::user()->update($validated);
 
         $this->learningContextSaved = true;
+    }
+
+    /**
+     * Resets this user's tour progress so the guided tour (and its
+     * contextual tips) auto-starts again, then sends them back to the
+     * editor where `CsvEditor::maybeAutoStartMainTour()` picks it up.
+     */
+    public function restartTour(): RedirectResponse
+    {
+        // These columns aren't mass-assignable (not in User::$fillable), so
+        // they're set directly rather than via update([...]), matching
+        // CsvEditor::maybeAutoStartMainTour()'s convention.
+        $user = Auth::user();
+        $user->tour_completed_at = null;
+        $user->tour_new_file_tip_seen_at = null;
+        $user->tour_first_row_tip_seen_at = null;
+        $user->save();
+
+        return redirect()->route('csv-editor');
     }
 
     public function render(): View

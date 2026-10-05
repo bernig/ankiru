@@ -133,6 +133,19 @@
         </div>
     </flux:card>
 
+    {{-- Visite guidée --}}
+    <flux:card>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="space-y-1">
+                <flux:heading size="lg">{{ __('profile.tour_title') }}</flux:heading>
+                <flux:text>{{ __('profile.tour_description') }}</flux:text>
+            </div>
+            <flux:button class="rounded-full!" wire:click="restartTour" icon="academic-cap" variant="primary">
+                {{ __('profile.tour_restart_button') }}
+            </flux:button>
+        </div>
+    </flux:card>
+
     {{-- Clé API OpenAI → déplacée vers la page Crédits --}}
     <flux:card>
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
