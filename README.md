@@ -13,7 +13,7 @@ Translate phrases into Russian with stress marks, generate audio, and export a `
 
 ## Tech stack
 
-- PHP 8.3 / Laravel 13
+- PHP 8.4+ / Laravel 13
 - Livewire 4 + Flux UI 2
 - Tailwind CSS 4
 - OpenAI (translation, stress marks, TTS)
@@ -21,7 +21,7 @@ Translate phrases into Russian with stress marks, generate audio, and export a `
 
 ## Requirements
 
-- PHP >= 8.3
+- PHP >= 8.4 (testé en CI sur 8.4 et 8.5)
 - Composer
 - Node.js >= 22
 
