@@ -10,6 +10,15 @@ use Livewire\Component;
 
 class JobMonitor extends Component
 {
+    /**
+     * The route middleware only guards the initial page load; Livewire update
+     * requests must re-check admin rights on their own.
+     */
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->is_admin, 403);
+    }
+
     /** @return Collection<int, object> */
     public function pendingJobs(): Collection
     {
@@ -63,10 +72,6 @@ class JobMonitor extends Component
 
     public function retryJob(string $uuid): void
     {
-        DB::table('failed_jobs')->where('uuid', $uuid)->update([
-            'failed_at' => now(),
-        ]);
-
         Artisan::call('queue:retry', ['id' => [$uuid]]);
     }
 

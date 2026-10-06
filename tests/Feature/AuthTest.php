@@ -332,3 +332,41 @@ test('forgot password is rate limited after 5 consecutive attempts', function ()
     $this->post('/forgot-password', ['email' => 'test@example.com'])
         ->assertStatus(429);
 });
+
+test('registration rejects an email that is already used', function (): void {
+    User::factory()->create(['email' => 'taken@example.com']);
+
+    $this->from('/register')->post('/register', [
+        'name' => 'Second User',
+        'email' => 'taken@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ])->assertSessionHasErrors('email');
+
+    expect(User::where('email', 'taken@example.com')->count())->toBe(1);
+    $this->assertGuest();
+});
+
+test('remember me sets a long-lived login cookie', function (): void {
+    $user = User::factory()->create(['password' => 'secret-password']);
+
+    $response = $this->post('/login', [
+        'email' => $user->email,
+        'password' => 'secret-password',
+        'remember' => '1',
+    ]);
+
+    $response->assertCookie(auth()->guard()->getRecallerName());
+    expect($user->fresh()->remember_token)->not->toBeNull();
+});
+
+test('login redirects to the page the guest originally requested', function (): void {
+    $user = User::factory()->create(['password' => 'secret-password']);
+
+    $this->get(route('profile'))->assertRedirect(route('login'));
+
+    $this->post('/login', [
+        'email' => $user->email,
+        'password' => 'secret-password',
+    ])->assertRedirect(route('profile'));
+});

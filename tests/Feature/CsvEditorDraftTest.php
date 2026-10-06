@@ -3,6 +3,7 @@
 use App\Livewire\CsvEditor;
 use App\Models\CsvDraft;
 use App\Models\User;
+use App\Services\AnkiPackageExporterService;
 use Illuminate\Http\UploadedFile;
 use Livewire\Livewire;
 
@@ -194,4 +195,67 @@ test('confirming a rename with an empty input dismisses the input without saving
         ->call('confirmRenameDraft')
         ->assertSet('isRenamingFile', false)
         ->assertSet('originalFileName', 'keep.csv');
+});
+
+// ── Ownership ────────────────────────────────────────────────────────────────
+
+function foreignDraft(): CsvDraft
+{
+    return CsvDraft::query()->create([
+        'user_id' => User::factory()->create()->id,
+        'original_file_name' => 'secret.csv',
+        'csv_rows' => [['Secret', 'Секрет']],
+        'has_csv_loaded' => true,
+        'last_accessed_at' => now()->subDay(),
+    ]);
+}
+
+test('mount never restores a draft owned by another user', function () {
+    foreignDraft();
+
+    Livewire::test(CsvEditor::class)
+        ->assertSet('hasCsvLoaded', false)
+        ->assertSet('csvRows', [])
+        ->assertDontSee('secret.csv');
+});
+
+test('switching to a draft owned by another user changes nothing', function () {
+    $foreignDraft = foreignDraft();
+
+    Livewire::test(CsvEditor::class)
+        ->call('switchToDraft', $foreignDraft->id)
+        ->assertSet('csvRows', [])
+        ->assertSet('originalFileName', '');
+
+    expect($foreignDraft->fresh()->last_accessed_at->isToday())->toBeFalse();
+});
+
+test('a tampered draft id cannot overwrite or delete another user\'s draft', function () {
+    $foreignDraft = foreignDraft();
+
+    Livewire::test(CsvEditor::class)
+        ->set('activeDraftId', $foreignDraft->id)
+        ->set('hasCsvLoaded', true)
+        ->set('csvRows', [['Overwritten', 'Перезаписано']])
+        ->call('updateCell', 0, 0, 'Overwritten again')
+        ->call('resetEditor');
+
+    expect($foreignDraft->fresh())
+        ->not->toBeNull()
+        ->csv_rows->toBe([['Secret', 'Секрет']]);
+});
+
+test('the collection export only contains the current user\'s drafts', function () {
+    foreignDraft();
+    $exporter = Mockery::spy(AnkiPackageExporterService::class);
+    $exporter->shouldReceive('exportCollection')->andReturnUsing(fn () => tempnam(sys_get_temp_dir(), 'colpkg_'));
+    app()->instance(AnkiPackageExporterService::class, $exporter);
+
+    Livewire::test(CsvEditor::class)
+        ->set('uploadedCsvFile', UploadedFile::fake()->createWithContent('mine.csv', '"Bonjour","Привет"'))
+        ->call('downloadColpkg');
+
+    $exporter->shouldHaveReceived('exportCollection')
+        ->withArgs(fn (array $decks) => array_column($decks, 'deckName') === ['mine'])
+        ->once();
 });

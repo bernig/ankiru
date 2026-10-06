@@ -1,7 +1,7 @@
 <div class="space-y-3" wire:poll.2s>
 
     <div class="flex items-center justify-between">
-        <flux:text class="text-sm text-zinc-400">{{ __('admin.log_refresh_info', ['count' => count($this->entries())]) }}</flux:text>
+        <flux:text class="text-sm text-zinc-400">{{ __('admin.log_refresh_info', ['count' => count($this->entries)]) }}</flux:text>
         <flux:select class="w-32" wire:model.live="lines" size="sm">
             <flux:select.option value="50">{{ __('admin.log_lines', ['count' => 50]) }}</flux:select.option>
             <flux:select.option value="100">{{ __('admin.log_lines', ['count' => 100]) }}</flux:select.option>
@@ -11,7 +11,7 @@
     </div>
 
     <div class="max-h-[70vh] overflow-auto rounded-lg border border-zinc-200 bg-zinc-950 font-mono text-xs leading-relaxed">
-        @forelse ($this->entries() as $entry)
+        @forelse ($this->entries as $entry)
             @php
                 $color = match ($entry['level']) {
                     'emergency', 'alert', 'critical', 'error' => 'text-red-400',

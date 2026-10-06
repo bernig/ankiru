@@ -29,7 +29,7 @@ class MakeAdminCommand extends Command
             return self::SUCCESS;
         }
 
-        $user->update(['is_admin' => true]);
+        $user->forceFill(['is_admin' => true])->save();
 
         $this->info("✓ {$user->name} ({$email}) is now an admin.");
 

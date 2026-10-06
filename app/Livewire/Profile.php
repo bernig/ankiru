@@ -57,9 +57,24 @@ class Profile extends Component
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.Auth::id()],
         ]);
 
-        Auth::user()->update($validated);
+        $user = Auth::user();
+        $user->fill($validated);
+
+        // A new address must be verified again, otherwise anyone could switch
+        // to an address they do not own and keep the verified status.
+        $emailChanged = $user->isDirty('email');
+        if ($emailChanged) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
 
         $this->profileSaved = true;
+
+        if ($emailChanged) {
+            $user->sendEmailVerificationNotification();
+            $this->redirectRoute('verification.notice');
+        }
     }
 
     public function updatePassword(): void

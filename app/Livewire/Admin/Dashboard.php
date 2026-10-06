@@ -22,6 +22,15 @@ class Dashboard extends Component
 
     public string $draftSearch = '';
 
+    /**
+     * The route middleware only guards the initial page load; Livewire update
+     * requests must re-check admin rights on their own.
+     */
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->is_admin, 403);
+    }
+
     public function updatedTab(): void
     {
         $this->resetPage();

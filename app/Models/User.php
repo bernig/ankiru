@@ -24,12 +24,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'openai_api_key',
-        'credits',
         'accent_color',
         'accent_bold',
         'accent_unicode',
         'learning_context',
-        'is_admin',
     ];
 
     /**
@@ -76,11 +74,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function avatarUrl(): string
     {
-        return cache()->remember(
-            'avatar_url_'.$this->id,
-            now()->addDay(),
-            fn () => 'https://api.dicebear.com/9.x/identicon/svg?seed='.rawurlencode($this->email ?: $this->name)
-        );
+        return 'https://api.dicebear.com/9.x/identicon/svg?seed='.rawurlencode($this->email ?: $this->name);
     }
 
     /**

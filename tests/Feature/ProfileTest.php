@@ -4,6 +4,8 @@ use App\Livewire\Credits\ApiKeyForm;
 use App\Livewire\Profile;
 use App\Models\ApiUsageLog;
 use App\Models\User;
+use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 
 test('page profil est accessible', function () {
@@ -300,4 +302,34 @@ test('le middleware injecte la clé API de l\'utilisateur dans la config', funct
         ->assertOk();
 
     expect(config('ai.providers.openai.key'))->toBe($userKey);
+});
+
+test('changer d\'email exige une nouvelle vérification de l\'adresse', function (): void {
+    Notification::fake();
+    $user = User::factory()->create(['email' => 'ancien@example.com']);
+
+    Livewire::actingAs($user)
+        ->test(Profile::class)
+        ->set('email', 'nouveau@example.com')
+        ->call('updateProfile')
+        ->assertRedirect(route('verification.notice'));
+
+    expect($user->fresh())
+        ->email->toBe('nouveau@example.com')
+        ->email_verified_at->toBeNull();
+    Notification::assertSentTo($user, VerifyEmail::class);
+});
+
+test('changer uniquement le nom conserve la vérification de l\'email', function (): void {
+    Notification::fake();
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test(Profile::class)
+        ->set('name', 'Nouveau Nom')
+        ->call('updateProfile')
+        ->assertNoRedirect();
+
+    expect($user->fresh()->email_verified_at)->not->toBeNull();
+    Notification::assertNothingSent();
 });

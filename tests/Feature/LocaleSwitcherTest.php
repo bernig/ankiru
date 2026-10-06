@@ -75,3 +75,9 @@ test('guest language switcher renders navigable locale links', function () {
     $response->assertSee('href="'.route('locale.update', 'en').'"', false);
     $response->assertSee('href="'.route('locale.update', 'ru').'"', false);
 });
+
+test('an unsupported locale stored in the session is ignored', function () {
+    $this->withSession(['locale' => 'de'])->get(route('login'))->assertOk();
+
+    expect(app()->getLocale())->toBe(config('app.locale'));
+});
