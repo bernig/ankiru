@@ -70,8 +70,8 @@
     </div>
 
     {{-- Mobile flyout menu --}}
-    <flux:modal name="mobile-menu" flyout>
-        <flux:navlist class="space-y-6">
+    <flux:modal name="mobile-menu" flyout class="p-5! sm:p-8!">
+        <flux:navlist class="mt-8 space-y-6">
             @guest
                 <flux:navlist.item href="{{ route('login') }}" icon="arrow-right-end-on-rectangle" wire:navigate>
                     {{ __('auth.login') }}

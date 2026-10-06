@@ -2,7 +2,7 @@
 
 return [
     'seo_description' => 'Turn your own Russian phrases into Anki cards with stress marks, translations, and audio. Free to use: just bring your OpenAI API key.',
-    'hero_badge' => 'For people who build their own Russian Anki decks',
+    'hero_badge' => 'Build custom Anki decks to learn Russian',
     'hero_title' => 'Build Russian Anki cards with stress marks and audio',
     'hero_description' => 'AI handles the Russian translation, stress marks, and audio generation. Export to .apkg for Anki or review directly in the app.',
     'pricing_title' => 'Bring your own API key, or buy platform credits',

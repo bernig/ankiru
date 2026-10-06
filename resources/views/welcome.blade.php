@@ -70,7 +70,7 @@
             </div>
 
             <div class="mx-auto mt-8 max-w-2xl rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 text-left">
-                <div class="flex items-start gap-3">
+                <div class="flex flex-col items-start gap-3 sm:flex-row">
                     <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
                         <flux:icon.banknotes class="size-5" />
                     </div>
@@ -114,7 +114,7 @@
 
         {{-- Anki callout --}}
         <div class="rounded-2xl border border-blue-200 bg-blue-50/80 p-5">
-            <div class="flex items-start gap-3">
+            <div class="flex flex-col items-start gap-3 sm:flex-row">
                 <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
                     <flux:icon.question-mark-circle class="size-5" />
                 </div>

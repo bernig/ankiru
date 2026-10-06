@@ -65,13 +65,13 @@
                     </flux:callout.link>
                 </flux:callout.text>
             </flux:callout>
-            <nav class="sm:divide-taupe-300 flex flex-col items-center gap-y-3 text-sm text-zinc-700 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-y-2 sm:divide-x">
-                <a class="hover:text-zinc-900 sm:px-3" href="{{ route('about') }}" wire:navigate>{{ __('about.title') }}</a>
-                <a class="hover:text-zinc-900 sm:px-3" href="{{ route('faq') }}" wire:navigate>{{ __('faq.title') }}</a>
-                <a class="hover:text-zinc-900 sm:px-3" href="{{ route('contact') }}" wire:navigate>{{ __('contact.title') }}</a>
-                <a class="hover:text-zinc-900 sm:px-3" href="{{ route('legal.mentions') }}" wire:navigate>{{ __('legal.mentions_title') }}</a>
-                <a class="hover:text-zinc-900 sm:px-3" href="{{ route('legal.privacy') }}" wire:navigate>{{ __('legal.privacy_title') }}</a>
-                <a class="showHideToggleCookiePreferencesModal cursor-pointer hover:text-zinc-900 sm:px-3">{{ __('cookie_consent.manage_preferences') }}</a>
+            <nav class="md:divide-taupe-300 flex flex-col items-center gap-y-3 text-sm text-zinc-700 md:flex-row md:flex-wrap md:justify-center md:gap-y-2 md:divide-x">
+                <a class="hover:text-zinc-900 md:px-3" href="{{ route('about') }}" wire:navigate>{{ __('about.title') }}</a>
+                <a class="hover:text-zinc-900 md:px-3" href="{{ route('faq') }}" wire:navigate>{{ __('faq.title') }}</a>
+                <a class="hover:text-zinc-900 md:px-3" href="{{ route('contact') }}" wire:navigate>{{ __('contact.title') }}</a>
+                <a class="hover:text-zinc-900 md:px-3" href="{{ route('legal.mentions') }}" wire:navigate>{{ __('legal.mentions_title') }}</a>
+                <a class="hover:text-zinc-900 md:px-3" href="{{ route('legal.privacy') }}" wire:navigate>{{ __('legal.privacy_title') }}</a>
+                <a class="showHideToggleCookiePreferencesModal cursor-pointer hover:text-zinc-900 md:px-3">{{ __('cookie_consent.manage_preferences') }}</a>
             </nav>
             @if (config('app.debug'))
                 <livewire:debug-ai-error-switch />

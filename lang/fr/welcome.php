@@ -2,7 +2,7 @@
 
 return [
     'seo_description' => 'Transformez vos phrases russes en cartes Anki avec accents toniques, traductions et audio. Gratuit : il suffit d\'avoir votre clé API OpenAI.',
-    'hero_badge' => 'Pour ceux qui créent leurs propres paquets Anki en russe',
+    'hero_badge' => 'Créez des paquets Anki personnalisés pour apprendre le russe',
     'hero_title' => 'Créez des cartes Anki russes avec accents toniques et audio',
     'hero_description' => 'L\'IA se charge de la traduction russe, des accents toniques et de l\'audio. Exportez en .apkg pour Anki ou révisez directement dans l\'application.',
     'pricing_title' => 'Clé API personnelle ou crédits plateforme',
