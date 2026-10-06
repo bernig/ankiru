@@ -232,21 +232,25 @@ class MassOperationJob implements ShouldQueue
      * Jobs bypass HTTP middleware, so the user's per-account OpenAI key is not
      * injected automatically. Load it from the database and set the config so
      * that all AI/TTS service calls in this job use the correct key.
+     *
+     * The key is always written explicitly (personal or platform): a queue
+     * worker is a long-lived process, so a conditional write would leave the
+     * previous job's personal key active for the next user.
      */
     private function applyUserApiKey(): void
     {
         if ($this->userId === null) {
             Log::warning('MassOperationJob: userId is null, cannot apply API key.');
-
-            return;
         }
 
-        $user = User::find($this->userId);
+        $user = $this->userId === null ? null : User::find($this->userId);
 
-        if ($user && $user->openai_api_key && ! $user->usesPlatformCredits()) {
-            config(['ai.providers.openai.key' => $user->openai_api_key]);
-            app(AiManager::class)->forgetInstance();
-        }
+        config(['ai.providers.openai.key' => $user && $user->openai_api_key && ! $user->usesPlatformCredits()
+            ? $user->openai_api_key
+            : config('ai.providers.openai.platform_key'),
+        ]);
+
+        app(AiManager::class)->forgetInstance();
     }
 
     // -------------------------------------------------------------------------

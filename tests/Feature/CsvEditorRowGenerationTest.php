@@ -201,6 +201,26 @@ test('sets a translation error when the agent throws an exception', function () 
         ->assertSet('generatedRows', []);
 });
 
+test('does not log usage or deduct credits when the agent returns no usable pair', function () {
+    $platformUser = User::factory()->create(['openai_api_key' => null, 'credits' => 1_000_000]);
+    $this->actingAs($platformUser);
+
+    RowGeneratorAgent::fake(['[{"french": "Bonjour", "translation": "Привет"}]']);
+
+    Livewire::test(CsvEditor::class)
+        ->set('hasCsvLoaded', true)
+        ->set('csvRows', [['Bonjour', 'Прив<b>е</b>т']])
+        ->set('generateRowsPrompt', 'Greetings')
+        ->set('generateRowsCount', 1)
+        ->call('generateRows')
+        ->assertSet('generatedRows', [])
+        ->assertSet('csvRows', [['Bonjour', 'Прив<b>е</b>т']])
+        ->assertNotSet('translationError', '');
+
+    expect(ApiUsageLog::count())->toBe(0)
+        ->and($platformUser->fresh()->credits)->toBe(1_000_000);
+});
+
 test('validates that the prompt is required', function () {
     RowGeneratorAgent::fake()->preventStrayPrompts();
 

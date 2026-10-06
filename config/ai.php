@@ -124,6 +124,8 @@ return [
         'openai' => [
             'driver' => 'openai',
             'key' => env('OPENAI_API_KEY'),
+            // Never mutated at runtime: reference value to restore after a per-user key override.
+            'platform_key' => env('OPENAI_API_KEY'),
             'url' => env('OPENAI_URL', 'https://api.openai.com/v1'),
         ],
 

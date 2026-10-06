@@ -15,9 +15,10 @@ class SetUserOpenAiKey
     {
         $user = $request->user();
 
-        if ($user && $user->openai_api_key && ! $user->usesPlatformCredits()) {
-            config(['ai.providers.openai.key' => $user->openai_api_key]);
-        }
+        config(['ai.providers.openai.key' => $user && $user->openai_api_key && ! $user->usesPlatformCredits()
+            ? $user->openai_api_key
+            : config('ai.providers.openai.platform_key'),
+        ]);
 
         return $next($request);
     }

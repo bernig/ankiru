@@ -101,8 +101,9 @@ class RowGenerationService
         $json = preg_replace('/\s*```$/m', '', $json ?? $raw);
         $json = trim($json ?? $raw);
 
-        // Extract the outermost JSON array in case of extra surrounding text.
-        if (preg_match('/\[.*\]/s', $json, $matches)) {
+        // Extract the array of objects in case of extra surrounding text. Anchoring
+        // on "[{" skips bracketed prose such as "Here are [5] pairs:".
+        if (preg_match('/\[\s*\{.*\}\s*\]/s', $json, $matches)) {
             $json = $matches[0];
         }
 
@@ -112,7 +113,7 @@ class RowGenerationService
             throw new RuntimeException('The AI returned an invalid response: '.$raw);
         }
 
-        return collect($decoded)
+        $pairs = collect($decoded)
             ->filter(fn ($item) => is_array($item) && isset($item['source'], $item['russian']))
             ->map(fn ($item) => [
                 'source' => trim((string) $item['source']),
@@ -121,5 +122,13 @@ class RowGenerationService
             ->filter(fn ($item) => $item['source'] !== '' && $item['russian'] !== '')
             ->values()
             ->toArray();
+
+        // Fail rather than return nothing: the caller logs usage and deducts
+        // credits on success, so an empty result would bill for zero rows.
+        if ($pairs === []) {
+            throw new RuntimeException('The AI returned no usable flashcard pairs: '.$raw);
+        }
+
+        return $pairs;
     }
 }

@@ -3,6 +3,7 @@
 use App\Enums\OperationType;
 use App\Events\MassOperationProgressEvent;
 use App\Jobs\MassOperationJob;
+use App\Models\User;
 use App\Services\OpenAiTranslationService;
 use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
@@ -372,4 +373,74 @@ it('increments generated count and accumulates actual chars after a successful T
 
     expect((int) Cache::get(massOpCacheKey('tts', 'generated')))->toBe(2);
     expect((int) Cache::get(massOpCacheKey('tts', 'actual_chars')))->toBe(17); // 10 + 7
+});
+
+// ---------------------------------------------------------------------------
+// OpenAI key resolution
+// ---------------------------------------------------------------------------
+
+it('restores the platform key when the next job belongs to a platform-credit user', function (): void {
+    Event::fake([MassOperationProgressEvent::class]);
+    seedBatchCache('stress', 2);
+    config([
+        'ai.providers.openai.key' => 'sk-platform',
+        'ai.providers.openai.platform_key' => 'sk-platform',
+    ]);
+
+    $personalKeyUser = User::factory()->create(['openai_api_key' => 'sk-personal-user-a-key', 'credits' => 0]);
+    $platformUser = User::factory()->create(['openai_api_key' => null, 'credits' => 1_000_000]);
+
+    $this->mock(RussianAccentService::class)
+        ->shouldReceive('textNeedsStressCorrection')->andReturn(true);
+    $this->mock(OpenAiTranslationService::class)
+        ->shouldReceive('correctRussianStressMarksWithUsage')
+        ->andReturn(['text' => 'result', 'promptTokens' => 10, 'completionTokens' => 5]);
+
+    $runJob = fn (int $rowIndex, int $userId) => (new MassOperationJob(
+        OperationType::Stress, massOpSessionId(), $rowIndex, 2, 'source', 'russian', $userId,
+    ))->handle(
+        app(RussianAccentService::class),
+        app(OpenAiTranslationService::class),
+        app(RussianTextToSpeechService::class),
+    );
+
+    $runJob(0, $personalKeyUser->id);
+    expect(config('ai.providers.openai.key'))->toBe('sk-personal-user-a-key');
+
+    $runJob(1, $platformUser->id);
+    expect(config('ai.providers.openai.key'))->toBe('sk-platform');
+});
+
+it('restores the platform key when the job has no user', function (): void {
+    Event::fake([MassOperationProgressEvent::class]);
+    seedBatchCache('stress', 1);
+    config([
+        'ai.providers.openai.key' => 'sk-leftover-personal-key',
+        'ai.providers.openai.platform_key' => 'sk-platform',
+    ]);
+
+    $this->mock(RussianAccentService::class)
+        ->shouldReceive('textNeedsStressCorrection')->andReturn(true);
+    $this->mock(OpenAiTranslationService::class)
+        ->shouldReceive('correctRussianStressMarksWithUsage')
+        ->andReturn(['text' => 'result', 'promptTokens' => 10, 'completionTokens' => 5]);
+
+    (new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 1, 'source', 'russian'))->handle(
+        app(RussianAccentService::class),
+        app(OpenAiTranslationService::class),
+        app(RussianTextToSpeechService::class),
+    );
+
+    expect(config('ai.providers.openai.key'))->toBe('sk-platform');
+});
+
+// ---------------------------------------------------------------------------
+// Broadcast contract (the Echo listener references these names verbatim)
+// ---------------------------------------------------------------------------
+
+it('broadcasts progress on the session channel under the operation.progress name', function (): void {
+    $event = new MassOperationProgressEvent('stress', 'abc-123', 'running', 1, 3, 0);
+
+    expect($event->broadcastOn()->name)->toBe('mass-op.abc-123')
+        ->and($event->broadcastAs())->toBe('operation.progress');
 });

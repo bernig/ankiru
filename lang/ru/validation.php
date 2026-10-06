@@ -10,13 +10,25 @@ return [
     'file' => 'Поле :attribute должно быть файлом.',
     'mimes' => 'Поле :attribute должно быть файлом одного из типов: :values.',
     'unique' => 'Такое значение поля :attribute уже используется.',
+    'exists' => 'Выбранное значение поля :attribute недействительно.',
+    'integer' => 'Поле :attribute должно быть целым числом.',
+    'lowercase' => 'Поле :attribute должно быть в нижнем регистре.',
+
+    'between' => [
+        'array' => 'Поле :attribute должно содержать от :min до :max элементов.',
+        'file' => 'Размер файла :attribute должен быть от :min до :max килобайт.',
+        'numeric' => 'Значение поля :attribute должно быть от :min до :max.',
+        'string' => 'Поле :attribute должно содержать от :min до :max символов.',
+    ],
 
     'min' => [
+        'numeric' => 'Значение поля :attribute должно быть не меньше :min.',
         'string' => 'Поле :attribute должно содержать не менее :min символов.',
         'file' => 'Размер файла :attribute должен быть не меньше :min килобайт.',
     ],
 
     'max' => [
+        'numeric' => 'Значение поля :attribute не должно превышать :max.',
         'string' => 'Поле :attribute не должно превышать :max символов.',
         'file' => 'Размер файла :attribute не должен превышать :max килобайт.',
     ],

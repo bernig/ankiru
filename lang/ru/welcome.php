@@ -58,6 +58,13 @@ return [
     'feature_practice_title' => 'Встроенный режим тестирования',
     'feature_practice_description' => 'Тестируйте свой словарный запас прямо в приложении. Карточки перемешиваются, вы переворачиваете каждую, чтобы увидеть перевод и прослушать аудио.',
 
+    'anki_callout_title' => 'Впервые слышите об Anki?',
+    'anki_callout_body' => 'Anki: бесплатное приложение для карточек с интервальным повторением. Экспортируйте карточки из Ankiru в файл .apkg и импортируйте их в Anki, или повторяйте их прямо в приложении, ничего не устанавливая.',
+    'anki_callout_desktop' => 'Anki Desktop (бесплатно)',
+    'anki_callout_android' => 'AnkiDroid Android (бесплатно)',
+    'anki_callout_ios' => 'AnkiMobile iOS (24,99 $)',
+    'anki_callout_learn_more' => 'Подробнее в FAQ',
+
     'open_source_badge' => 'Open source',
     'open_source_label' => 'Смотреть на GitHub',
 

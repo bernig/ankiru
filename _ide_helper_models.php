@@ -34,45 +34,8 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiUsageLog wherePromptTokens($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiUsageLog whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiUsageLog whereUserId($value)
- * @noinspection PhpFullyQualifiedNameUsageInspection
- * @noinspection PhpUnnecessaryFullyQualifiedNameInspection
  */
 	class ApiUsageLog extends \Eloquent {}
-}
-
-namespace App\Models{
-/**
- * @property int $id
- * @property int $user_id
- * @property int $csv_draft_id
- * @property int $row_index
- * @property int $repetitions
- * @property numeric $ease_factor
- * @property int $interval_days
- * @property \Carbon\CarbonImmutable $due_date
- * @property \Carbon\CarbonImmutable|null $last_reviewed_at
- * @property \Carbon\CarbonImmutable|null $created_at
- * @property \Carbon\CarbonImmutable|null $updated_at
- * @property-read \App\Models\CsvDraft $csvDraft
- * @property-read \App\Models\User $user
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereCsvDraftId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereDueDate($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereEaseFactor($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereIntervalDays($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereLastReviewedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereRepetitions($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereRowIndex($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CardReview whereUserId($value)
- * @noinspection PhpFullyQualifiedNameUsageInspection
- * @noinspection PhpUnnecessaryFullyQualifiedNameInspection
- */
-	class CardReview extends \Eloquent {}
 }
 
 namespace App\Models{
@@ -106,8 +69,6 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase whereStripeSessionId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CreditPurchase whereUserId($value)
- * @noinspection PhpFullyQualifiedNameUsageInspection
- * @noinspection PhpUnnecessaryFullyQualifiedNameInspection
  */
 	class CreditPurchase extends \Eloquent {}
 }
@@ -135,8 +96,6 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CsvDraft whereOriginalFileName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CsvDraft whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CsvDraft whereUserId($value)
- * @noinspection PhpFullyQualifiedNameUsageInspection
- * @noinspection PhpUnnecessaryFullyQualifiedNameInspection
  */
 	class CsvDraft extends \Eloquent {}
 }
@@ -155,6 +114,9 @@ namespace App\Models{
  * @property bool $accent_unicode
  * @property string|null $learning_context
  * @property string|null $remember_token
+ * @property \Carbon\CarbonImmutable|null $tour_completed_at
+ * @property \Carbon\CarbonImmutable|null $tour_new_file_tip_seen_at
+ * @property \Carbon\CarbonImmutable|null $tour_first_row_tip_seen_at
  * @property bool $is_admin
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
@@ -184,9 +146,10 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereOpenaiApiKey($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTourCompletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTourFirstRowTipSeenAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTourNewFileTipSeenAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
- * @noinspection PhpFullyQualifiedNameUsageInspection
- * @noinspection PhpUnnecessaryFullyQualifiedNameInspection
  */
 	class User extends \Eloquent implements \Illuminate\Contracts\Auth\MustVerifyEmail {}
 }
