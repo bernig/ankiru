@@ -39,8 +39,8 @@ class OpenAiTranslationService
 
         return [
             'text' => $result,
-            'promptTokens' => $response->usage->promptTokens,
-            'completionTokens' => $response->usage->completionTokens,
+            'promptTokens' => $response->usage->inputTokens,
+            'completionTokens' => $response->usage->outputTokens,
         ];
     }
 
@@ -111,8 +111,8 @@ TEXT;
 
         return [
             'text' => $result,
-            'promptTokens' => $response->usage->promptTokens,
-            'completionTokens' => $response->usage->completionTokens,
+            'promptTokens' => $response->usage->inputTokens,
+            'completionTokens' => $response->usage->outputTokens,
         ];
     }
 
