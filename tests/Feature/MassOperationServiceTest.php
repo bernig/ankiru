@@ -7,6 +7,7 @@ use App\Services\MassOperationService;
 use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
@@ -278,4 +279,41 @@ it('clears the stress cancelled flag when a new stress batch is dispatched', fun
     makeService()->dispatchStressBatch(stressSampleRows(), 'sess-cancel2');
 
     expect(Cache::has('mass_op:sess-cancel2:stress:cancelled'))->toBeFalse();
+});
+
+// ---------------------------------------------------------------------------
+// Queued jobs of a cancelled batch (database queue)
+// ---------------------------------------------------------------------------
+it('removes the waiting jobs of a cancelled batch from the database queue, and only those', function (): void {
+    config(['queue.default' => 'database']);
+    Storage::fake('local');
+    $this->actingAs(User::factory()->create());
+    $service = makeService();
+
+    $service->dispatchTtsBatch(ttsSampleRows(), 'batch-cancelled');
+    $service->dispatchTtsBatch(ttsSampleRows(), 'batch-other');
+    // A worker has already picked up one job of the cancelled batch.
+    $reservedJobId = Cache::get('mass_op:batch-cancelled:tts:job_ids')[0];
+    DB::table('jobs')->where('id', $reservedJobId)->update(['reserved_at' => now()->getTimestamp()]);
+
+    expect(DB::table('jobs')->count())->toBe(6)
+        ->and($service->hasQueuedJobs('batch-cancelled', OperationType::Tts))->toBeTrue();
+
+    $service->cancelBatch('batch-cancelled', OperationType::Tts);
+
+    expect(DB::table('jobs')->pluck('id')->all())->toHaveCount(4)->toContain($reservedJobId)
+        ->and($service->hasQueuedJobs('batch-other', OperationType::Tts))->toBeTrue();
+});
+
+it('reports a batch whose queued jobs are all gone as having none', function (): void {
+    config(['queue.default' => 'database']);
+    Storage::fake('local');
+    $this->actingAs(User::factory()->create());
+    $service = makeService();
+
+    $service->dispatchTtsBatch(ttsSampleRows(), 'batch-orphaned');
+    DB::table('jobs')->delete();
+
+    expect($service->hasQueuedJobs('batch-orphaned', OperationType::Tts))->toBeFalse()
+        ->and($service->hasQueuedJobs('batch-without-recorded-ids', OperationType::Tts))->toBeTrue();
 });

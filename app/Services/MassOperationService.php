@@ -4,8 +4,11 @@ namespace App\Services;
 
 use App\Enums\OperationType;
 use App\Jobs\MassOperationJob;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Orchestrates bulk operations over all CSV rows.
@@ -19,6 +22,9 @@ use Illuminate\Support\Facades\Cache;
  */
 class MassOperationService
 {
+    /** Job IDs per whereIn() query, well under every database's bound-parameter limit. */
+    private const int JOB_ID_CHUNK = 500;
+
     /** System-prompt token count for RussianStressCorrectorAgent (measured). */
     private const int STRESS_SYSTEM_PROMPT_TOKENS = 420;
 
@@ -151,8 +157,10 @@ class MassOperationService
 
         $forceDebugError = config('app.debug') && session('debug_force_ai_error');
 
+        $queuedJobIds = [];
+
         foreach ($qualifyingRows as [$rowIndex, $sourceText, $russianText]) {
-            MassOperationJob::dispatch(
+            $queuedJobIds[] = Bus::dispatchToQueue(new MassOperationJob(
                 operationType: OperationType::Stress,
                 batchId: $batchId,
                 rowIndex: $rowIndex,
@@ -161,8 +169,10 @@ class MassOperationService
                 russianText: $russianText,
                 userId: $userId,
                 forceDebugError: $forceDebugError,
-            );
+            ));
         }
+
+        $this->rememberQueuedJobIds($batchId, OperationType::Stress, $queuedJobIds);
 
         return $total;
     }
@@ -185,8 +195,10 @@ class MassOperationService
 
         $forceDebugError = config('app.debug') && session('debug_force_ai_error');
 
+        $queuedJobIds = [];
+
         foreach ($qualifyingRows as [$rowIndex, $sourceText, $russianText]) {
-            MassOperationJob::dispatch(
+            $queuedJobIds[] = Bus::dispatchToQueue(new MassOperationJob(
                 operationType: OperationType::Tts,
                 batchId: $batchId,
                 rowIndex: $rowIndex,
@@ -195,8 +207,10 @@ class MassOperationService
                 russianText: $russianText,
                 userId: $userId,
                 forceDebugError: $forceDebugError,
-            );
+            ));
         }
+
+        $this->rememberQueuedJobIds($batchId, OperationType::Tts, $queuedJobIds);
 
         return $total;
     }
@@ -276,13 +290,10 @@ class MassOperationService
     // Cancellation
     // -------------------------------------------------------------------------
     /**
-     * Mark a batch as cancelled. Every job of the batch checks this flag at
-     * the start of handle() and returns before any API call, so the jobs
-     * still queued drain as no-ops.
-     *
-     * Pending jobs are deliberately not deleted from the queue: finding them
-     * meant a LIKE scan over the whole jobs.payload column, tied to the
-     * database queue driver.
+     * Mark a batch as cancelled and remove its jobs still waiting in the
+     * queue. Every job also checks the flag at the start of handle() and
+     * returns before any API call: that covers the jobs a worker has already
+     * picked up, and queue drivers whose jobs cannot be deleted.
      */
     public function cancelBatch(string $batchId, OperationType $operationType): void
     {
@@ -295,6 +306,42 @@ class MassOperationService
         // long time, and they must still find the flag when they run.
         Cache::put(self::batchCacheKey($batchId, $operationType, 'cancelled'), true, ttl: now()->addWeek());
         Cache::put(self::batchCacheKey($batchId, $operationType, 'status'), 'done', ttl: 3600);
+
+        $jobIds = Cache::pull(self::batchCacheKey($batchId, $operationType, 'job_ids'));
+
+        if (is_array($jobIds) && $this->usesDatabaseQueue()) {
+            foreach (array_chunk($jobIds, self::JOB_ID_CHUNK) as $chunk) {
+                $this->jobsTable()->whereIn('id', $chunk)->whereNull('reserved_at')->delete();
+            }
+        }
+    }
+
+    /**
+     * Whether any job of the batch is still in the database queue, pending
+     * or being processed. Looked up by primary key, from the IDs recorded at
+     * dispatch. Other queue drivers cannot be inspected, and a batch
+     * dispatched before the IDs were recorded has none: both count as having
+     * jobs, so they are never cancelled by mistake.
+     */
+    public function hasQueuedJobs(string $batchId, OperationType $operationType): bool
+    {
+        if (! $this->usesDatabaseQueue()) {
+            return true;
+        }
+
+        $jobIds = Cache::get(self::batchCacheKey($batchId, $operationType, 'job_ids'));
+
+        if (! is_array($jobIds)) {
+            return true;
+        }
+
+        foreach (array_chunk($jobIds, self::JOB_ID_CHUNK) as $chunk) {
+            if ($this->jobsTable()->whereIn('id', $chunk)->exists()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // -------------------------------------------------------------------------
@@ -386,5 +433,35 @@ class MassOperationService
         if (Auth::id() !== null) {
             Cache::put(self::currentBatchCacheKey(Auth::id(), $operationType), $batchId, 3600);
         }
+    }
+
+    /**
+     * Record the database IDs of the queued jobs, so the batch can be
+     * cancelled or checked by primary key instead of searching job payloads.
+     * Drivers that return no ID (sync runs jobs inline, fakes) record nothing.
+     *
+     * @param  array<int, mixed>  $pushResults  Return values of Bus::dispatchToQueue().
+     */
+    private function rememberQueuedJobIds(string $batchId, OperationType $operationType, array $pushResults): void
+    {
+        if (! $this->usesDatabaseQueue()) {
+            return;
+        }
+
+        $jobIds = array_values(array_filter(array_map('intval', $pushResults), fn (int $id): bool => $id > 0));
+
+        Cache::put(self::batchCacheKey($batchId, $operationType, 'job_ids'), $jobIds, now()->addWeek());
+    }
+
+    private function usesDatabaseQueue(): bool
+    {
+        return config('queue.connections.'.config('queue.default').'.driver') === 'database';
+    }
+
+    private function jobsTable(): Builder
+    {
+        $connection = config('queue.connections.'.config('queue.default'));
+
+        return DB::connection($connection['connection'] ?? null)->table($connection['table'] ?? 'jobs');
     }
 }

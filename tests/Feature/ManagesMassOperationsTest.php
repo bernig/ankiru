@@ -83,6 +83,7 @@ function stubMassServiceEstimates(MockInterface $mockService): void
     $mockService->shouldReceive('estimateTtsBatchCost')->andReturn([
         'rowCount' => 0, 'totalChars' => 0, 'estimatedCost' => 0.0,
     ]);
+    $mockService->shouldReceive('hasQueuedJobs')->andReturnTrue()->byDefault();
 }
 
 // ---------------------------------------------------------------------------
@@ -542,11 +543,15 @@ it('auto-cancels a running batch when no jobs remain in the queue', function () 
         ->once()
         ->with(Mockery::any(), OperationType::Tts);
 
+    // No jobs in the queue: the batch is orphaned.
+    $mockService->shouldReceive('hasQueuedJobs')
+        ->with(Mockery::any(), OperationType::Tts)
+        ->andReturnFalse();
+
     stubMassServiceEstimates($mockService);
 
     app()->instance(MassOperationService::class, $mockService);
 
-    // No jobs in the queue: the batch is orphaned.
     Livewire::test(CsvEditor::class)
         ->setRows(massOpRows())
         ->set('hasCsvLoaded', true)

@@ -8,7 +8,6 @@ use App\Services\CreditService;
 use App\Services\MassOperationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
@@ -417,17 +416,13 @@ trait ManagesMassOperations
 
         // Auto-cancel a batch that is marked running but has no remaining jobs in
         // the queue (e.g. worker was killed mid-run, permission error wiped jobs).
-        // Only relevant with the 'database' driver; other drivers don't expose a
-        // queryable jobs table, so the check would always return false.
-        if (config('queue.default') === 'database') {
-            if ($stressProgress['status'] === 'running' && ! $this->hasActiveJobsInQueue($stressBatchId, OperationType::Stress)) {
-                $this->cancelBatch(OperationType::Stress);
-                $stressProgress['status'] = 'done';
-            }
-            if ($ttsProgress['status'] === 'running' && ! $this->hasActiveJobsInQueue($ttsBatchId, OperationType::Tts)) {
-                $this->cancelBatch(OperationType::Tts);
-                $ttsProgress['status'] = 'done';
-            }
+        if ($stressProgress['status'] === 'running' && ! $this->massOperationService->hasQueuedJobs($stressBatchId, OperationType::Stress)) {
+            $this->cancelBatch(OperationType::Stress);
+            $stressProgress['status'] = 'done';
+        }
+        if ($ttsProgress['status'] === 'running' && ! $this->massOperationService->hasQueuedJobs($ttsBatchId, OperationType::Tts)) {
+            $this->cancelBatch(OperationType::Tts);
+            $ttsProgress['status'] = 'done';
         }
 
         if ($stressProgress['status'] !== 'idle') {
@@ -747,18 +742,6 @@ trait ManagesMassOperations
         $this->syncProgressFromCache();
 
         return true;
-    }
-
-    /**
-     * Return true if the queue contains any jobs (pending or reserved) for this
-     * batch and operation type. Used to detect orphaned 'running' batches.
-     */
-    private function hasActiveJobsInQueue(string $batchId, OperationType $operationType): bool
-    {
-        return DB::table('jobs')
-            ->where('payload', 'like', "%{$batchId}%")
-            ->where('payload', 'like', '%'.$operationType->value.'%')
-            ->exists();
     }
 
     private function cancelBatch(OperationType $operationType): void
