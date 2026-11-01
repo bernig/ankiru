@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\OperationType;
+use App\Enums\UsageOperation;
 use App\Events\MassOperationProgressEvent;
 use App\Models\User;
 use App\Services\CreditService;
@@ -183,7 +184,7 @@ class MassOperationJob implements ShouldQueue
         if ($this->user !== null && $result['promptTokens'] > 0) {
             $creditService->recordTokenUsage(
                 $this->user,
-                'stress_correction',
+                UsageOperation::StressCorrection,
                 $result['promptTokens'],
                 $result['completionTokens'],
                 billCredits: $this->billsPlatformCredits,

@@ -26,6 +26,7 @@ return [
     'operation_translation' => 'Перевод',
     'operation_stress_correction' => 'Исправление ударений',
     'operation_tts' => 'Аудио',
+    'operation_row_generation' => 'Генерация строк',
     'learning_context' => 'Мой контекст обучения',
     'learning_context_description' => 'Опишите вашу ситуацию и конкретные потребности. Это помогает ИИ генерировать фразы, лучше подходящие вашему профилю.',
     'learning_context_label' => 'Ваш контекст',

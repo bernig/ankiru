@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Concerns;
 
+use App\Enums\UsageOperation;
 use App\Services\CreditService;
 use App\Services\OpenAiTranslationService;
 use App\Services\RussianAccentService;
@@ -76,7 +77,7 @@ trait ManagesTranslation
             $this->csvRows[$rowIndex][1] = $result['text'];
             $this->autoSaveDraft();
 
-            $this->creditService->recordTokenUsage($user, 'translation', $result['promptTokens'], $result['completionTokens']);
+            $this->creditService->recordTokenUsage($user, UsageOperation::Translation, $result['promptTokens'], $result['completionTokens']);
 
             $success = true;
         } catch (Exception $exception) {
@@ -135,7 +136,7 @@ trait ManagesTranslation
             }
 
             if ($result['promptTokens'] > 0) {
-                $this->creditService->recordTokenUsage($user, 'stress_correction', $result['promptTokens'], $result['completionTokens']);
+                $this->creditService->recordTokenUsage($user, UsageOperation::StressCorrection, $result['promptTokens'], $result['completionTokens']);
             }
 
             $success = true;

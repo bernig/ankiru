@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\UsageOperation;
 use App\Mail\DailySummaryMail;
 use App\Models\ApiUsageLog;
 use App\Models\CsvDraft;
@@ -30,17 +31,17 @@ class SendDailySummaryEmail extends Command
                 ->count(),
 
             'translations' => ApiUsageLog::query()
-                ->where('operation', 'translation')
+                ->where('operation', UsageOperation::Translation)
                 ->whereBetween('created_at', [$yesterday, $endOfYesterday])
                 ->count(),
 
             'stress_corrections' => ApiUsageLog::query()
-                ->where('operation', 'stress_correction')
+                ->where('operation', UsageOperation::StressCorrection)
                 ->whereBetween('created_at', [$yesterday, $endOfYesterday])
                 ->count(),
 
             'tts_generations' => ApiUsageLog::query()
-                ->where('operation', 'tts')
+                ->where('operation', UsageOperation::Tts)
                 ->whereBetween('created_at', [$yesterday, $endOfYesterday])
                 ->count(),
         ];

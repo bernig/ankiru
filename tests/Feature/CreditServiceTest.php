@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UsageOperation;
 use App\Models\CreditPurchase;
 use App\Models\User;
 use App\Services\CreditService;
@@ -167,10 +168,10 @@ test('journalise la consommation et facture selon le mode figé au dispatch plut
     $user = User::factory()->create(['credits' => 1000]);
     $service = app(CreditService::class);
 
-    $service->recordTokenUsage($user, 'stress_correction', 100, 50, billCredits: false);
+    $service->recordTokenUsage($user, UsageOperation::StressCorrection, 100, 50, billCredits: false);
     expect($user->fresh()->credits)->toBe(1000);
 
-    $service->recordTokenUsage($user, 'translation', 100, 50);
+    $service->recordTokenUsage($user, UsageOperation::Translation, 100, 50);
     expect($user->fresh()->credits)->toBe(850)
-        ->and($user->apiUsageLogs()->pluck('operation')->all())->toBe(['stress_correction', 'translation']);
+        ->and($user->apiUsageLogs()->pluck('operation')->all())->toBe([UsageOperation::StressCorrection, UsageOperation::Translation]);
 });

@@ -26,6 +26,7 @@ return [
     'operation_translation' => 'Traduction',
     'operation_stress_correction' => 'Correction d\'accents',
     'operation_tts' => 'Audio',
+    'operation_row_generation' => 'Génération de lignes',
     'learning_context' => 'Mon contexte d\'apprentissage',
     'learning_context_description' => 'Décrivez votre situation et vos besoins spécifiques. Ces informations aident l\'IA à générer des phrases mieux adaptées à votre profil.',
     'learning_context_label' => 'Votre contexte',

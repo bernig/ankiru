@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Enums\UsageOperation;
 use App\Models\ApiUsageLog;
 use App\Models\CsvDraft;
 use App\Models\User;
@@ -102,7 +103,7 @@ class Dashboard extends Component
             'operations' => ApiUsageLog::count(),
             'prompt_tokens' => (int) ApiUsageLog::sum('prompt_tokens'),
             'completion_tokens' => (int) ApiUsageLog::sum('completion_tokens'),
-            'tts_characters' => (int) ApiUsageLog::where('operation', 'tts')->sum('characters'),
+            'tts_characters' => (int) ApiUsageLog::where('operation', UsageOperation::Tts)->sum('characters'),
         ];
     }
 

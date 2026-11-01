@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\UsageOperation;
 use App\Models\ApiUsageLog;
 use App\Models\CreditPurchase;
 use App\Models\User;
@@ -28,7 +29,7 @@ class CreditService
      * @param  bool|null  $billCredits  Billing mode to apply; defaults to the user's
      *                                  current one. Queued jobs pass the mode frozen at dispatch.
      */
-    public function recordTokenUsage(User $user, string $operation, int $promptTokens, int $completionTokens, ?bool $billCredits = null): void
+    public function recordTokenUsage(User $user, UsageOperation $operation, int $promptTokens, int $completionTokens, ?bool $billCredits = null): void
     {
         ApiUsageLog::create([
             'user_id' => $user->id,
@@ -51,7 +52,7 @@ class CreditService
     {
         ApiUsageLog::create([
             'user_id' => $user->id,
-            'operation' => 'tts',
+            'operation' => UsageOperation::Tts,
             'characters' => $characters,
         ]);
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\UsageOperation;
 use Database\Factories\ApiUsageLogFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -40,5 +41,15 @@ class ApiUsageLog extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'operation' => UsageOperation::class,
+        ];
     }
 }

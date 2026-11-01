@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\UsageOperation;
 use App\Models\ApiUsageLog;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -18,7 +19,7 @@ class ApiUsageLogFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'operation' => $this->faker->randomElement(['translation', 'stress_correction', 'tts']),
+            'operation' => $this->faker->randomElement(UsageOperation::cases()),
             'prompt_tokens' => $this->faker->numberBetween(50, 500),
             'completion_tokens' => $this->faker->numberBetween(20, 200),
             'characters' => null,

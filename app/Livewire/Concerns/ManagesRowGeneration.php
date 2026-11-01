@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Concerns;
 
+use App\Enums\UsageOperation;
 use App\Services\CreditService;
 use App\Services\RowGenerationService;
 use Exception;
@@ -153,7 +154,7 @@ trait ManagesRowGeneration
             $this->filterNoAudio = false;
             $this->setPage($this->totalPages);
 
-            $this->creditService->recordTokenUsage($user, 'row_generation', $result['promptTokens'], $result['completionTokens']);
+            $this->creditService->recordTokenUsage($user, UsageOperation::RowGeneration, $result['promptTokens'], $result['completionTokens']);
 
             $this->generatedRows = $result['pairs'];
             $this->generateRowsPrompt = '';

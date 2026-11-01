@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Credits;
 
+use App\Enums\UsageOperation;
 use App\Models\ApiUsageLog;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -48,13 +49,13 @@ class ApiKeyForm extends Component
                 ->get()
                 ->map(function (ApiUsageLog $row) use ($inputPricePerMillion, $outputPricePerMillion, $ttsPricePerMillion): array {
                     $cost = match ($row->operation) {
-                        'tts' => $row->characters / 1_000_000 * $ttsPricePerMillion,
+                        UsageOperation::Tts => $row->characters / 1_000_000 * $ttsPricePerMillion,
                         default => $row->prompt_tokens / 1_000_000 * $inputPricePerMillion
                             + $row->completion_tokens / 1_000_000 * $outputPricePerMillion,
                     };
 
                     return [
-                        'operation' => $row->operation,
+                        'operation' => $row->operation->value,
                         'calls' => (int) $row->calls,
                         'prompt_tokens' => (int) $row->prompt_tokens,
                         'completion_tokens' => (int) $row->completion_tokens,

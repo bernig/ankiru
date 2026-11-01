@@ -26,6 +26,7 @@ return [
     'operation_translation' => 'Translation',
     'operation_stress_correction' => 'Stress correction',
     'operation_tts' => 'Audio',
+    'operation_row_generation' => 'Row generation',
     'learning_context' => 'My Learning Context',
     'learning_context_description' => 'Describe your situation and specific needs. This helps the AI generate phrases better suited to your profile.',
     'learning_context_label' => 'Your context',

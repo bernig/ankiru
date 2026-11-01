@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UsageOperation;
 use App\Livewire\Credits\ApiKeyForm;
 use App\Livewire\Profile;
 use App\Models\ApiUsageLog;
@@ -154,6 +155,16 @@ test('les statistiques d\'utilisation agrègent les logs par opération', functi
     $tts = $stats->firstWhere('operation', 'tts');
     expect($tts['calls'])->toBe(1);
     expect($tts['characters'])->toBe(500);
+});
+
+test('les statistiques nomment chaque type d\'opération, y compris la génération de lignes', function () {
+    $user = User::factory()->create(['openai_api_key' => 'sk-test-key-for-automated-tests']);
+
+    ApiUsageLog::factory()->create(['user_id' => $user->id, 'operation' => UsageOperation::RowGeneration, 'prompt_tokens' => 100, 'completion_tokens' => 50, 'characters' => null]);
+
+    Livewire::actingAs($user)->test(ApiKeyForm::class)
+        ->assertSee(__('profile.operation_row_generation'))
+        ->assertDontSee('profile.operation_row_generation');
 });
 
 test('les statistiques n\'incluent pas les logs des autres utilisateurs', function () {
