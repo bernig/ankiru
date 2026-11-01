@@ -11,7 +11,7 @@ use RuntimeException;
  * Generates high-quality Russian text-to-speech audio using the Laravel AI SDK,
  * backed by the OpenAI TTS provider.
  *
- * Caching strategy: generated MP3 files are stored under storage/app/tts/ with a
+ * Caching strategy: generated MP3 files are stored under tts/ on the local disk with a
  * filename derived from the SHA-256 hash of the normalized Russian phrase (stress
  * tags stripped). The same spoken phrase always maps to the same file, so the TTS
  * API is only called once per unique phrase regardless of stress-mark placement.

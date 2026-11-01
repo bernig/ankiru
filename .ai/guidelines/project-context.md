@@ -6,36 +6,39 @@ This is a web-based Anki flashcard creation tool specialized for French → Russ
 
 ## Domain concepts
 
-- **CsvDraft**: A user's saved file/deck. Stored in the `csv_drafts` table as a JSON array of rows. Each user can have multiple drafts open simultaneously.
+- **CsvDraft**: A user's saved file/deck. Stored in the `csv_drafts` table as a JSON array of rows. Each user can have multiple drafts open simultaneously. Creating one emails the reception address (`CsvDraftObserver`).
 - **Row**: A single flashcard, stored as a 2-element array `[sourceText, russianText]`. Index 0 is the source language (typically French), index 1 is Russian. There is **no header row** in the CSV.
 - **Stress mark / accent**: Russian stressed vowels are marked internally with `<b>vowel</b>` HTML tags (e.g. `при<b>в</b>ет`). This is the **canonical internal format** throughout the codebase. Only words with ≥ 2 vowels are tagged; `ё` is always stressed.
-- **TTS (Text-to-Speech)**: MP3 audio files generated via OpenAI for the Russian column of a card. Cached on disk at `storage/app/tts/{sha256hash}.mp3`. The hash is computed from the normalized phrase (stress tags stripped), so the same spoken phrase always maps to the same file.
-- **Mass operation**: A batch process that dispatches one `MassOperationJob` per qualifying row for either stress correction (`OperationType::Stress`) or TTS generation (`OperationType::Tts`). Progress is tracked via Laravel Cache and broadcast in real time via Laravel Reverb WebSockets (`MassOperationProgressEvent`).
+- **TTS (Text-to-Speech)**: MP3 audio files generated via OpenAI for the Russian column of a card. Cached on the `local` disk under `tts/{sha256hash}.mp3` (on disk: `storage/app/private/tts/`). The hash is computed from the normalized phrase (stress tags stripped), so the same spoken phrase always maps to the same file.
+- **Mass operation**: A batch process that dispatches one `MassOperationJob` per qualifying row for either stress correction (`OperationType::Stress`) or TTS generation (`OperationType::Tts`). Progress is tracked via Laravel Cache and broadcast in real time via Laravel Reverb WebSockets (`MassOperationProgressEvent`, on the private channel `App.Models.User.{id}`).
 - **Anki package (.apkg)**: ZIP archive containing `collection.anki2` (SQLite database) and media files. Built by `AnkiPackageExporterService`. The format follows the Anki database spec strictly.
-- **OpenAI key**: Each user provides their own OpenAI API key, stored encrypted in the `users.openai_api_key` column. It is injected at request time via the `SetUserOpenAiKey` middleware. All AI operations require it.
+- **OpenAI key and credits**: AI calls use the platform key while the user has purchased credits (`users.credits > 0`, Stripe one-time packs), otherwise the user's own key, stored encrypted in `users.openai_api_key`. A user with neither cannot use AI, and never falls back to the platform key. `User::resolveOpenAiKey()` decides; the `SetUserOpenAiKey` middleware applies it per request, and `MassOperationJob` applies it itself since jobs bypass middleware.
 
 ## Key workflows
 
-1. **Upload or create a file** → CSV is parsed via `fgetcsv`, accent formats normalized, rows saved as a new `CsvDraft` (auto-saved on every change).
+1. **Upload or create a file** → `CsvImportService` detects the encoding (UTF-8 with or without BOM, UTF-16, Windows-1251/1252) and the delimiter (`,` `;` tab), pads rows to the first row's column count and normalizes accent formats; rows are saved as a new `CsvDraft` (auto-saved on every change).
 2. **Edit rows** → inline cell editing, add/delete rows, search and filter (by text, missing stress marks, missing audio).
 3. **Single-row translation** → `ManagesTranslation` calls `OpenAiTranslationService` → `SourceToRussianTranslatorAgent` (gpt-5.4) to translate the source cell into Russian with stress marks.
 4. **Generate new rows** → `ManagesRowGeneration` calls `RowGenerationService` → `RowGeneratorAgent` (gpt-5.4, temperature 0.8) to produce N new source/Russian pairs on a given topic.
-5. **Mass stress correction** → `MassOperationService::dispatchStressBatch()` dispatches one `MassOperationJob` per row needing correction → `RussianStressCorrectorAgent` (gpt-5.4, temperature 0) reviews and corrects stress tags.
+5. **Mass stress correction** → `MassOperationService::dispatchStressBatch()` dispatches one `MassOperationJob` per row needing correction → `RussianStressCorrectorAgent` (gpt-5.4, temperature 0) reviews and corrects stress tags. Each correction is stored with the text it was computed from and applied only if the row still holds that exact text, into the draft recorded at dispatch.
 6. **Mass TTS generation** → `MassOperationService::dispatchTtsBatch()` dispatches one `MassOperationJob` per row without cached audio → `RussianTextToSpeechService` generates and caches the MP3.
-7. **Export** → `.csv` download (accent style applied: color, bold, unicode combining accent), single-deck `.apkg`, or multi-deck `.apkg` collection (all user drafts combined).
+7. **Export** → `DeckExportService` builds the `.csv` (accent style applied: color, bold, unicode combining accent) and the card list for `AnkiPackageExporterService`: single-deck `.apkg`, or multi-deck `.apkg` collection (all user drafts combined). Note GUIDs are stable (hash of draft id, source text and occurrence), so re-importing updates notes instead of duplicating them.
 8. **Test mode** → `ManagesTestMode` shuffles all rows with non-empty source and Russian text into a queue, then lets the user flip each card (front = source, back = Russian + audio). No SM-2, no score tracking.
 
 ## Architecture notes
 
-- `CsvEditor` is the main Livewire 4 component, decomposed into concern traits:
-  - `ManagesMassOperations` — batch dispatch, progress polling, cancellation
-  - `ManagesPersistence` — CsvDraft CRUD, draft switching, auto-save
-  - `ManagesRowGeneration` — AI row generation modal
-  - `ManagesTranslation` — single-cell and single-row translation
-  - `ManagesTtsAudio` — TTS modal, individual audio generation/deletion
-  - `ManagesTestMode` — simple test mode: shuffles all non-empty rows, shows source text, user flips to reveal Russian + audio, advances to next card. No spaced repetition, no progress persistence.
+- `CsvEditor` is the main Livewire 4 component. Its rows (`protected array $csvRows`) are **not** in the Livewire snapshot: `hydrate()` reloads them from the active draft on every request. The client only receives derived public arrays rebuilt in `render()` and never read back: `pageRows` (current page, keyed by absolute row index), `pageAudio` (audio flag per row index) and `testCards` (only while test mode is open). In tests, use the `setRows()`, `rows()`, `assertRowsSet()` and `assertRowCount()` Testable macros from `tests/Pest.php`.
+- `CsvEditor` is decomposed into concern traits:
+  - `ManagesMassOperations`: batch dispatch, progress polling, cancellation
+  - `ManagesPersistence`: CsvDraft CRUD, draft switching, auto-save
+  - `ManagesRowGeneration`: AI row generation modal
+  - `ManagesTranslation`: single-cell and single-row translation
+  - `ManagesTtsAudio`: TTS modal, individual audio generation/deletion
+  - `ManagesTestMode`: simple test mode: shuffles all non-empty rows, shows source text, user flips to reveal Russian + audio, advances to next card. No spaced repetition, no progress persistence.
 - Services are injected in `boot()` (not `__construct`) because Livewire does not serialize protected properties between requests. Never move them to the constructor.
-- Mass operation progress is tracked in Laravel Cache under keys `mass_op:{sessionId}:{operationType}:{counter}` (e.g. `mass_op:abc123:tts:processed`). The session ID is a per-batch UUID generated at dispatch time.
+- Mass operation progress is tracked in Laravel Cache under keys `mass_op:{batchId}:{operationType}:{suffix}` (e.g. `mass_op:abc123:tts:processed`), always built with `MassOperationService::batchCacheKey()`. The batch ID is a UUID generated at dispatch time; `mass_op:user:{userId}:{operationType}:current` points at the user's latest batch so a reloaded editor can find it. The billing mode (credits or personal key) is frozen per batch at dispatch.
+- Cancelling a batch only sets its `cancelled` flag (kept one week); queued jobs are not deleted and return early when they see it.
+- AI usage goes through `CreditService`: `canAfford()` before the call (own-key users are never blocked), then `recordTokenUsage()` or `recordTtsUsage()`, which write `api_usage_logs` and deduct credits (balance floored at 0).
 - TTS audio is stored on the `local` disk (not `public`). It is embedded into `.apkg` exports as binary media entries.
 - The application is multilingual; locale is switched via `LocaleController` and applied by `SetApplicationLocale` middleware.
 - Users must verify their email (`MustVerifyEmail`).
@@ -44,21 +47,21 @@ This is a web-based Anki flashcard creation tool specialized for French → Russ
 
 ## Business rules & constraints
 
-- **Stress mark format** — the canonical internal representation is `<b>vowel</b>`. All services, agents, and the CSV parser read and write this format. On export, the user's accent style preference (color `#RRGGBB`, bold, unicode U+0301) is applied by `applyAccentStyle()`, but the stored value is never changed.
-- **Row structure** — column 0 is always source language, column 1 is always Russian. The column count is inferred from the first row; all subsequent rows are padded or truncated to match.
-- **TTS hash** — the MP3 filename is the SHA-256 of the Russian text with `<b>`/`</b>` stripped and whitespace trimmed. Changing stress marks does not invalidate the cached audio.
-- **OpenAI key required** — all AI actions (translate, generate, stress correct, TTS) check `apiKeyMissing()` first and open the key setup modal if absent.
-- **Qualifying rows for stress** — a row qualifies for mass stress correction only when `RussianAccentService::textNeedsStressCorrection()` returns true (at least one Cyrillic word with ≥ 2 vowels has no stress tag).
-- **Qualifying rows for TTS** — a row qualifies only when its Russian text is non-empty and no cached MP3 exists for it.
+- **Stress mark format**: the canonical internal representation is `<b>vowel</b>`. All services, agents, and the CSV parser read and write this format. On export, the user's accent style preference (color `#RRGGBB`, bold, unicode U+0301) is applied by `applyAccentStyle()`, but the stored value is never changed.
+- **Row structure**: column 0 is always source language, column 1 is always Russian. The column count is inferred from the first row; all subsequent rows are padded or truncated to match.
+- **TTS hash**: the MP3 filename is the SHA-256 of the Russian text with `<b>`/`</b>` stripped and whitespace trimmed. Changing stress marks does not invalidate the cached audio.
+- **OpenAI key or credits required**: all AI actions (translate, generate, stress correct, TTS) check `apiKeyMissing()` first (credits or personal key) and open the key setup modal if neither is available, then check the credit estimate and open the credits shop if it falls short.
+- **Qualifying rows for stress**: a row qualifies for mass stress correction only when `RussianAccentService::textNeedsStressCorrection()` returns true (at least one Cyrillic word with ≥ 2 vowels has no stress tag).
+- **Qualifying rows for TTS**: a row qualifies only when its Russian text is non-empty and no cached MP3 exists for it.
 - All AI agents use `gpt-5.4`.
 
 ## UI conventions
 
-- **No em dashes in views** — never use `—` (U+2014) in Blade templates. Use a simple hyphen `-` as a null/empty placeholder in tables, and plain punctuation (`:`, `,`, `.`) elsewhere. Em dashes feel unnatural in a web UI context.
+- **No em dashes in views**: never use `—` (U+2014) in Blade templates. Use a simple hyphen `-` as a null/empty placeholder in tables, and plain punctuation (`:`, `,`, `.`) elsewhere. Em dashes feel unnatural in a web UI context.
 
 ## Out of scope
 
-- Do not change the `.apkg` export format (SQLite schema, media JSON map, ZIP structure) — it must remain compatible with Anki Desktop and AnkiDroid.
-- Do not change the internal stress mark encoding (`<b>vowel</b>`) — it is assumed everywhere in services, agents, and client-side Alpine.js code.
+- Do not change the `.apkg` export format (SQLite schema, media JSON map, ZIP structure, it must remain compatible with Anki Desktop and AnkiDroid.
+- Do not change the internal stress mark encoding (`<b>vowel</b>`), it is assumed everywhere in services, agents, and client-side Alpine.js code.
 - Do not move service injection from `boot()` to `__construct()` in `CsvEditor`.
 - Do not change queue or broadcast driver configuration without approval.
