@@ -568,3 +568,18 @@ window.applyAccentStyle = function (color, bold, unicode) {
     window.csvAccentMode.setStyleMode(color, bold, unicode || false);
 };
 
+/**
+ * Build an export link with the browser's time zone, so the server stamps
+ * the downloaded file name with the user's local time, plus any extra query
+ * parameters (e.g. the collection name).
+ *
+ * @param {string} url
+ * @param {Object<string, string>} [params]
+ * @returns {string}
+ */
+window.exportUrl = function (url, params = {}) {
+    const query = new URLSearchParams(params);
+    query.set('tz', Intl.DateTimeFormat().resolvedOptions().timeZone);
+
+    return `${url}?${query}`;
+};

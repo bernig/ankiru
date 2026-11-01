@@ -9,10 +9,8 @@ use App\Livewire\Concerns\ManagesTestMode;
 use App\Livewire\Concerns\ManagesTranslation;
 use App\Livewire\Concerns\ManagesTtsAudio;
 use App\Models\CsvDraft;
-use App\Services\AnkiPackageExporterService;
 use App\Services\CreditService;
 use App\Services\CsvImportService;
-use App\Services\DeckExportService;
 use App\Services\MassOperationService;
 use App\Services\OpenAiTranslationService;
 use App\Services\RowGenerationService;
@@ -20,7 +18,6 @@ use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
@@ -28,7 +25,6 @@ use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CsvEditor extends Component
 {
@@ -115,9 +111,6 @@ class CsvEditor extends Component
     /** The value bound to the rename input field. */
     public string $renameInput = '';
 
-    /** Name entered by the user for the combined multi-deck .apkg export. */
-    public string $collectionExportName = 'Collection';
-
     /** Hex color applied to stressed vowels in the exported CSV (#RRGGBB), or null for plain bold only. */
     public ?string $accentColor = null;
 
@@ -151,8 +144,6 @@ class CsvEditor extends Component
 
     protected RussianTextToSpeechService $ttsService;
 
-    protected AnkiPackageExporterService $ankiExporterService;
-
     protected MassOperationService $massOperationService;
 
     protected RowGenerationService $rowGenerationService;
@@ -161,8 +152,6 @@ class CsvEditor extends Component
 
     protected CsvImportService $csvImportService;
 
-    protected DeckExportService $deckExportService;
-
     /**
      * Called by Livewire before every action (mount and subsequent requests).
      */
@@ -170,22 +159,18 @@ class CsvEditor extends Component
         OpenAiTranslationService $translationService,
         RussianAccentService $accentService,
         RussianTextToSpeechService $ttsService,
-        AnkiPackageExporterService $ankiExporterService,
         MassOperationService $massOperationService,
         RowGenerationService $rowGenerationService,
         CreditService $creditService,
         CsvImportService $csvImportService,
-        DeckExportService $deckExportService,
     ): void {
         $this->translationService = $translationService;
         $this->accentService = $accentService;
         $this->ttsService = $ttsService;
-        $this->ankiExporterService = $ankiExporterService;
         $this->massOperationService = $massOperationService;
         $this->rowGenerationService = $rowGenerationService;
         $this->creditService = $creditService;
         $this->csvImportService = $csvImportService;
-        $this->deckExportService = $deckExportService;
     }
 
     /**
@@ -437,69 +422,6 @@ class CsvEditor extends Component
         array_splice($this->csvRows, $index, 0, [$deleted['row']]);
         $this->autoSaveDraft();
         $this->setPage(intdiv($index, $this->perPage) + 1);
-    }
-
-    // -------------------------------------------------------------------------
-    // Export
-    // -------------------------------------------------------------------------
-
-    /**
-     * Trigger a browser download of the current CSV data as a plain CSV file.
-     */
-    public function downloadCsv(): StreamedResponse
-    {
-        $csvContent = $this->deckExportService->toCsv($this->csvRows, $this->accentColor, $this->accentBold, $this->accentUnicode);
-        $downloadFileName = $this->buildBaseFileName().'_edited_'.now()->format('Ymd_His').'.csv';
-
-        return response()->streamDownload(function () use ($csvContent): void {
-            echo $csvContent;
-        }, $downloadFileName, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-        ]);
-    }
-
-    /**
-     * Build and download a full Anki-compatible .apkg package.
-     *
-     * The package contains a SQLite collection database with one note per CSV
-     * row, plus all TTS audio files that have been cached for those rows.
-     */
-    public function downloadAnkiPackage(): StreamedResponse
-    {
-        $cards = $this->deckExportService->toAnkiCards($this->csvRows, $this->activeDraftId);
-        $deckName = CsvDraft::baseName($this->originalFileName) ?: 'French-Russian';
-        $apkgPath = $this->ankiExporterService->export($cards, $deckName);
-
-        $downloadFileName = $this->buildBaseFileName().'_'.now()->format('Ymd_His').'.apkg';
-
-        return $this->streamApkgFileDownload($apkgPath, $downloadFileName);
-    }
-
-    /**
-     * Build and download a multi-deck .apkg package containing all of the user's files.
-     * Only available when the user has at least two files.
-     */
-    public function downloadColpkg(): StreamedResponse
-    {
-        $allDrafts = CsvDraft::query()
-            ->where('user_id', auth()->id())
-            ->orderBy('id')
-            ->get();
-
-        $decks = [];
-
-        foreach ($allDrafts as $draft) {
-            $decks[] = [
-                'deckName' => CsvDraft::baseName($draft->original_file_name) ?: 'Deck',
-                'cards' => $this->deckExportService->toAnkiCards($draft->csv_rows ?? [], $draft->id),
-            ];
-        }
-
-        $parentName = trim($this->collectionExportName) ?: 'Collection';
-        $apkgPath = $this->ankiExporterService->exportCollection($decks, $parentName);
-        $downloadFileName = $this->deckExportService->toDownloadFileName($parentName, 'Collection').'_'.now()->format('Ymd_His').'.apkg';
-
-        return $this->streamApkgFileDownload($apkgPath, $downloadFileName);
     }
 
     /**
@@ -782,33 +704,6 @@ class CsvEditor extends Component
         $this->lastDeletedRow = null;
         $this->forgetStressBatchUndo();
         $this->resetPage();
-    }
-
-    /**
-     * Stream an .apkg file to the browser then delete the temporary file.
-     */
-    private function streamApkgFileDownload(string $apkgPath, string $downloadFileName): StreamedResponse
-    {
-        return response()->streamDownload(function () use ($apkgPath): void {
-            readfile($apkgPath);
-
-            if (! @unlink($apkgPath)) {
-                Log::warning('Failed to delete temporary .apkg file after streaming.', [
-                    'path' => $apkgPath,
-                ]);
-            }
-        }, $downloadFileName, [
-            'Content-Type' => 'application/octet-stream',
-        ]);
-    }
-
-    /**
-     * Derive the base file name (without extension) used for all download file names.
-     * Falls back to 'export' when no original file name is available.
-     */
-    private function buildBaseFileName(): string
-    {
-        return $this->deckExportService->toDownloadFileName(CsvDraft::baseName($this->originalFileName), 'export');
     }
 
     /**

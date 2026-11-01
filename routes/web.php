@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CreditController;
+use App\Http\Controllers\DeckExportController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Middleware\EnsureUserIsAdmin;
@@ -72,6 +73,12 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('profile', function () {
         return view('profile');
     })->name('profile');
+
+    Route::prefix('exports')->name('exports.')->controller(DeckExportController::class)->group(function (): void {
+        Route::get('drafts/{draft}/csv', 'csv')->name('csv');
+        Route::get('drafts/{draft}/apkg', 'apkg')->name('apkg');
+        Route::get('collection', 'collection')->name('collection');
+    });
 
     Route::prefix('credits')->name('credits.')->group(function (): void {
         Route::get('/', [CreditController::class, 'index'])->name('index');

@@ -256,8 +256,9 @@ test('the collection export only contains the current user\'s drafts', function 
     app()->instance(AnkiPackageExporterService::class, $exporter);
 
     Livewire::test(CsvEditor::class)
-        ->set('uploadedCsvFile', UploadedFile::fake()->createWithContent('mine.csv', '"Bonjour","Привет"'))
-        ->call('downloadColpkg');
+        ->set('uploadedCsvFile', UploadedFile::fake()->createWithContent('mine.csv', '"Bonjour","Привет"'));
+
+    $this->get(route('exports.collection'))->assertOk();
 
     $exporter->shouldHaveReceived('exportCollection')
         ->withArgs(fn (array $decks) => array_column($decks, 'deckName') === ['mine'])

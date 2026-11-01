@@ -97,16 +97,15 @@
                 </flux:modal.trigger>
 
                 <flux:dropdown position="bottom" align="end">
-                    <flux:button class="rounded-full! size-10 sm:size-auto sm:h-10" data-tour="export" title="{{ __('csv_editor.export') }}" variant="primary" wire:loading.attr="disabled" wire:target="downloadAnkiPackage,downloadColpkg">
-                        <flux:icon.arrow-down-tray class="size-4" wire:loading.remove wire:target="downloadCsv,downloadAnkiPackage,downloadColpkg" />
-                        <flux:icon.loading class="size-4" wire:loading wire:target="downloadCsv,downloadAnkiPackage,downloadColpkg" variant="outline" />
+                    <flux:button class="rounded-full! size-10 sm:size-auto sm:h-10" data-tour="export" title="{{ __('csv_editor.export') }}" variant="primary">
+                        <flux:icon.arrow-down-tray class="size-4" />
                         <span class="hidden sm:inline">{{ __('csv_editor.export') }}</span>
                     </flux:button>
                     <flux:menu>
-                        <flux:menu.item wire:click="downloadCsv" icon:variant="outline" icon="document-text">
+                        <flux:menu.item href="{{ route('exports.csv', $activeDraftId) }}" x-bind:href="window.exportUrl('{{ route('exports.csv', $activeDraftId) }}')" icon:variant="outline" icon="document-text">
                             {{ __('csv_editor.export_csv') }}
                         </flux:menu.item>
-                        <flux:menu.item wire:click="downloadAnkiPackage" icon:variant="outline" icon="archive-box-arrow-down">
+                        <flux:menu.item href="{{ route('exports.apkg', $activeDraftId) }}" x-bind:href="window.exportUrl('{{ route('exports.apkg', $activeDraftId) }}')" icon:variant="outline" icon="archive-box-arrow-down">
                             {{ __('csv_editor.export_anki_package') }}
                         </flux:menu.item>
                         @if (count($allDraftsMeta) >= 2)
