@@ -51,7 +51,6 @@ return [
     'retranslate_with_chatgpt' => 'Regenerate translation with ChatGPT',
     'fix_stress_marks' => 'Fix stress marks with ChatGPT',
     'delete_row' => 'Delete',
-    'delete_row_confirm' => 'Delete this row? This cannot be undone.',
     'open_row' => 'Open',
 
     // TTS modal
@@ -166,4 +165,7 @@ return [
     'tour_first_row_tip_text' => 'Click the left column to write a sentence in your language. Then either type its Russian translation yourself in the right column, or click the translate button that appears on hover to translate it automatically with ChatGPT.',
     'more_information' => 'More information',
     'accent_cell_keyboard_hint' => 'Russian text: arrow keys to pick a vowel, Enter to place the stress',
+    'row_deleted' => 'Row deleted.',
+    'undo' => 'Undo',
+    'bulk_stress_undo' => 'Undo these corrections',
 ];

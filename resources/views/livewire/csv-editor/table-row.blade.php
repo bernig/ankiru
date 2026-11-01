@@ -121,7 +121,7 @@
 
             <div class="flex items-center whitespace-nowrap rounded-full border border-zinc-200 bg-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100">
                 <flux:tooltip content="{{ __('csv_editor.delete_row') }}" position="top">
-                    <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-red-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100" wire:loading.attr="disabled" wire:target="deleteRow({{ $rowIndex }})" @click="($wire.pageRows[rowIndex]?.[1] ?? '').trim() ? $dispatch('request-delete-row', { rowIndex }) : $wire.deleteRow(rowIndex)">
+                    <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-red-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100" wire:loading.attr="disabled" wire:target="deleteRow({{ $rowIndex }})" @click="$wire.deleteRow(rowIndex)">
                         <span wire:loading wire:target="deleteRow({{ $rowIndex }})"><flux:icon.arrow-path class="m-2 size-4 animate-spin" /></span>
                         <span wire:loading.remove wire:target="deleteRow({{ $rowIndex }})">
                             <flux:icon.trash class="m-2 size-4" />

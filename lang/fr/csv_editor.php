@@ -51,7 +51,6 @@ return [
     'retranslate_with_chatgpt' => 'Régénérer la traduction avec ChatGPT',
     'fix_stress_marks' => 'Corriger les accents avec ChatGPT',
     'delete_row' => 'Supprimer',
-    'delete_row_confirm' => 'Supprimer cette ligne ? Cette action est irréversible.',
     'open_row' => 'Ouvrir',
 
     // Fenêtre TTS
@@ -166,4 +165,7 @@ return [
     'tour_first_row_tip_text' => 'Cliquez dans la colonne de gauche pour écrire une phrase dans votre langue. Puis écrivez vous-même sa traduction en russe dans la colonne de droite, ou cliquez sur le bouton de traduction automatique qui apparaît au survol pour la traduire avec ChatGPT.',
     'more_information' => "Plus d'informations",
     'accent_cell_keyboard_hint' => "Texte russe : flèches pour choisir une voyelle, Entrée pour placer l'accent",
+    'row_deleted' => 'Ligne supprimée.',
+    'undo' => 'Annuler',
+    'bulk_stress_undo' => 'Annuler ces corrections',
 ];

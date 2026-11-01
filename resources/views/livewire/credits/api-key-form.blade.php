@@ -9,7 +9,7 @@
                 <flux:text class="text-sm font-medium text-green-700">
                     {{ __('profile.api_key_set') }}
                 </flux:text>
-                <flux:button class="hover:bg-red-50! text-red-500! hover:text-red-600! shrink-0" icon="trash" icon:variant="outline" wire:click="clearApiKey" wire:confirm="{{ __('profile.api_key_clear_confirm') }}" variant="ghost" size="xs">
+                <flux:button class="hover:bg-red-50! text-red-500! hover:text-red-600! shrink-0" icon="trash" icon:variant="outline" x-on:click="$flux.modal('clear-api-key-confirm').show()" variant="ghost" size="xs">
                     {{ __('profile.api_key_clear') }}
                 </flux:button>
             </div>
@@ -130,5 +130,20 @@
         </div>
 
     @endif
+
+    <flux:modal class="min-w-0 md:w-sm" name="clear-api-key-confirm">
+        <div class="flex flex-col gap-5">
+            <flux:heading size="lg">{{ __('profile.api_key_clear') }}</flux:heading>
+            <flux:text>{{ __('profile.api_key_clear_confirm') }}</flux:text>
+            <div class="flex justify-end gap-2">
+                <flux:modal.close>
+                    <flux:button class="rounded-full!" variant="subtle">{{ __('csv_editor.close') }}</flux:button>
+                </flux:modal.close>
+                <flux:button class="rounded-full!" variant="danger" icon="trash" wire:click="clearApiKey" x-on:click="$flux.modal('clear-api-key-confirm').close()">
+                    {{ __('profile.api_key_clear') }}
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
 
 </div>

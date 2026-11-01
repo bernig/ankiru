@@ -44,6 +44,15 @@ class MassOperationService
     }
 
     /**
+     * Cache key holding the corrections of the user's last finished stress
+     * batch, so the editor can revert them.
+     */
+    public static function stressUndoCacheKey(int $userId): string
+    {
+        return "mass_op:user:{$userId}:stress:undo";
+    }
+
+    /**
      * Cache key of one piece of a batch's state, shared by the service, the
      * jobs and the editor.
      *

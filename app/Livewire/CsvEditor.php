@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -52,6 +53,15 @@ class CsvEditor extends Component
 
     /** Number of rows displayed per page (user-configurable). */
     public int $perPage = 50;
+
+    /**
+     * The row removed by the last deleteRow(), so undoDeleteRow() can put it
+     * back where it was. Cleared once restored or when another file opens.
+     *
+     * @var array{draftId: int, index: int, row: array<int, string>}|null
+     */
+    #[Locked]
+    public ?array $lastDeletedRow = null;
 
     /** @var TemporaryUploadedFile|null */
     public $uploadedCsvFile = null;
@@ -391,6 +401,13 @@ class CsvEditor extends Component
      */
     public function deleteRow(int $rowIndex): void
     {
+        if (! isset($this->csvRows[$rowIndex])) {
+            return;
+        }
+
+        $this->lastDeletedRow = ['draftId' => $this->activeDraftId, 'index' => $rowIndex, 'row' => $this->csvRows[$rowIndex]];
+        $this->dispatch('row-deleted');
+
         unset($this->csvRows[$rowIndex]);
         $this->csvRows = array_values($this->csvRows);
         // Close the audio modal, since indices have shifted and references would be stale.
@@ -400,6 +417,25 @@ class CsvEditor extends Component
         if ($this->getPage() > $this->totalPages) {
             $this->setPage($this->totalPages);
         }
+    }
+
+    /**
+     * Put back the row removed by the last deleteRow(), at its former index
+     * (or at the end when rows were removed since), and show its page.
+     */
+    public function undoDeleteRow(): void
+    {
+        $deleted = $this->lastDeletedRow;
+        $this->lastDeletedRow = null;
+
+        if ($deleted === null || $deleted['draftId'] !== $this->activeDraftId) {
+            return;
+        }
+
+        $index = min($deleted['index'], count($this->csvRows));
+        array_splice($this->csvRows, $index, 0, [$deleted['row']]);
+        $this->autoSaveDraft();
+        $this->setPage(intdiv($index, $this->perPage) + 1);
     }
 
     // -------------------------------------------------------------------------
@@ -757,6 +793,8 @@ class CsvEditor extends Component
         $this->searchQuery = '';
         $this->filterAccentNeeded = false;
         $this->filterNoAudio = false;
+        $this->lastDeletedRow = null;
+        $this->forgetStressBatchUndo();
         $this->resetPage();
     }
 

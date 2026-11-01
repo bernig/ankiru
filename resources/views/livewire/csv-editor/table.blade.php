@@ -155,7 +155,7 @@
             </flux:button.group>
 
             <div class="flex items-center justify-between border-t border-zinc-100 pt-3">
-                <flux:button square icon="trash" icon:variant="outline" variant="danger" title="{{ __('csv_editor.delete_row') }}" @click="($wire.pageRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim() ? $dispatch('request-delete-row', { rowIndex: $store.mobileEdit.rowIndex }) : ($wire.deleteRow($store.mobileEdit.rowIndex), $flux.modal('mobile-edit').close())" />
+                <flux:button square icon="trash" icon:variant="outline" variant="danger" title="{{ __('csv_editor.delete_row') }}" @click="$wire.deleteRow($store.mobileEdit.rowIndex); $flux.modal('mobile-edit').close()" />
                 <flux:modal.close>
                     <flux:button variant="filled" icon="check">{{ __('csv_editor.close') }}</flux:button>
                 </flux:modal.close>
@@ -164,26 +164,12 @@
         </div>
     </flux:modal>
 
-    {{-- ── Delete row confirmation modal ── --}}
-    <div x-data="{ pendingDeleteRowIndex: -1 }" x-on:request-delete-row.window="pendingDeleteRowIndex = $event.detail.rowIndex; $nextTick(() => $flux.modal('delete-row-confirm').show())">
-        <flux:modal class="min-w-0 md:w-sm" name="delete-row-confirm">
-            <div class="flex flex-col gap-5">
-                <flux:heading size="lg">{{ __('csv_editor.delete_row') }}</flux:heading>
-                <flux:text>{{ __('csv_editor.delete_row_confirm') }}</flux:text>
-                <div class="flex justify-end gap-2">
-                    <flux:modal.close>
-                        <flux:button class="rounded-full!" variant="subtle">{{ __('csv_editor.close') }}</flux:button>
-                    </flux:modal.close>
-                    <flux:button class="rounded-full!" variant="danger" wire:loading.attr="disabled" wire:target="deleteRow" @click="$wire.deleteRow(pendingDeleteRowIndex).then(() => { $flux.modal('mobile-edit').close(); $flux.modal('delete-row-confirm').close(); })">
-                        <span wire:loading wire:target="deleteRow"><flux:icon.arrow-path class="size-4 animate-spin" /></span>
-                        <span wire:loading.remove wire:target="deleteRow">
-                            <flux:icon.trash class="size-4" />
-                        </span>
-                        {{ __('csv_editor.delete_row') }}
-                    </flux:button>
-                </div>
-            </div>
-        </flux:modal>
+    {{-- ── Undo toast shown after a row deletion ── --}}
+    <div class="fixed inset-x-4 bottom-4 z-[60] mx-auto flex max-w-sm items-center justify-between gap-3 rounded-xl bg-zinc-800 px-4 py-3 text-sm text-white shadow-xl" role="status" x-data="{ visible: false, timer: null, hideLater() { clearTimeout(this.timer); this.timer = setTimeout(() => this.visible = false, 8000); } }" x-on:row-deleted.window="visible = true; hideLater()" x-on:mouseenter="clearTimeout(timer)" x-on:mouseleave="hideLater()" x-on:focusin="clearTimeout(timer)" x-on:focusout="hideLater()" x-on:csv-file-switched.window="visible = false" x-show="visible" x-transition x-cloak>
+        <span>{{ __('csv_editor.row_deleted') }}</span>
+        <button class="cursor-pointer rounded font-semibold text-yellow-300 hover:text-yellow-200" type="button" wire:click="undoDeleteRow" x-on:click="visible = false">
+            {{ __('csv_editor.undo') }}
+        </button>
     </div>
 
 </flux:card>

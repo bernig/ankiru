@@ -78,6 +78,11 @@
                                 &middot; {{ number_format($stressBatchPromptTokens + $stressBatchCompletionTokens) }} {{ __('csv_editor.bulk_widget_tokens') }}
                             @endif
                         </div>
+                        @if ($canUndoStressBatch)
+                            <button class="self-start text-xs font-medium text-blue-500 hover:text-blue-600" type="button" wire:click="undoStressBatch">
+                                {{ __('csv_editor.bulk_stress_undo') }}
+                            </button>
+                        @endif
                     @endif
                 </div>
             @endif

@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\CsvEditor;
+use App\Models\CsvDraft;
 use App\Models\User;
 use Livewire\Livewire;
 
@@ -100,6 +101,30 @@ test('clamps the current page after deleting the only row on the last page', fun
         ->call('setPage', 2)
         ->call('deleteRow', 50)
         ->assertSet('paginators.page', 1);
+});
+
+test('puts a deleted row back at its index and saves it', function (): void {
+    $component = Livewire::test(CsvEditor::class)
+        ->setRows([['Un', 'Один'], ['Deux', 'Два'], ['Trois', 'Три']])
+        ->call('deleteRow', 1)
+        ->assertDispatched('row-deleted')
+        ->call('undoDeleteRow')
+        ->assertRowsSet('', [['Un', 'Один'], ['Deux', 'Два'], ['Trois', 'Три']])
+        ->assertSet('lastDeletedRow', null);
+
+    expect(CsvDraft::find($component->get('activeDraftId'))->csv_rows)->toBe([['Un', 'Один'], ['Deux', 'Два'], ['Trois', 'Три']]);
+});
+
+test('does not restore a deleted row into another file', function (): void {
+    $component = Livewire::test(CsvEditor::class)
+        ->setRows([['Un', 'Один'], ['Deux', 'Два']])
+        ->call('deleteRow', 0);
+
+    $otherDraft = CsvDraft::factory()->for(auth()->user())->create(['csv_rows' => [['Autre', 'Другой']]]);
+
+    $component->call('switchToDraft', $otherDraft->id)
+        ->call('undoDeleteRow')
+        ->assertRowsSet('', [['Autre', 'Другой']]);
 });
 
 test('row needs stress correction resets correctly after a row is deleted and indices shift', function () {

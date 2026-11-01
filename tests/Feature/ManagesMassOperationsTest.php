@@ -788,6 +788,40 @@ it('merges corrections into the original draft when the user switched files duri
         ->and($otherDraft->fresh()->csv_rows)->toBe([['Je parle.', 'Я говорю.']]);
 });
 
+it('reverts the corrections of a finished stress batch, except on rows changed since', function () {
+    seedFinishedStressBatch([
+        0 => ['original' => 'Я говорю.', 'corrected' => 'Я говор<b>ю</b>.'],
+        1 => ['original' => 'Хорошая погода.', 'corrected' => 'Хор<b>о</b>шая пог<b>о</b>да.'],
+    ], null);
+
+    Livewire::test(CsvEditor::class)
+        ->set('hasCsvLoaded', true)
+        ->setRows([['Je parle.', 'Я говорю.'], ['Il fait beau.', 'Хорошая погода.']])
+        ->call('handleBatchProgressUpdate', stressDoneEvent(2))
+        ->assertSet('canUndoStressBatch', true)
+        ->call('updateCell', 1, 1, 'Плохая погода.')
+        ->call('undoStressBatch')
+        ->assertRowsSet('', [['Je parle.', 'Я говорю.'], ['Il fait beau.', 'Плохая погода.']])
+        ->assertSet('canUndoStressBatch', false)
+        ->assertSet('stressBatchStatus', 'idle');
+});
+
+it('no longer offers to revert a stress batch once another file is opened', function () {
+    seedFinishedStressBatch([0 => ['original' => 'Я говорю.', 'corrected' => 'Я говор<b>ю</b>.']], null);
+
+    $component = Livewire::test(CsvEditor::class)
+        ->set('hasCsvLoaded', true)
+        ->setRows([['Je parle.', 'Я говорю.']])
+        ->call('handleBatchProgressUpdate', stressDoneEvent(1));
+
+    $otherDraft = CsvDraft::factory()->for(auth()->user())->create(['csv_rows' => [['Je parle.', 'Я говор<b>ю</b>.']]]);
+
+    $component->call('switchToDraft', $otherDraft->id)
+        ->assertSet('canUndoStressBatch', false)
+        ->call('undoStressBatch')
+        ->assertRowsSet('', [['Je parle.', 'Я говор<b>ю</b>.']]);
+});
+
 // ---------------------------------------------------------------------------
 // Locked batch state
 // ---------------------------------------------------------------------------

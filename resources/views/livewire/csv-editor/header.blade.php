@@ -42,7 +42,7 @@
 
                             <flux:menu.separator />
 
-                            <flux:menu.item icon:variant="outline" icon="trash" variant="danger" wire:click="resetEditor" wire:confirm="{{ __('csv_editor.delete_file_confirm') }}">
+                            <flux:menu.item icon:variant="outline" icon="trash" variant="danger" x-on:click="$flux.modal('delete-file-confirm').show()">
                                 {{ __('csv_editor.delete_file') }}
                             </flux:menu.item>
                         </flux:menu>
@@ -119,5 +119,20 @@
                 </flux:dropdown>
             </div>
         </div>
+
+        <flux:modal class="min-w-0 md:w-sm" name="delete-file-confirm">
+            <div class="flex flex-col gap-5">
+                <flux:heading size="lg">{{ __('csv_editor.delete_file') }}</flux:heading>
+                <flux:text>{{ __('csv_editor.delete_file_confirm') }}</flux:text>
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button class="rounded-full!" variant="subtle">{{ __('csv_editor.close') }}</flux:button>
+                    </flux:modal.close>
+                    <flux:button class="rounded-full!" variant="danger" icon="trash" wire:click="resetEditor" x-on:click="$flux.modal('delete-file-confirm').close()">
+                        {{ __('csv_editor.delete_file') }}
+                    </flux:button>
+                </div>
+            </div>
+        </flux:modal>
     @endif
 </div>

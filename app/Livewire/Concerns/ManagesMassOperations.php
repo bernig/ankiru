@@ -86,6 +86,14 @@ trait ManagesMassOperations
     #[Locked]
     public int $ttsBatchActualChars = 0;
 
+    /**
+     * True while the corrections of the last finished stress batch can be
+     * reverted with undoStressBatch(). The corrections themselves are kept
+     * in the cache (stressUndoCacheKey()), not in the snapshot.
+     */
+    #[Locked]
+    public bool $canUndoStressBatch = false;
+
     // Estimates - only populated after openBulkActionsModal() is called.
     #[Locked]
     public int $estimatedStressInputTokens = 0;
@@ -176,6 +184,8 @@ trait ManagesMassOperations
         if (! $this->hasCsvLoaded || $this->stressBatchStatus === 'running') {
             return;
         }
+
+        $this->forgetStressBatchUndo();
 
         if ($this->adoptRunningBatchFromAnotherTab(OperationType::Stress)) {
             return;
@@ -335,6 +345,37 @@ trait ManagesMassOperations
         return $this->ttsBatchStatus === 'running';
     }
 
+    /**
+     * Revert the corrections of the last finished stress batch. A row is only
+     * reverted while it still holds the corrected text: a row edited, moved
+     * or re-corrected since keeps its current value.
+     */
+    public function undoStressBatch(): void
+    {
+        $undo = Cache::pull($this->stressUndoCacheKey());
+        $this->canUndoStressBatch = false;
+
+        if (! is_array($undo) || $undo['draftId'] !== $this->activeDraftId) {
+            return;
+        }
+
+        $anyReverted = false;
+
+        foreach ($undo['corrections'] as $rowIndex => $correction) {
+            if (($this->csvRows[$rowIndex][1] ?? null) === $correction['corrected']) {
+                $this->csvRows[$rowIndex][1] = $correction['original'];
+                $anyReverted = true;
+            }
+        }
+
+        if ($anyReverted) {
+            $this->autoSaveDraft();
+        }
+
+        $this->stressBatchStatus = 'idle';
+        $this->refreshEstimates();
+    }
+
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
@@ -439,8 +480,10 @@ trait ManagesMassOperations
 
         if ($corrections !== []) {
             if ($targetDraftId === null || (int) $targetDraftId === $this->activeDraftId) {
-                $this->csvRows = $this->applyStressCorrections($this->csvRows, $corrections);
+                $appliedCorrections = [];
+                $this->csvRows = $this->applyStressCorrections($this->csvRows, $corrections, $appliedCorrections);
                 $this->autoSaveDraft();
+                $this->rememberStressBatchUndo($appliedCorrections);
             } else {
                 $this->applyStressCorrectionsToStoredDraft((int) $targetDraftId, $corrections);
             }
@@ -476,9 +519,10 @@ trait ManagesMassOperations
      *
      * @param  array<int, array<int, string>>  $rows
      * @param  array<int, array{original: string, corrected: string}>  $corrections  Keyed by row index at dispatch time.
+     * @param  array<int, array{original: string, corrected: string}>  $appliedCorrections  Filled with the corrections applied, keyed by the row index they landed on.
      * @return array<int, array<int, string>>
      */
-    private function applyStressCorrections(array $rows, array $corrections): array
+    private function applyStressCorrections(array $rows, array $corrections, array &$appliedCorrections = []): array
     {
         $correctedRowIndexes = [];
 
@@ -500,10 +544,37 @@ trait ManagesMassOperations
             if ($targetRowIndex !== null) {
                 $rows[$targetRowIndex][1] = $correction['corrected'];
                 $correctedRowIndexes[$targetRowIndex] = true;
+                $appliedCorrections[$targetRowIndex] = $correction;
             }
         }
 
         return $rows;
+    }
+
+    /**
+     * @param  array<int, array{original: string, corrected: string}>  $appliedCorrections
+     */
+    private function rememberStressBatchUndo(array $appliedCorrections): void
+    {
+        if ($appliedCorrections === []) {
+            return;
+        }
+
+        Cache::put($this->stressUndoCacheKey(), ['draftId' => $this->activeDraftId, 'corrections' => $appliedCorrections], 3600);
+        $this->canUndoStressBatch = true;
+    }
+
+    private function forgetStressBatchUndo(): void
+    {
+        if ($this->canUndoStressBatch) {
+            Cache::forget($this->stressUndoCacheKey());
+            $this->canUndoStressBatch = false;
+        }
+    }
+
+    private function stressUndoCacheKey(): string
+    {
+        return MassOperationService::stressUndoCacheKey((int) Auth::id());
     }
 
     /**
