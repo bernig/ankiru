@@ -102,10 +102,10 @@
                         <span class="hidden sm:inline">{{ __('csv_editor.export') }}</span>
                     </flux:button>
                     <flux:menu>
-                        <flux:menu.item href="{{ route('exports.csv', $activeDraftId) }}" x-bind:href="window.exportUrl('{{ route('exports.csv', $activeDraftId) }}')" icon:variant="outline" icon="document-text">
+                        <flux:menu.item href="{{ route('exports.csv', $activeDraftId) }}" x-on:click="$el.href = window.exportUrl('{{ route('exports.csv', $activeDraftId) }}')" icon:variant="outline" icon="document-text">
                             {{ __('csv_editor.export_csv') }}
                         </flux:menu.item>
-                        <flux:menu.item href="{{ route('exports.apkg', $activeDraftId) }}" x-bind:href="window.exportUrl('{{ route('exports.apkg', $activeDraftId) }}')" icon:variant="outline" icon="archive-box-arrow-down">
+                        <flux:menu.item href="{{ route('exports.apkg', $activeDraftId) }}" x-on:click="$el.href = window.exportUrl('{{ route('exports.apkg', $activeDraftId) }}')" icon:variant="outline" icon="archive-box-arrow-down">
                             {{ __('csv_editor.export_anki_package') }}
                         </flux:menu.item>
                         @if (count($allDraftsMeta) >= 2)

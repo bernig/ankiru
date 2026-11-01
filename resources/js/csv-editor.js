@@ -571,7 +571,9 @@ window.applyAccentStyle = function (color, bold, unicode) {
 /**
  * Build an export link with the browser's time zone, so the server stamps
  * the downloaded file name with the user's local time, plus any extra query
- * parameters (e.g. the collection name).
+ * parameters (e.g. the collection name). Called from the link's click
+ * handler, right before the browser follows it: a value bound earlier could
+ * be reset to the server's plain URL when Livewire re-renders the menu.
  *
  * @param {string} url
  * @param {Object<string, string>} [params]

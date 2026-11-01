@@ -9,7 +9,7 @@
                 <flux:button variant="ghost">{{ __('csv_editor.close') }}</flux:button>
             </flux:modal.close>
 
-            <flux:button variant="primary" href="{{ route('exports.collection') }}" x-bind:href="downloadUrl" x-on:click="$flux.modal('collection-export').close()">
+            <flux:button variant="primary" href="{{ route('exports.collection') }}" x-on:click="$el.href = downloadUrl; $flux.modal('collection-export').close()">
                 {{ __('csv_editor.export') }}
             </flux:button>
         </div>
