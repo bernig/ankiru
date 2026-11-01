@@ -342,5 +342,6 @@ test('the audio indicator updates once the audio of a row is deleted', function 
         ->setRows([['Bonjour', 'Привет']])
         ->assertSet('pageAudio', [0 => true])
         ->call('deleteTtsAudio', 0)
-        ->assertSet('pageAudio', [0 => false]);
+        ->assertSet('pageAudio', [0 => false])
+        ->assertDispatched('tts-audio-deleted', rowIndex: 0);
 });

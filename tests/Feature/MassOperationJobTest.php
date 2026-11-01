@@ -554,3 +554,20 @@ it('does nothing for a job of a cancelled batch, even one still queued', functio
         ->and(Cache::get(massOpCacheKey('stress', 'status')))->toBe('done');
     Event::assertNotDispatched(MassOperationProgressEvent::class);
 });
+
+it('still skips the job of a cancelled batch that waited hours in the queue', function (): void {
+    Event::fake([MassOperationProgressEvent::class]);
+    seedBatchCache('stress', 2);
+
+    app(MassOperationService::class)->cancelBatch(massOpSessionId(), OperationType::Stress);
+    $this->travel(2)->days();
+
+    $this->mock(OpenAiTranslationService::class)
+        ->shouldNotReceive('correctRussianStressMarksWithUsage');
+
+    (new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 2, 'source', 'Я работаю.'))->handle(
+        app(RussianAccentService::class),
+        app(OpenAiTranslationService::class),
+        app(RussianTextToSpeechService::class),
+    );
+});

@@ -164,6 +164,8 @@ trait ManagesTtsAudio
         }
 
         $this->ttsService->deleteAudio($rawRussianText);
+        // The TTS player modal listens to this to clear its player for the row.
+        $this->dispatch('tts-audio-deleted', rowIndex: $rowIndex);
     }
 
     /**

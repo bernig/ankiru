@@ -270,7 +270,9 @@ class MassOperationService
             return;
         }
 
-        Cache::put("mass_op:{$batchId}:{$operationType->value}:cancelled", true, ttl: 3600);
+        // Outlives the other batch keys: queued jobs may wait for a worker a
+        // long time, and they must still find the flag when they run.
+        Cache::put("mass_op:{$batchId}:{$operationType->value}:cancelled", true, ttl: now()->addWeek());
         Cache::put("mass_op:{$batchId}:{$operationType->value}:status", 'done', ttl: 3600);
     }
 
