@@ -6,7 +6,6 @@ use App\Enums\OperationType;
 use App\Jobs\MassOperationJob;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Orchestrates bulk operations over all CSV rows.
@@ -256,25 +255,23 @@ class MassOperationService
     // Cancellation
     // -------------------------------------------------------------------------
     /**
-     * Mark a batch as cancelled and delete all pending (unreserved) jobs for it
-     * from the queue. Jobs already reserved by a worker check the cancelled
-     * flag at the start of handle() and skip processing.
+     * Mark a batch as cancelled. Every job of the batch checks this flag at
+     * the start of handle() and returns before any API call, so the jobs
+     * still queued drain as no-ops.
+     *
+     * Pending jobs are deliberately not deleted from the queue: finding them
+     * meant a LIKE scan over the whole jobs.payload column, tied to the
+     * database queue driver.
      */
     public function cancelBatch(string $batchId, OperationType $operationType): void
     {
-        // An empty ID would turn the LIKE below into a match on every job.
+        // An empty ID would cancel a batch nobody can track.
         if ($batchId === '') {
             return;
         }
 
         Cache::put("mass_op:{$batchId}:{$operationType->value}:cancelled", true, ttl: 3600);
         Cache::put("mass_op:{$batchId}:{$operationType->value}:status", 'done', ttl: 3600);
-
-        DB::table('jobs')
-            ->whereNull('reserved_at')
-            ->where('payload', 'like', "%{$batchId}%")
-            ->where('payload', 'like', '%'.$operationType->value.'%')
-            ->delete();
     }
 
     // -------------------------------------------------------------------------

@@ -4,6 +4,7 @@ use App\Enums\OperationType;
 use App\Events\MassOperationProgressEvent;
 use App\Jobs\MassOperationJob;
 use App\Models\User;
+use App\Services\MassOperationService;
 use App\Services\OpenAiTranslationService;
 use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
@@ -531,5 +532,25 @@ it('does not broadcast progress for a job without user', function (): void {
 
     (new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 1, 'source', 'russian'))->failed(new RuntimeException('boom'));
 
+    Event::assertNotDispatched(MassOperationProgressEvent::class);
+});
+
+it('does nothing for a job of a cancelled batch, even one still queued', function (): void {
+    Event::fake([MassOperationProgressEvent::class]);
+    seedBatchCache('stress', 2);
+
+    app(MassOperationService::class)->cancelBatch(massOpSessionId(), OperationType::Stress);
+
+    $this->mock(OpenAiTranslationService::class)
+        ->shouldNotReceive('correctRussianStressMarksWithUsage');
+
+    (new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 2, 'source', 'Я работаю.'))->handle(
+        app(RussianAccentService::class),
+        app(OpenAiTranslationService::class),
+        app(RussianTextToSpeechService::class),
+    );
+
+    expect((int) Cache::get(massOpCacheKey('stress', 'processed')))->toBe(0)
+        ->and(Cache::get(massOpCacheKey('stress', 'status')))->toBe('done');
     Event::assertNotDispatched(MassOperationProgressEvent::class);
 });
