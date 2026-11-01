@@ -464,7 +464,7 @@ class CsvEditor extends Component
 
         $parentName = trim($this->collectionExportName) ?: 'Collection';
         $apkgPath = $this->ankiExporterService->exportCollection($decks, $parentName);
-        $downloadFileName = $parentName.'_'.now()->format('Ymd_His').'.apkg';
+        $downloadFileName = $this->toDownloadFileName($parentName, 'Collection').'_'.now()->format('Ymd_His').'.apkg';
 
         return $this->streamApkgFileDownload($apkgPath, $downloadFileName);
     }
@@ -852,9 +852,20 @@ class CsvEditor extends Component
      */
     private function buildBaseFileName(): string
     {
-        $baseName = pathinfo($this->originalFileName, PATHINFO_FILENAME);
+        return $this->toDownloadFileName(pathinfo($this->originalFileName, PATHINFO_FILENAME), 'export');
+    }
 
-        return empty($baseName) ? 'export' : $baseName;
+    /**
+     * Make a user-chosen name usable as a download file name. Symfony rejects
+     * "/" and "\" in a Content-Disposition header (an exception, so a 500),
+     * and control characters have no place there either; each is replaced
+     * by a hyphen. The deck name inside the package keeps the original text.
+     */
+    private function toDownloadFileName(string $name, string $fallback): string
+    {
+        $safeName = trim((string) preg_replace('/[\/\\\\\x00-\x1F\x7F]+/u', '-', $name), ' -.');
+
+        return $safeName === '' ? $fallback : $safeName;
     }
 
     /**

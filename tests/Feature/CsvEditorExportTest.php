@@ -141,3 +141,35 @@ test('colpkg export option is shown only when at least two files exist', functio
     Livewire::test(CsvEditor::class)
         ->assertSee(__('csv_editor.export_collection_package'));
 });
+
+test('a collection name with a slash downloads instead of failing', function (): void {
+    $this->travelTo(now()->setDateTime(2026, 11, 1, 12, 0, 0));
+
+    $this->mock(AnkiPackageExporterService::class)
+        ->shouldReceive('exportCollection')
+        ->once()
+        ->with(Mockery::any(), 'Russe/Français')
+        ->andReturnUsing(function (): string {
+            $temporaryPackagePath = sys_get_temp_dir().'/'.uniqid('anki_test_', true).'.apkg';
+            file_put_contents($temporaryPackagePath, 'fake-apkg-content');
+
+            return $temporaryPackagePath;
+        });
+
+    CsvDraft::factory()->count(2)->create(['user_id' => auth()->id()]);
+
+    Livewire::test(CsvEditor::class)
+        ->set('collectionExportName', 'Russe/Français')
+        ->call('downloadColpkg')
+        ->assertFileDownloaded('Russe-Français_20261101_120000.apkg');
+});
+
+test('a file renamed with a backslash still downloads as csv', function (): void {
+    $this->travelTo(now()->setDateTime(2026, 11, 1, 12, 0, 0));
+
+    Livewire::test(CsvEditor::class)
+        ->setRows(sampleRows())
+        ->set('originalFileName', 'Mes\\phrases.csv')
+        ->call('downloadCsv')
+        ->assertFileDownloaded('Mes-phrases_edited_20261101_120000.csv');
+});
