@@ -429,6 +429,8 @@ trait ManagesMassOperations
         $this->stressBatchCorrectedCount = $report['corrected'];
         $this->stressBatchPromptTokens = $report['promptTokens'];
         $this->stressBatchCompletionTokens = $report['completionTokens'];
+
+        $this->notifyIfBatchStoppedForCredits(OperationType::Stress);
     }
 
     /**
@@ -440,6 +442,8 @@ trait ManagesMassOperations
         $report = $this->massOperationService->getTtsReport($this->getMassOpSessionId());
         $this->ttsBatchGeneratedCount = $report['generated'];
         $this->ttsBatchActualChars = $report['actualChars'];
+
+        $this->notifyIfBatchStoppedForCredits(OperationType::Tts);
     }
 
     /**
@@ -623,21 +627,21 @@ trait ManagesMassOperations
             ->exists();
     }
 
-    /**
-     * Mark a batch as cancelled and delete all pending (unreserved) jobs for it
-     * from the queue. Jobs already reserved by a worker will check the cancelled
-     * flag at the start of handle() and skip processing.
-     */
     private function cancelBatch(OperationType $operationType): void
     {
-        $sessionId = $this->getMassOpSessionId();
-        Cache::put("mass_op:{$sessionId}:{$operationType->value}:cancelled", true, ttl: 3600);
-        Cache::put("mass_op:{$sessionId}:{$operationType->value}:status", 'done', ttl: 3600);
+        $this->massOperationService->cancelBatch($this->getMassOpSessionId(), $operationType);
+    }
 
-        DB::table('jobs')
-            ->whereNull('reserved_at')
-            ->where('payload', 'like', "%{$sessionId}%")
-            ->where('payload', 'like', '%'.$operationType->value.'%')
-            ->delete();
+    /**
+     * Open the credits shop when a finished batch was stopped by a job because
+     * the user ran out of credits, so they know why rows were left untouched.
+     */
+    private function notifyIfBatchStoppedForCredits(OperationType $operationType): void
+    {
+        $stopReason = Cache::pull("mass_op:{$this->getMassOpSessionId()}:{$operationType->value}:stopped");
+
+        if ($stopReason === 'insufficient_credits') {
+            $this->dispatch('open-credits-shop');
+        }
     }
 }

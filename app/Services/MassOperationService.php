@@ -6,6 +6,7 @@ use App\Enums\OperationType;
 use App\Jobs\MassOperationJob;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Orchestrates bulk operations over all CSV rows.
@@ -243,6 +244,26 @@ class MassOperationService
     }
 
     // -------------------------------------------------------------------------
+    // Cancellation
+    // -------------------------------------------------------------------------
+    /**
+     * Mark a batch as cancelled and delete all pending (unreserved) jobs for it
+     * from the queue. Jobs already reserved by a worker check the cancelled
+     * flag at the start of handle() and skip processing.
+     */
+    public function cancelBatch(string $sessionId, OperationType $operationType): void
+    {
+        Cache::put("mass_op:{$sessionId}:{$operationType->value}:cancelled", true, ttl: 3600);
+        Cache::put("mass_op:{$sessionId}:{$operationType->value}:status", 'done', ttl: 3600);
+
+        DB::table('jobs')
+            ->whereNull('reserved_at')
+            ->where('payload', 'like', "%{$sessionId}%")
+            ->where('payload', 'like', '%'.$operationType->value.'%')
+            ->delete();
+    }
+
+    // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
     /**
@@ -304,6 +325,7 @@ class MassOperationService
     {
         $prefix = "mass_op:{$sessionId}:{$operationType->value}";
         Cache::forget("{$prefix}:cancelled");
+        Cache::forget("{$prefix}:stopped");
 
         $typeCounters = match ($operationType) {
             OperationType::Stress => [
@@ -322,6 +344,9 @@ class MassOperationService
             "{$prefix}:total" => $total,
             "{$prefix}:processed" => 0,
             "{$prefix}:failed" => 0,
+            // Billing mode is fixed for the whole batch: a batch started on
+            // credits stops when they run out instead of switching keys.
+            "{$prefix}:billing" => Auth::user()?->usesPlatformCredits() ? 'credits' : 'personal',
             ...$typeCounters,
         ], 3600);
     }

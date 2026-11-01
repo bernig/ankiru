@@ -2,6 +2,7 @@
 
 use App\Enums\OperationType;
 use App\Jobs\MassOperationJob;
+use App\Models\User;
 use App\Services\MassOperationService;
 use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
@@ -155,6 +156,15 @@ it('records the target draft and row indexes when dispatching a stress batch', f
     expect(Cache::get('mass_op:sess-3:stress:draft_id'))->toBe(42)
         ->and(Cache::get('mass_op:sess-3:stress:row_indexes'))->toBe($expectedRowIndexes);
 });
+it('records the billing mode the batch was started with', function (int $credits, string $expectedBilling): void {
+    Queue::fake();
+    test()->actingAs(User::factory()->create(['credits' => $credits, 'openai_api_key' => 'sk-personal-key-1234567890']));
+    makeService()->dispatchStressBatch(stressSampleRows(), 'sess-5');
+    expect(Cache::get('mass_op:sess-5:stress:billing'))->toBe($expectedBilling);
+})->with([
+    'credits' => [500, 'credits'],
+    'personal key' => [0, 'personal'],
+]);
 it('returns 0 and dispatches nothing when no rows need stress correction', function (): void {
     Queue::fake();
     $rows = [['Source', 'Хор<b>о</b>шо.']];

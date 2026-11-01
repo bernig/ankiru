@@ -42,12 +42,13 @@ test('déduit les crédits correctement', function (): void {
     expect($user->fresh()->credits)->toBe(700);
 });
 
-test('refuse la déduction si crédits insuffisants', function (): void {
+test('ramène le solde à 0 si crédits insuffisants, sans le rendre négatif', function (): void {
     $user = User::factory()->create(['credits' => 100]);
     $service = app(CreditService::class);
 
     expect($service->deduct($user, 500))->toBeFalse();
-    expect($user->fresh()->credits)->toBe(100);
+    expect($user->fresh()->credits)->toBe(0)
+        ->and($user->credits)->toBe(0);
 });
 
 test('ne déduit rien pour un montant nul', function (): void {
@@ -62,13 +63,13 @@ test('gère la race condition : deux déductions concurrentes sur solde insuffis
     $user = User::factory()->create(['credits' => 1000]);
     $service = app(CreditService::class);
 
-    // Deux déductions de 600 : la première réussit, la seconde échoue
+    // Deux déductions de 600 : la première est couverte, la seconde vide le solde
     $r1 = $service->deduct($user, 600);
     $r2 = $service->deduct($user->fresh(), 600);
 
     expect([$r1, $r2])->toContain(true)
         ->and([$r1, $r2])->toContain(false);
-    expect($user->fresh()->credits)->toBe(400);
+    expect($user->fresh()->credits)->toBe(0);
 });
 
 // ── credit ──────────────────────────────────────────────────────────────────

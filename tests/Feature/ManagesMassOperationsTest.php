@@ -518,6 +518,10 @@ it('auto-cancels a running batch when no jobs remain in the queue', function () 
     $mockService->shouldReceive('getTtsReport')
         ->andReturn(['generated' => 7, 'actualChars' => 200]);
 
+    $mockService->shouldReceive('cancelBatch')
+        ->once()
+        ->with(Mockery::any(), OperationType::Tts);
+
     stubMassServiceEstimates($mockService);
 
     app()->instance(MassOperationService::class, $mockService);
@@ -772,3 +776,23 @@ it('rejects client updates to the batch status', function (string $property) {
     Livewire::test(CsvEditor::class)->set($property, 'idle');
 })->with(['stressBatchStatus', 'ttsBatchStatus'])
     ->throws(CannotUpdateLockedPropertyException::class);
+
+it('opens the credits shop when a job stopped the batch for lack of credits', function () {
+    Storage::fake('local');
+    Cache::put('mass_op:'.session()->getId().':tts:stopped', 'insufficient_credits', now()->addHour());
+
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', massOpRows())
+        ->set('hasCsvLoaded', true)
+        ->tap(fn () => markBatchRunning(OperationType::Tts, 2))
+        ->call('openBulkActionsModal')
+        ->call('handleBatchProgressUpdate', [
+            'operationType' => 'tts',
+            'status' => 'done',
+            'processedCount' => 1,
+            'totalCount' => 2,
+            'failedCount' => 0,
+        ])
+        ->assertSet('ttsBatchStatus', 'done')
+        ->assertDispatched('open-credits-shop');
+});

@@ -7,6 +7,7 @@ use App\Events\MassOperationProgressEvent;
 use App\Models\ApiUsageLog;
 use App\Models\User;
 use App\Services\CreditService;
+use App\Services\MassOperationService;
 use App\Services\OpenAiTranslationService;
 use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
@@ -37,6 +38,12 @@ class MassOperationJob implements ShouldQueue
 
     /** 60 seconds is ample for a single AI or TTS API call. */
     public int $timeout = 60;
+
+    /** User the job runs for, loaded at the start of handle(). */
+    private ?User $user = null;
+
+    /** True when this job's AI call is paid with platform credits. */
+    private bool $billsPlatformCredits = false;
 
     /**
      * @param  OperationType  $operationType  The type of bulk operation to perform.
@@ -76,7 +83,11 @@ class MassOperationJob implements ShouldQueue
             return;
         }
 
-        $this->applyUserApiKey();
+        if (! $this->applyUserApiKey()) {
+            $this->stopBatchForInsufficientCredits();
+
+            return;
+        }
 
         try {
             if ($this->forceDebugError) {
@@ -174,11 +185,9 @@ class MassOperationJob implements ShouldQueue
                 'completion_tokens' => $result['completionTokens'],
             ]);
 
-            $user = User::find($this->userId);
-
-            if ($user?->usesPlatformCredits()) {
+            if ($this->billsPlatformCredits && $this->user !== null) {
                 app(CreditService::class)->deduct(
-                    $user,
+                    $this->user,
                     app(CreditService::class)->tokensToCredits($result['promptTokens'], $result['completionTokens']),
                 );
             }
@@ -213,11 +222,9 @@ class MassOperationJob implements ShouldQueue
                     'characters' => $charCount,
                 ]);
 
-                $user = User::find($this->userId);
-
-                if ($user?->usesPlatformCredits()) {
+                if ($this->billsPlatformCredits && $this->user !== null) {
                     app(CreditService::class)->deduct(
-                        $user,
+                        $this->user,
                         app(CreditService::class)->ttsCharsToCredits($charCount),
                     );
                 }
@@ -234,24 +241,46 @@ class MassOperationJob implements ShouldQueue
      * injected automatically. Load it from the database and set the config so
      * that all AI/TTS service calls in this job use the correct key.
      *
-     * The key is always written explicitly (personal or platform): a queue
+     * The key is always written explicitly (empty when unusable): a queue
      * worker is a long-lived process, so a conditional write would leave the
-     * previous job's personal key active for the next user.
+     * previous job's key active for the next user.
+     *
+     * Returns false when the user can no longer be billed: no credits and no
+     * personal key, or a batch started on credits whose balance is now 0.
      */
-    private function applyUserApiKey(): void
+    private function applyUserApiKey(): bool
     {
         if ($this->userId === null) {
             Log::warning('MassOperationJob: userId is null, cannot apply API key.');
         }
 
-        $user = $this->userId === null ? null : User::find($this->userId);
+        $this->user = $this->userId === null ? null : User::find($this->userId);
+        $apiKey = $this->user?->resolveOpenAiKey();
+        $this->billsPlatformCredits = $this->user?->usesPlatformCredits() ?? false;
 
-        config(['ai.providers.openai.key' => $user && $user->openai_api_key && ! $user->usesPlatformCredits()
-            ? $user->openai_api_key
-            : config('ai.providers.openai.platform_key'),
-        ]);
-
+        config(['ai.providers.openai.key' => $apiKey ?? '']);
         app(AiManager::class)->forgetInstance();
+
+        if ($this->user === null) {
+            return true;
+        }
+
+        $batchStartedOnCredits = Cache::get($this->cacheKey('billing')) === 'credits';
+
+        return $apiKey !== null && ($this->billsPlatformCredits || ! $batchStartedOnCredits);
+    }
+
+    /**
+     * Stop the whole batch: remaining jobs are cancelled and the batch is
+     * reported as done so the editor merges the rows already processed and
+     * tells the user why the rest was skipped.
+     */
+    private function stopBatchForInsufficientCredits(): void
+    {
+        app(MassOperationService::class)->cancelBatch($this->sessionId, $this->operationType);
+        Cache::put($this->cacheKey('stopped'), 'insufficient_credits', ttl: 3600);
+
+        $this->broadcastProgress(forceDone: true);
     }
 
     // -------------------------------------------------------------------------
@@ -262,12 +291,12 @@ class MassOperationJob implements ShouldQueue
      * Read the current batch counters and broadcast a progress event.
      * When all rows have been processed, sets the status to 'done'.
      */
-    private function broadcastProgress(): void
+    private function broadcastProgress(bool $forceDone = false): void
     {
         $counters = Cache::many([$this->cacheKey('processed'), $this->cacheKey('failed')]);
         $processedCount = (int) ($counters[$this->cacheKey('processed')] ?? 0);
         $failedCount = (int) ($counters[$this->cacheKey('failed')] ?? 0);
-        $isDone = $processedCount >= $this->totalRows;
+        $isDone = $forceDone || $processedCount >= $this->totalRows;
 
         if ($isDone) {
             Cache::put($this->cacheKey('status'), 'done', ttl: 3600);

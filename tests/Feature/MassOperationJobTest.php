@@ -411,7 +411,7 @@ it('restores the platform key when the next job belongs to a platform-credit use
     expect(config('ai.providers.openai.key'))->toBe('sk-platform');
 });
 
-it('restores the platform key when the job has no user', function (): void {
+it('clears any leftover key when the job has no user', function (): void {
     Event::fake([MassOperationProgressEvent::class]);
     seedBatchCache('stress', 1);
     config([
@@ -431,7 +431,76 @@ it('restores the platform key when the job has no user', function (): void {
         app(RussianTextToSpeechService::class),
     );
 
-    expect(config('ai.providers.openai.key'))->toBe('sk-platform');
+    expect(config('ai.providers.openai.key'))->toBe('');
+});
+
+// ---------------------------------------------------------------------------
+// Credits: billing and stop when the balance runs out
+// ---------------------------------------------------------------------------
+
+/**
+ * Run one stress job for the given user against a mocked API that must not
+ * be called.
+ */
+function runStressJobWithoutApiCall(User $user, int $totalRows = 3): void
+{
+    test()->mock(RussianAccentService::class)
+        ->shouldReceive('textNeedsStressCorrection')->andReturn(true);
+    test()->mock(OpenAiTranslationService::class)
+        ->shouldNotReceive('correctRussianStressMarksWithUsage');
+
+    (new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, $totalRows, 'source', 'russian', $user->id))->handle(
+        app(RussianAccentService::class),
+        app(OpenAiTranslationService::class),
+        app(RussianTextToSpeechService::class),
+    );
+}
+
+it('stops the batch without calling the API when the user has neither credits nor key', function (): void {
+    Event::fake([MassOperationProgressEvent::class]);
+    seedBatchCache('stress', 3);
+    config(['ai.providers.openai.platform_key' => 'sk-platform']);
+
+    runStressJobWithoutApiCall(User::factory()->create(['openai_api_key' => null, 'credits' => 0]));
+
+    expect(config('ai.providers.openai.key'))->toBe('')
+        ->and(Cache::get(massOpCacheKey('stress', 'status')))->toBe('done')
+        ->and(Cache::get(massOpCacheKey('stress', 'cancelled')))->toBeTrue()
+        ->and(Cache::get(massOpCacheKey('stress', 'stopped')))->toBe('insufficient_credits');
+
+    Event::assertDispatched(MassOperationProgressEvent::class, fn ($event) => $event->status === 'done');
+});
+
+it('stops a batch started on credits instead of switching to the personal key', function (): void {
+    Event::fake([MassOperationProgressEvent::class]);
+    seedBatchCache('stress', 3);
+    Cache::put(massOpCacheKey('stress', 'billing'), 'credits', 3600);
+
+    runStressJobWithoutApiCall(User::factory()->create(['openai_api_key' => 'sk-personal-key-1234567890', 'credits' => 0]));
+
+    expect(Cache::get(massOpCacheKey('stress', 'stopped')))->toBe('insufficient_credits');
+});
+
+it('charges a job paid with credits down to 0 when its cost exceeds the balance', function (): void {
+    Event::fake([MassOperationProgressEvent::class]);
+    seedBatchCache('stress', 2);
+    Cache::put(massOpCacheKey('stress', 'billing'), 'credits', 3600);
+    $user = User::factory()->create(['openai_api_key' => null, 'credits' => 10]);
+
+    $this->mock(RussianAccentService::class)
+        ->shouldReceive('textNeedsStressCorrection')->andReturn(true);
+    $this->mock(OpenAiTranslationService::class)
+        ->shouldReceive('correctRussianStressMarksWithUsage')
+        ->andReturn(['text' => 'result', 'promptTokens' => 400, 'completionTokens' => 100]);
+
+    (new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 2, 'source', 'russian', $user->id))->handle(
+        app(RussianAccentService::class),
+        app(OpenAiTranslationService::class),
+        app(RussianTextToSpeechService::class),
+    );
+
+    expect($user->fresh()->credits)->toBe(0)
+        ->and(Cache::get(massOpCacheKey('stress', 'stopped')))->toBeNull();
 });
 
 // ---------------------------------------------------------------------------

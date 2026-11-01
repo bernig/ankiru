@@ -34,10 +34,16 @@ test('uses the platform key when the user has credits, even with a personal key'
     expect(config('ai.providers.openai.key'))->toBe('sk-platform');
 });
 
-test('uses the platform key for guests', function (): void {
+test('never falls back to the platform key for guests', function (): void {
     config(['ai.providers.openai.key' => 'sk-stale-personal-key']);
 
     runOpenAiKeyMiddleware(null);
 
-    expect(config('ai.providers.openai.key'))->toBe('sk-platform');
+    expect(config('ai.providers.openai.key'))->toBe('');
+});
+
+test('never falls back to the platform key without credits or personal key', function (): void {
+    runOpenAiKeyMiddleware(User::factory()->create(['openai_api_key' => null, 'credits' => 0]));
+
+    expect(config('ai.providers.openai.key'))->toBe('');
 });

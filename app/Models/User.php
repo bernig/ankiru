@@ -67,6 +67,20 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->credits > 0;
     }
 
+    /**
+     * OpenAI key for this user's AI calls: the platform key while purchased
+     * credits remain, otherwise the personal key. Null when neither applies:
+     * a user without credits never falls back to the platform key.
+     */
+    public function resolveOpenAiKey(): ?string
+    {
+        if ($this->usesPlatformCredits()) {
+            return config('ai.providers.openai.platform_key');
+        }
+
+        return $this->hasPersonalApiKey() ? $this->openai_api_key : null;
+    }
+
     public function canUseAi(): bool
     {
         return $this->hasPersonalApiKey() || $this->credits > 0;

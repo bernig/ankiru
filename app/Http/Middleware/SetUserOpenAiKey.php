@@ -13,12 +13,9 @@ class SetUserOpenAiKey
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $user = $request->user();
-
-        config(['ai.providers.openai.key' => $user && $user->openai_api_key && ! $user->usesPlatformCredits()
-            ? $user->openai_api_key
-            : config('ai.providers.openai.platform_key'),
-        ]);
+        // Always written (empty when unusable) so no key from a previous
+        // request or the platform default is ever left in place.
+        config(['ai.providers.openai.key' => $request->user()?->resolveOpenAiKey() ?? '']);
 
         return $next($request);
     }

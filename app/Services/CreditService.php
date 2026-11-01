@@ -22,8 +22,11 @@ class CreditService
     }
 
     /**
-     * Atomically deducts $amount credits.
-     * Returns false if balance is insufficient (no change applied).
+     * Atomically deducts $amount credits, flooring the balance at 0.
+     *
+     * Deductions happen after the AI call has been paid for, so a shortfall is
+     * still charged down to 0 instead of being skipped. Returns false when the
+     * balance did not cover the full amount.
      */
     public function deduct(User $user, int $amount): bool
     {
@@ -31,12 +34,16 @@ class CreditService
             return true;
         }
 
-        $affected = DB::table('users')
-            ->where('id', $user->id)
-            ->where('credits', '>=', $amount)
-            ->decrement('credits', $amount);
+        return DB::transaction(function () use ($user, $amount): bool {
+            $balance = (int) DB::table('users')->where('id', $user->id)->lockForUpdate()->value('credits');
+            $newBalance = max(0, $balance - $amount);
 
-        return $affected > 0;
+            DB::table('users')->where('id', $user->id)->update(['credits' => $newBalance]);
+
+            $user->forceFill(['credits' => $newBalance])->syncOriginalAttribute('credits');
+
+            return $balance >= $amount;
+        });
     }
 
     /**
