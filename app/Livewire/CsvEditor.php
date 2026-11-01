@@ -19,6 +19,7 @@ use App\Services\RowGenerationService;
 use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -732,6 +733,22 @@ class CsvEditor extends Component
      * Reset UI-only state that must be cleared whenever a different file is
      * opened (filters, search, rename input, TTS modal, pagination).
      */
+    /**
+     * Whether the current user can start an AI action estimated at
+     * $estimatedCredits. When the platform balance falls short, opens the
+     * credits shop and returns false; the caller then shows its own error.
+     */
+    private function ensureCanAfford(int $estimatedCredits): bool
+    {
+        if ($this->creditService->canAfford(Auth::user(), $estimatedCredits)) {
+            return true;
+        }
+
+        $this->dispatch('open-credits-shop');
+
+        return false;
+    }
+
     private function resetFiltersAndPagination(): void
     {
         $this->isRenamingFile = false;

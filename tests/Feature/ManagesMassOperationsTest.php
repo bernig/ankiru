@@ -6,6 +6,7 @@ use App\Jobs\MassOperationJob;
 use App\Livewire\CsvEditor;
 use App\Models\CsvDraft;
 use App\Models\User;
+use App\Services\CreditService;
 use App\Services\MassOperationService;
 use App\Services\OpenAiTranslationService;
 use App\Services\RussianAccentService;
@@ -619,7 +620,7 @@ it('a cancelled job skips processing', function () {
     $accentService = app(RussianAccentService::class);
     $translationService = app(OpenAiTranslationService::class);
 
-    $job->handle($accentService, app(OpenAiTranslationService::class), $ttsService);
+    $job->handle($accentService, app(OpenAiTranslationService::class), $ttsService, app(CreditService::class));
 });
 
 // ---------------------------------------------------------------------------

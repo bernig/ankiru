@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Enums\OperationType;
 use App\Events\MassOperationProgressEvent;
-use App\Models\ApiUsageLog;
 use App\Models\User;
 use App\Services\CreditService;
 use App\Services\MassOperationService;
@@ -78,6 +77,7 @@ class MassOperationJob implements ShouldQueue
         RussianAccentService $accentService,
         OpenAiTranslationService $translationService,
         RussianTextToSpeechService $ttsService,
+        CreditService $creditService,
     ): void {
         if (Cache::get($this->cacheKey('cancelled'))) {
             return;
@@ -96,8 +96,8 @@ class MassOperationJob implements ShouldQueue
             }
 
             match ($this->operationType) {
-                OperationType::Stress => $this->handleStressCorrection($accentService, $translationService),
-                OperationType::Tts => $this->handleTtsGeneration($ttsService),
+                OperationType::Stress => $this->handleStressCorrection($accentService, $translationService, $creditService),
+                OperationType::Tts => $this->handleTtsGeneration($ttsService, $creditService),
             };
         } catch (Throwable $exception) {
             Log::error('MassOperationJob row failed.', [
@@ -150,6 +150,7 @@ class MassOperationJob implements ShouldQueue
     private function handleStressCorrection(
         RussianAccentService $accentService,
         OpenAiTranslationService $translationService,
+        CreditService $creditService,
     ): void {
         // Skip rows that no longer need correction (e.g. edited manually after dispatch).
         if (! $accentService->textNeedsStressCorrection($this->russianText)) {
@@ -177,20 +178,14 @@ class MassOperationJob implements ShouldQueue
             ttl: 3600,
         );
 
-        if ($this->userId !== null && $result['promptTokens'] > 0) {
-            ApiUsageLog::create([
-                'user_id' => $this->userId,
-                'operation' => 'stress_correction',
-                'prompt_tokens' => $result['promptTokens'],
-                'completion_tokens' => $result['completionTokens'],
-            ]);
-
-            if ($this->billsPlatformCredits && $this->user !== null) {
-                app(CreditService::class)->deduct(
-                    $this->user,
-                    app(CreditService::class)->tokensToCredits($result['promptTokens'], $result['completionTokens']),
-                );
-            }
+        if ($this->user !== null && $result['promptTokens'] > 0) {
+            $creditService->recordTokenUsage(
+                $this->user,
+                'stress_correction',
+                $result['promptTokens'],
+                $result['completionTokens'],
+                billCredits: $this->billsPlatformCredits,
+            );
         }
     }
 
@@ -200,7 +195,7 @@ class MassOperationJob implements ShouldQueue
      * Accumulates the exact character count and generated-file count in shared
      * cache counters for post-batch reporting.
      */
-    private function handleTtsGeneration(RussianTextToSpeechService $ttsService): void
+    private function handleTtsGeneration(RussianTextToSpeechService $ttsService, CreditService $creditService): void
     {
         $normalizedText = $ttsService->normalizeForSpeech($this->russianText);
 
@@ -215,19 +210,8 @@ class MassOperationJob implements ShouldQueue
             Cache::increment($this->cacheKey('actual_chars'), $charCount);
             Cache::increment($this->cacheKey('generated'));
 
-            if ($this->userId !== null) {
-                ApiUsageLog::create([
-                    'user_id' => $this->userId,
-                    'operation' => 'tts',
-                    'characters' => $charCount,
-                ]);
-
-                if ($this->billsPlatformCredits && $this->user !== null) {
-                    app(CreditService::class)->deduct(
-                        $this->user,
-                        app(CreditService::class)->ttsCharsToCredits($charCount),
-                    );
-                }
+            if ($this->user !== null) {
+                $creditService->recordTtsUsage($this->user, $charCount, billCredits: $this->billsPlatformCredits);
             }
         }
     }

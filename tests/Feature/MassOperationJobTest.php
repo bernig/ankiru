@@ -4,6 +4,7 @@ use App\Enums\OperationType;
 use App\Events\MassOperationProgressEvent;
 use App\Jobs\MassOperationJob;
 use App\Models\User;
+use App\Services\CreditService;
 use App\Services\MassOperationService;
 use App\Services\OpenAiTranslationService;
 use App\Services\RussianAccentService;
@@ -82,6 +83,7 @@ it('writes corrected text to the per-row cache key', function (): void {
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 
     expect(Cache::get(massOpCacheKey('stress', 'row:3')))->toBe(['original' => $russianText, 'corrected' => $corrected]);
@@ -101,6 +103,7 @@ it('increments the processed counter after a successful stress job', function ()
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 
     expect((int) Cache::get(massOpCacheKey('stress', 'processed')))->toBe(1);
@@ -120,6 +123,7 @@ it('sets status to done when the last stress row is processed', function (): voi
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 
     expect(Cache::get(massOpCacheKey('stress', 'status')))->toBe('done');
@@ -140,6 +144,7 @@ it('broadcasts a MassOperationProgressEvent after a successful stress job', func
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 
     Event::assertDispatched(MassOperationProgressEvent::class, function ($event) use ($user): bool {
@@ -168,6 +173,7 @@ it('skips correction when the row no longer needs stress marks', function (): vo
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 
     // Processed counter still increments even when skipped.
@@ -194,11 +200,13 @@ it('accumulates exact token counts and increments corrected counter on success',
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
     (new MassOperationJob(OperationType::Stress, massOpSessionId(), 1, 2, 'src', 'russian'))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 
     expect((int) Cache::get(massOpCacheKey('stress', 'corrected')))->toBe(2);
@@ -225,6 +233,7 @@ it('records a failure and keeps the batch running when a stress API call throws'
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 
     expect((int) Cache::get(massOpCacheKey('stress', 'failed')))->toBe(1);
@@ -278,6 +287,7 @@ it('calls generateAudio with the russian text for a TTS job', function (): void 
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 
     expect((int) Cache::get(massOpCacheKey('tts', 'processed')))->toBe(1);
@@ -295,6 +305,7 @@ it('skips TTS generation when the russian text is empty', function (): void {
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 
     expect((int) Cache::get(massOpCacheKey('tts', 'processed')))->toBe(1);
@@ -312,6 +323,7 @@ it('sets status to done when the last TTS row is processed', function (): void {
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 
     expect(Cache::get(massOpCacheKey('tts', 'status')))->toBe('done');
@@ -342,6 +354,7 @@ it('records a failure and keeps the batch running when a TTS API call throws', f
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 
     expect((int) Cache::get(massOpCacheKey('tts', 'failed')))->toBe(1);
@@ -368,11 +381,13 @@ it('increments generated count and accumulates actual chars after a successful T
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
     (new MassOperationJob(OperationType::Tts, massOpSessionId(), 1, 2, '', $russianB))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 
     expect((int) Cache::get(massOpCacheKey('tts', 'generated')))->toBe(2);
@@ -406,6 +421,7 @@ it('restores the platform key when the next job belongs to a platform-credit use
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 
     $runJob(0, $personalKeyUser->id);
@@ -433,6 +449,7 @@ it('clears any leftover key when the job has no user', function (): void {
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 
     expect(config('ai.providers.openai.key'))->toBe('');
@@ -457,6 +474,7 @@ function runStressJobWithoutApiCall(User $user, int $totalRows = 3): void
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 }
 
@@ -501,6 +519,7 @@ it('charges a job paid with credits down to 0 when its cost exceeds the balance'
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 
     expect($user->fresh()->credits)->toBe(0)
@@ -548,6 +567,7 @@ it('does nothing for a job of a cancelled batch, even one still queued', functio
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 
     expect((int) Cache::get(massOpCacheKey('stress', 'processed')))->toBe(0)
@@ -569,5 +589,6 @@ it('still skips the job of a cancelled batch that waited hours in the queue', fu
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
+        app(CreditService::class),
     );
 });

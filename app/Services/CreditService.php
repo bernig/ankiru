@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ApiUsageLog;
 use App\Models\CreditPurchase;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +12,53 @@ class CreditService
     public const int TRANSLATION_ESTIMATED_CREDITS = 550;
 
     public const int STRESS_CORRECTION_ESTIMATED_CREDITS = 530;
+
+    /**
+     * Whether an AI action estimated at $estimatedCredits may start. Users on
+     * their own OpenAI key pay OpenAI directly, so the balance never blocks them.
+     */
+    public function canAfford(User $user, int $estimatedCredits): bool
+    {
+        return ! $user->usesPlatformCredits() || $this->hasEnoughCredits($user, $estimatedCredits);
+    }
+
+    /**
+     * Log a paid chat completion and, on platform credits, charge its tokens.
+     *
+     * @param  bool|null  $billCredits  Billing mode to apply; defaults to the user's
+     *                                  current one. Queued jobs pass the mode frozen at dispatch.
+     */
+    public function recordTokenUsage(User $user, string $operation, int $promptTokens, int $completionTokens, ?bool $billCredits = null): void
+    {
+        ApiUsageLog::create([
+            'user_id' => $user->id,
+            'operation' => $operation,
+            'prompt_tokens' => $promptTokens,
+            'completion_tokens' => $completionTokens,
+        ]);
+
+        if ($billCredits ?? $user->usesPlatformCredits()) {
+            $this->deduct($user, $this->tokensToCredits($promptTokens, $completionTokens));
+        }
+    }
+
+    /**
+     * Log a newly generated TTS file and, on platform credits, charge its characters.
+     *
+     * @param  bool|null  $billCredits  See recordTokenUsage().
+     */
+    public function recordTtsUsage(User $user, int $characters, ?bool $billCredits = null): void
+    {
+        ApiUsageLog::create([
+            'user_id' => $user->id,
+            'operation' => 'tts',
+            'characters' => $characters,
+        ]);
+
+        if ($billCredits ?? $user->usesPlatformCredits()) {
+            $this->deduct($user, $this->ttsCharsToCredits($characters));
+        }
+    }
 
     public function hasEnoughCredits(User $user, int $amount): bool
     {

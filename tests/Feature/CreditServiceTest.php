@@ -153,3 +153,24 @@ test('usesPlatformCredits : false quand credits = 0, avec ou sans clé', functio
     expect($withKey->usesPlatformCredits())->toBeFalse()
         ->and($withoutKey->usesPlatformCredits())->toBeFalse();
 });
+
+// ── canAfford / recordTokenUsage ────────────────────────────────────────────
+
+test('ne bloque jamais un utilisateur sans crédits, qui passe par sa propre clé', function (): void {
+    $service = app(CreditService::class);
+
+    expect($service->canAfford(User::factory()->create(['credits' => 0]), 5000))->toBeTrue()
+        ->and($service->canAfford(User::factory()->create(['credits' => 100]), 5000))->toBeFalse();
+});
+
+test('journalise la consommation et facture selon le mode figé au dispatch plutôt que le mode actuel', function (): void {
+    $user = User::factory()->create(['credits' => 1000]);
+    $service = app(CreditService::class);
+
+    $service->recordTokenUsage($user, 'stress_correction', 100, 50, billCredits: false);
+    expect($user->fresh()->credits)->toBe(1000);
+
+    $service->recordTokenUsage($user, 'translation', 100, 50);
+    expect($user->fresh()->credits)->toBe(850)
+        ->and($user->apiUsageLogs()->pluck('operation')->all())->toBe(['stress_correction', 'translation']);
+});

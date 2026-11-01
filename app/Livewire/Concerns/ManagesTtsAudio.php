@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Concerns;
 
-use App\Models\ApiUsageLog;
 use App\Services\CreditService;
 use App\Services\RussianTextToSpeechService;
 use Exception;
@@ -109,14 +108,10 @@ trait ManagesTtsAudio
         $user = Auth::user();
         $charCount = mb_strlen($normalizedText);
 
-        if ($user->usesPlatformCredits()) {
-            $estimatedCredits = $this->creditService->estimateCreditsForTts($charCount);
-            if (! $this->creditService->hasEnoughCredits($user, $estimatedCredits)) {
-                $this->ttsError = __('csv_editor.error_insufficient_credits');
-                $this->dispatch('open-credits-shop');
+        if (! $this->ensureCanAfford($this->creditService->estimateCreditsForTts($charCount))) {
+            $this->ttsError = __('csv_editor.error_insufficient_credits');
 
-                return;
-            }
+            return;
         }
 
         $this->ttsGeneratingRowIndex = $rowIndex;
@@ -125,19 +120,7 @@ trait ManagesTtsAudio
             $isNewGeneration = $this->ttsService->generateAudio($rawRussianText);
 
             if ($isNewGeneration) {
-                ApiUsageLog::create([
-                    'user_id' => Auth::id(),
-                    'operation' => 'tts',
-                    'characters' => $charCount,
-                ]);
-
-                if ($user->usesPlatformCredits()) {
-                    $this->creditService->deduct(
-                        $user,
-                        $this->creditService->ttsCharsToCredits($charCount),
-                    );
-                    $user->refresh();
-                }
+                $this->creditService->recordTtsUsage($user, $charCount);
             }
 
             $filenameHash = $this->ttsService->buildFilenameHash($rawRussianText);

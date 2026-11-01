@@ -181,15 +181,10 @@ trait ManagesMassOperations
             return;
         }
 
-        $user = Auth::user();
-
-        if ($user->usesPlatformCredits()) {
+        if (Auth::user()->usesPlatformCredits()) {
             $estimate = $this->massOperationService->estimateStressBatchCost($this->csvRows);
-            $requiredCredits = $estimate['inputTokens'] + $estimate['outputTokens'];
 
-            if (! app(CreditService::class)->hasEnoughCredits($user, $requiredCredits)) {
-                $this->dispatch('open-credits-shop');
-
+            if (! $this->ensureCanAfford($this->creditService->tokensToCredits($estimate['inputTokens'], $estimate['outputTokens']))) {
                 return;
             }
         }
@@ -243,15 +238,10 @@ trait ManagesMassOperations
             return;
         }
 
-        $user = Auth::user();
-
-        if ($user->usesPlatformCredits()) {
+        if (Auth::user()->usesPlatformCredits()) {
             $estimate = $this->massOperationService->estimateTtsBatchCost($this->csvRows);
-            $requiredCredits = app(CreditService::class)->ttsCharsToCredits($estimate['totalChars']);
 
-            if (! app(CreditService::class)->hasEnoughCredits($user, $requiredCredits)) {
-                $this->dispatch('open-credits-shop');
-
+            if (! $this->ensureCanAfford($this->creditService->ttsCharsToCredits($estimate['totalChars']))) {
                 return;
             }
         }

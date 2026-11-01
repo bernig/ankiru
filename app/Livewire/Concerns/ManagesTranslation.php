@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Concerns;
 
-use App\Models\ApiUsageLog;
 use App\Services\CreditService;
 use App\Services\OpenAiTranslationService;
 use App\Services\RussianAccentService;
@@ -63,9 +62,8 @@ trait ManagesTranslation
 
         $user = Auth::user();
 
-        if ($user->usesPlatformCredits() && ! $this->creditService->hasEnoughCredits($user, CreditService::TRANSLATION_ESTIMATED_CREDITS)) {
+        if (! $this->ensureCanAfford(CreditService::TRANSLATION_ESTIMATED_CREDITS)) {
             $this->translationError = __('csv_editor.error_insufficient_credits');
-            $this->dispatch('open-credits-shop');
 
             return;
         }
@@ -78,20 +76,7 @@ trait ManagesTranslation
             $this->csvRows[$rowIndex][1] = $result['text'];
             $this->autoSaveDraft();
 
-            ApiUsageLog::create([
-                'user_id' => Auth::id(),
-                'operation' => 'translation',
-                'prompt_tokens' => $result['promptTokens'],
-                'completion_tokens' => $result['completionTokens'],
-            ]);
-
-            if ($user->usesPlatformCredits()) {
-                $this->creditService->deduct(
-                    $user,
-                    $this->creditService->tokensToCredits($result['promptTokens'], $result['completionTokens']),
-                );
-                $user->refresh();
-            }
+            $this->creditService->recordTokenUsage($user, 'translation', $result['promptTokens'], $result['completionTokens']);
 
             $success = true;
         } catch (Exception $exception) {
@@ -132,9 +117,8 @@ trait ManagesTranslation
 
         $user = Auth::user();
 
-        if ($user->usesPlatformCredits() && ! $this->creditService->hasEnoughCredits($user, CreditService::STRESS_CORRECTION_ESTIMATED_CREDITS)) {
+        if (! $this->ensureCanAfford(CreditService::STRESS_CORRECTION_ESTIMATED_CREDITS)) {
             $this->translationError = __('csv_editor.error_insufficient_credits');
-            $this->dispatch('open-credits-shop');
 
             return;
         }
@@ -151,20 +135,7 @@ trait ManagesTranslation
             }
 
             if ($result['promptTokens'] > 0) {
-                ApiUsageLog::create([
-                    'user_id' => Auth::id(),
-                    'operation' => 'stress_correction',
-                    'prompt_tokens' => $result['promptTokens'],
-                    'completion_tokens' => $result['completionTokens'],
-                ]);
-
-                if ($user->usesPlatformCredits()) {
-                    $this->creditService->deduct(
-                        $user,
-                        $this->creditService->tokensToCredits($result['promptTokens'], $result['completionTokens']),
-                    );
-                    $user->refresh();
-                }
+                $this->creditService->recordTokenUsage($user, 'stress_correction', $result['promptTokens'], $result['completionTokens']);
             }
 
             $success = true;
