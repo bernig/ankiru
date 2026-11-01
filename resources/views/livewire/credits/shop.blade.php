@@ -1,13 +1,13 @@
 <div class="flex flex-1 flex-col space-y-5">
 
     {{-- Current balance --}}
-    <div class="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-5 py-4 dark:border-blue-900 dark:bg-blue-950/40">
+    <div class="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-5 py-4">
         <div>
-            <flux:text class="text-sm font-medium text-blue-700 dark:text-blue-300">{{ __('credits.your_balance') }}</flux:text>
-            <flux:text class="mt-0.5 text-xs text-blue-500 dark:text-blue-500">{{ __('credits.balance_description_short') }}</flux:text>
+            <flux:text class="text-sm font-medium text-blue-700">{{ __('credits.your_balance') }}</flux:text>
+            <flux:text class="mt-0.5 text-xs text-blue-500">{{ __('credits.balance_description_short') }}</flux:text>
         </div>
         <div class="text-right">
-            <div class="text-2xl font-bold tabular-nums text-blue-700 dark:text-blue-300">
+            <div class="text-2xl font-bold tabular-nums text-blue-700">
                 {{ number_format($balance, 0, ',', ' ') }}
             </div>
             <div class="text-xs text-blue-500">{{ __('credits.credits') }}</div>
@@ -31,7 +31,7 @@
             </div>
 
             {{-- Progress bar --}}
-            <div class="relative h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+            <div class="relative h-1.5 overflow-hidden rounded-full bg-zinc-100">
                 <div class="h-full rounded-full bg-blue-400 transition-all duration-200" style="width: {{ round((($this->quantity - $minQuantity) / max(1, $maxQuantity - $minQuantity)) * 100) }}%"></div>
             </div>
             <div class="flex justify-between text-xs text-zinc-400">
@@ -45,18 +45,18 @@
         {{-- Price breakdown --}}
         <div class="space-y-1.5">
             <div class="flex items-center justify-between text-sm">
-                <span class="text-zinc-600 dark:text-zinc-400">{{ __('credits.base_price') }}</span>
+                <span class="text-zinc-600">{{ __('credits.base_price') }}</span>
                 <span class="font-medium tabular-nums">{{ number_format($this->priceBreakdown['base_cents'] / 100, 2, ',', ' ') }} €</span>
             </div>
 
             @foreach ($this->priceBreakdown['fees'] as $fee)
                 <div class="flex items-center justify-between text-sm">
-                    <span class="text-zinc-400 dark:text-zinc-500">{{ $fee['label'] }}</span>
-                    <span class="tabular-nums text-zinc-400 dark:text-zinc-500">+ {{ number_format($fee['cents'] / 100, 2, ',', ' ') }} €</span>
+                    <span class="text-zinc-400">{{ $fee['label'] }}</span>
+                    <span class="tabular-nums text-zinc-400">+ {{ number_format($fee['cents'] / 100, 2, ',', ' ') }} €</span>
                 </div>
             @endforeach
 
-            <div class="mt-2 flex items-center justify-between border-t border-zinc-100 pt-2 dark:border-zinc-800">
+            <div class="mt-2 flex items-center justify-between border-t border-zinc-100 pt-2">
                 <span class="font-semibold">{{ __('credits.total') }}</span>
                 <span class="text-xl font-bold tabular-nums">{{ number_format($this->priceBreakdown['total_cents'] / 100, 2, ',', ' ') }} €</span>
             </div>

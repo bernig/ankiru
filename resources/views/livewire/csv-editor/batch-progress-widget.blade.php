@@ -12,22 +12,22 @@
         silently hidden.
 --}}
 @if ($stressBatchStatus !== 'idle' || $ttsBatchStatus !== 'idle')
-    <div class="fixed inset-x-4 bottom-4 z-50 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl sm:inset-x-auto sm:right-4 sm:w-72 dark:border-zinc-700 dark:bg-zinc-900" x-data="{ dismissed: false }" x-effect="if ($wire.stressBatchStatus === 'running' || $wire.ttsBatchStatus === 'running') dismissed = false" x-show="! dismissed" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-y-4 opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-4 opacity-0">
+    <div class="fixed inset-x-4 bottom-4 z-50 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl sm:inset-x-auto sm:right-4 sm:w-72" x-data="{ dismissed: false }" x-effect="if ($wire.stressBatchStatus === 'running' || $wire.ttsBatchStatus === 'running') dismissed = false" x-show="! dismissed" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-y-4 opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-4 opacity-0">
 
         {{-- Widget header row --}}
-        <div class="flex items-center justify-between border-b border-zinc-100 px-3 py-2 dark:border-zinc-800">
-            <flux:text class="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+        <div class="flex items-center justify-between border-b border-zinc-100 px-3 py-2">
+            <flux:text class="text-xs font-semibold text-zinc-600">
                 {{ __('csv_editor.bulk_actions') }}
             </flux:text>
 
             <div class="flex items-center gap-3">
                 {{-- "Details" link - re-opens the Bulk Actions modal --}}
-                <button class="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300" type="button" x-on:click="$flux.modal('bulk-actions').show()">
+                <button class="text-xs text-blue-500 hover:text-blue-600" type="button" x-on:click="$flux.modal('bulk-actions').show()">
                     {{ __('csv_editor.bulk_widget_details') }}
                 </button>
 
                 {{-- Dismiss button - only available when nothing is running --}}
-                <button class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300" type="button" title="{{ __('csv_editor.bulk_widget_dismiss') }}" aria-label="{{ __('csv_editor.bulk_widget_dismiss') }}" x-show="$wire.stressBatchStatus !== 'running' && $wire.ttsBatchStatus !== 'running'" x-on:click="dismissed = true">
+                <button class="text-zinc-400 hover:text-zinc-600" type="button" title="{{ __('csv_editor.bulk_widget_dismiss') }}" aria-label="{{ __('csv_editor.bulk_widget_dismiss') }}" x-show="$wire.stressBatchStatus !== 'running' && $wire.ttsBatchStatus !== 'running'" x-on:click="dismissed = true">
                     <flux:icon.x-mark class="size-3.5" />
                 </button>
             </div>
@@ -40,7 +40,7 @@
             @if ($stressBatchStatus !== 'idle')
                 <div class="flex flex-col gap-1.5">
                     <div class="flex items-center justify-between gap-2">
-                        <div class="flex min-w-0 items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+                        <div class="flex min-w-0 items-center gap-1.5 text-xs text-zinc-600">
                             <flux:icon.sparkles class="size-3.5 shrink-0" />
                             <span class="truncate">{{ __('csv_editor.bulk_stress_title') }}</span>
                         </div>
@@ -67,7 +67,7 @@
                             </span>
                         @endif
                     @else
-                        <div class="text-xs text-zinc-400 dark:text-zinc-500">
+                        <div class="text-xs text-zinc-400">
                             @if ($stressBatchCorrectedCount > 0)
                                 {{ __('csv_editor.bulk_report_corrected', ['count' => number_format($stressBatchCorrectedCount)]) }}
                             @endif
@@ -86,7 +86,7 @@
             @if ($ttsBatchStatus !== 'idle')
                 <div class="flex flex-col gap-1.5">
                     <div class="flex items-center justify-between gap-2">
-                        <div class="flex min-w-0 items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+                        <div class="flex min-w-0 items-center gap-1.5 text-xs text-zinc-600">
                             <flux:icon.musical-note class="size-3.5 shrink-0" />
                             <span class="truncate">{{ __('csv_editor.bulk_tts_title') }}</span>
                         </div>
@@ -113,7 +113,7 @@
                             </span>
                         @endif
                     @else
-                        <div class="text-xs text-zinc-400 dark:text-zinc-500">
+                        <div class="text-xs text-zinc-400">
                             @if ($ttsBatchGeneratedCount > 0)
                                 {{ __('csv_editor.bulk_report_generated', ['count' => number_format($ttsBatchGeneratedCount)]) }}
                             @endif

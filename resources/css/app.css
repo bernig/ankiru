@@ -8,6 +8,11 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+/*
+ * The app has no dark mode: nothing adds the .dark class (no @fluxAppearance).
+ * Keep this line anyway, so the dark: classes inside Flux components stay off;
+ * without it Tailwind would follow the system dark mode.
+ */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Re-assign Flux's gray of choice... */
@@ -29,14 +34,6 @@
     --color-accent: var(--color-yellow-400);
     --color-accent-content: var(--color-yellow-600);
     --color-accent-foreground: var(--color-yellow-950);
-}
-
-@layer theme {
-    .dark {
-        --color-accent: var(--color-yellow-400);
-        --color-accent-content: var(--color-yellow-400);
-        --color-accent-foreground: var(--color-yellow-950);
-    }
 }
 
 /* Hide elements marked with x-cloak until Alpine initializes */

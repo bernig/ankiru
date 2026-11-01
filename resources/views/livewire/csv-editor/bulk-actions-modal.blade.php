@@ -31,7 +31,7 @@
         @endif
 
         {{-- ── Section A: Stress-mark correction ──────────────────────────── --}}
-        <div class="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-700">
+        <div class="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4">
 
             {{-- Section header --}}
             <div class="flex items-center gap-2">
@@ -77,7 +77,7 @@
                 <div class="flex flex-col gap-3" wire:loading.remove wire:target="openBulkActionsModal">
                     {{-- Previous-run summary (only visible after a batch has completed) --}}
                     @if ($stressBatchStatus === 'done')
-                        <div class="rounded-md bg-zinc-50 px-3 py-2 text-xs text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-400">
+                        <div class="rounded-md bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
                             <span class="font-medium">{{ __('csv_editor.bulk_last_run') }} :</span>
 
                             @if ($stressBatchCorrectedCount > 0)
@@ -101,7 +101,7 @@
 
                     {{-- Current state: all done checkmark OR estimate + run button --}}
                     @if ($missingStressRowCount === 0)
-                        <div class="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+                        <div class="flex items-center gap-2 text-sm text-zinc-500">
                             <flux:icon.check-circle class="size-4 shrink-0 text-green-500" />
                             {{ __('csv_editor.bulk_all_stress_done') }}
                         </div>
@@ -110,7 +110,7 @@
                             {{ trans_choice('csv_editor.bulk_rows_need_stress', $missingStressRowCount, ['count' => number_format($missingStressRowCount)]) }}
                         </flux:text>
 
-                        <flux:text class="text-xs text-zinc-400 dark:text-zinc-500">
+                        <flux:text class="text-xs text-zinc-400">
                             {{ __('csv_editor.bulk_estimate_tokens', [
                                 'input' => number_format($estimatedStressInputTokens),
                                 'output' => number_format($estimatedStressOutputTokens),
@@ -130,7 +130,7 @@
         </div>
 
         {{-- ── Section B: TTS audio generation ────────────────────────────── --}}
-        <div class="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-700">
+        <div class="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4">
 
             {{-- Section header --}}
             <div class="flex items-center gap-2">
@@ -176,7 +176,7 @@
                 <div class="flex flex-col gap-3" wire:loading.remove wire:target="openBulkActionsModal">
                     {{-- Previous-run summary (only visible after a batch has completed) --}}
                     @if ($ttsBatchStatus === 'done')
-                        <div class="rounded-md bg-zinc-50 px-3 py-2 text-xs text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-400">
+                        <div class="rounded-md bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
                             <span class="font-medium">{{ __('csv_editor.bulk_last_run') }} :</span>
 
                             @if ($ttsBatchGeneratedCount > 0)
@@ -197,7 +197,7 @@
 
                     {{-- Current state: all done checkmark OR estimate + run button --}}
                     @if ($missingAudioRowCount === 0)
-                        <div class="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+                        <div class="flex items-center gap-2 text-sm text-zinc-500">
                             <flux:icon.check-circle class="size-4 shrink-0 text-green-500" />
                             {{ __('csv_editor.bulk_all_audio_done') }}
                         </div>
@@ -206,7 +206,7 @@
                             {{ trans_choice('csv_editor.bulk_rows_missing_audio', $missingAudioRowCount, ['count' => number_format($missingAudioRowCount)]) }}
                         </flux:text>
 
-                        <flux:text class="text-xs text-zinc-400 dark:text-zinc-500">
+                        <flux:text class="text-xs text-zinc-400">
                             {{ __('csv_editor.bulk_estimate_chars', [
                                 'chars' => number_format($estimatedTtsChars),
                                 'cost' => number_format($estimatedTtsCost, 4),

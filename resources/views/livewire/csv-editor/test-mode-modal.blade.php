@@ -58,7 +58,7 @@
 
             {{-- ── Deck vide ── --}}
             <div class="flex flex-col items-center gap-4 py-6 text-center">
-                <flux:icon.rectangle-stack class="size-14 text-zinc-300 dark:text-zinc-600" />
+                <flux:icon.rectangle-stack class="size-14 text-zinc-300" />
                 <flux:heading size="lg">{{ __('csv_editor.practice_empty') }}</flux:heading>
                 <flux:text class="text-zinc-500">{{ __('csv_editor.practice_empty_description') }}</flux:text>
             </div>
@@ -83,7 +83,7 @@
                 {{-- ── Autoplay toggle ── --}}
                 <div class="mr-10 flex justify-end">
                     <flux:tooltip :content="__('csv_editor.practice_autoplay_tooltip')">
-                        <button class="{{ $testAutoplay ? 'text-purple-600' : 'text-zinc-400 dark:text-zinc-500' }} shrink-0 rounded-full p-1 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-700" wire:click="$toggle('testAutoplay')">
+                        <button class="{{ $testAutoplay ? 'text-purple-600' : 'text-zinc-400' }} shrink-0 rounded-full p-1 transition-colors hover:bg-zinc-100" wire:click="$toggle('testAutoplay')">
                             @if ($testAutoplay)
                                 <flux:icon.speaker-wave class="size-4" />
                             @else
@@ -98,15 +98,15 @@
 
                     {{-- Recto (texte source) --}}
                     <div class="flex min-h-28 flex-col items-center justify-center gap-2 py-2 text-center">
-                        <p class="text-xl font-medium text-zinc-900 sm:text-2xl dark:text-zinc-100" x-html="window.csvAccentMode.sanitizeRichText($wire.testCards[$wire.testQueue[$wire.testQueuePosition]]?.[0] ?? '')"></p>
+                        <p class="text-xl font-medium text-zinc-900 sm:text-2xl" x-html="window.csvAccentMode.sanitizeRichText($wire.testCards[$wire.testQueue[$wire.testQueuePosition]]?.[0] ?? '')"></p>
                     </div>
 
                     {{-- Séparateur + verso (affiché quand retourné) --}}
                     <div x-show="$wire.testCardFlipped" x-cloak>
-                        <div class="my-4 border-t border-zinc-100 dark:border-zinc-700"></div>
+                        <div class="my-4 border-t border-zinc-100"></div>
 
                         <div class="flex flex-col items-center gap-3 py-2 text-center">
-                            <div class="cursor-default text-xl font-medium text-zinc-900 sm:text-2xl dark:text-zinc-100" x-html="window.csvAccentMode.buildHtml($wire.testCards[$wire.testQueue[$wire.testQueuePosition]]?.[1] ?? '')" @click="
+                            <div class="cursor-default text-xl font-medium text-zinc-900 sm:text-2xl" x-html="window.csvAccentMode.buildHtml($wire.testCards[$wire.testQueue[$wire.testQueuePosition]]?.[1] ?? '')" @click="
                                     const t = $wire.testCards[$wire.testQueue[$wire.testQueuePosition]]?.[1] ?? '';
                                     window.csvAccentMode.invalidateCache(t);
                                     window.csvAccentMode.handleClick($event, $wire, 'cell', $wire.testQueue[$wire.testQueuePosition], 1)

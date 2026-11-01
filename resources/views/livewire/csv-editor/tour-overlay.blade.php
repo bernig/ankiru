@@ -26,12 +26,12 @@
     <div class="pointer-events-none fixed z-[9998] rounded-lg transition-all duration-300 ease-out" x-show="$store.tour.active && $store.tour.rect" :style="$store.tour.spotlightStyle"></div>
 
     {{-- Instruction card --}}
-    <div class="fixed inset-x-4 bottom-4 z-[9999] mx-auto max-w-md rounded-xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-700 dark:bg-zinc-800" x-show="$store.tour.active" x-transition @click.stop>
+    <div class="fixed inset-x-4 bottom-4 z-[9999] mx-auto max-w-md rounded-xl border border-zinc-200 bg-white p-5 shadow-xl" x-show="$store.tour.active" x-transition @click.stop>
         <template x-if="$store.tour.current">
             <div class="flex flex-col gap-3">
                 <div class="flex items-start justify-between gap-2">
                     <flux:heading size="sm" x-text="$store.tour.current.title"></flux:heading>
-                    <button class="shrink-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300" type="button" title="{{ __('csv_editor.tour_skip') }}" @click="$store.tour.stop()">
+                    <button class="shrink-0 text-zinc-400 hover:text-zinc-600" type="button" title="{{ __('csv_editor.tour_skip') }}" @click="$store.tour.stop()">
                         <flux:icon.x-mark class="size-4" />
                     </button>
                 </div>
@@ -42,7 +42,7 @@
                     <span class="text-xs text-zinc-400" x-text="($store.tour.stepIndex + 1) + ' / ' + $store.tour.steps.length"></span>
 
                     <div class="flex items-center gap-3">
-                        <button class="cursor-pointer text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300" type="button" @click="$store.tour.stop()">
+                        <button class="cursor-pointer text-sm text-zinc-500 hover:text-zinc-700" type="button" @click="$store.tour.stop()">
                             {{ __('csv_editor.tour_skip') }}
                         </button>
                         <flux:button size="sm" variant="ghost" x-show="$store.tour.stepIndex > 0" @click="$store.tour.prev()">

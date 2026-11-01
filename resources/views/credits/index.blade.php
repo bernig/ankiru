@@ -16,8 +16,8 @@
 
                 {{-- Option header --}}
                 <div class="mb-4 flex items-start gap-4">
-                    <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
-                        <flux:icon class="size-5 text-zinc-600 dark:text-zinc-400" name="key" variant="outline" />
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-zinc-100">
+                        <flux:icon class="size-5 text-zinc-600" name="key" variant="outline" />
                     </div>
                     <div>
                         <div class="flex flex-wrap items-center gap-2">
@@ -36,9 +36,9 @@
             {{-- Divider --}}
             <div class="flex items-center justify-center">
                 <div class="my-8 flex items-center gap-3 lg:mx-8 lg:my-0 lg:flex-col">
-                    <div class="h-px flex-1 bg-zinc-200 lg:h-full lg:w-px dark:bg-zinc-700"></div>
-                    <span class="shrink-0 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-400 dark:border-zinc-700 dark:bg-zinc-900">{{ __('credits.or') }}</span>
-                    <div class="h-px flex-1 bg-zinc-200 lg:h-full lg:w-px dark:bg-zinc-700"></div>
+                    <div class="h-px flex-1 bg-zinc-200 lg:h-full lg:w-px"></div>
+                    <span class="shrink-0 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-400">{{ __('credits.or') }}</span>
+                    <div class="h-px flex-1 bg-zinc-200 lg:h-full lg:w-px"></div>
                 </div>
             </div>
 
@@ -47,8 +47,8 @@
 
                 {{-- Option header --}}
                 <div class="mb-4 flex items-start gap-4">
-                    <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-950">
-                        <flux:icon class="size-5 text-blue-600 dark:text-blue-400" name="credit-card" variant="outline" />
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-50">
+                        <flux:icon class="size-5 text-blue-600" name="credit-card" variant="outline" />
                     </div>
                     <div>
                         <div class="flex flex-wrap items-center gap-2">

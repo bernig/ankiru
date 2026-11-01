@@ -13,12 +13,12 @@
                 <flux:heading size="lg">{{ trans_choice('csv_editor.generate_rows_success_title', count($generatedRows), ['count' => count($generatedRows)]) }}</flux:heading>
             </div>
 
-            <div class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
+            <div class="overflow-hidden rounded-lg border border-zinc-200">
                 @foreach ($generatedRows as $pair)
-                    <div class="flex items-start gap-3 px-4 py-2.5 text-sm odd:bg-white even:bg-zinc-50 dark:odd:bg-zinc-800/40 dark:even:bg-zinc-800/20">
-                        <span class="min-w-0 flex-1 text-zinc-600 dark:text-zinc-400">{{ $pair['source'] }}</span>
-                        <flux:icon.arrow-right class="mt-0.5 size-4 shrink-0 text-zinc-300 dark:text-zinc-600" />
-                        <span class="min-w-0 flex-1 font-medium text-zinc-900 dark:text-zinc-100">{!! str_replace(['&lt;b&gt;', '&lt;/b&gt;'], ['<b>', '</b>'], e(strip_tags($pair['russian'], '<b>'))) !!}</span>
+                    <div class="flex items-start gap-3 px-4 py-2.5 text-sm odd:bg-white even:bg-zinc-50">
+                        <span class="min-w-0 flex-1 text-zinc-600">{{ $pair['source'] }}</span>
+                        <flux:icon.arrow-right class="mt-0.5 size-4 shrink-0 text-zinc-300" />
+                        <span class="min-w-0 flex-1 font-medium text-zinc-900">{!! str_replace(['&lt;b&gt;', '&lt;/b&gt;'], ['<b>', '</b>'], e(strip_tags($pair['russian'], '<b>'))) !!}</span>
                     </div>
                 @endforeach
             </div>
@@ -72,7 +72,7 @@
                             ]) }}
                         </flux:text>
                     @else
-                        <flux:text class="text-xs text-amber-600 dark:text-amber-400">
+                        <flux:text class="text-xs text-amber-600">
                             {{ __('csv_editor.generate_rows_include_existing_count_only', [
                                 'count' => $cost['existingCount'],
                             ]) }}
@@ -94,7 +94,7 @@
             </flux:field>
 
             {{-- Indicateur de coût --}}
-            <div class="flex items-center gap-2 rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-400">
+            <div class="flex items-center gap-2 rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
                 <flux:icon.information-circle class="size-4 shrink-0" />
                 <span>{{ __('csv_editor.generate_rows_cost_hint', [
                     'cost' => '$' . number_format($cost['totalCost'], 3),

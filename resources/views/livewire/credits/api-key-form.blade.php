@@ -3,10 +3,10 @@
     @if ($this->hasOpenAiKey)
 
         {{-- Key is set --}}
-        <div class="flex items-center gap-3 rounded-xl border border-green-100 bg-green-50 px-4 py-3 dark:border-green-900 dark:bg-green-950/40">
+        <div class="flex items-center gap-3 rounded-xl border border-green-100 bg-green-50 px-4 py-3">
             <flux:icon class="size-5 shrink-0 text-green-500" name="check-circle" variant="solid" />
             <div class="flex min-w-0 flex-1 items-center justify-between gap-3">
-                <flux:text class="text-sm font-medium text-green-700 dark:text-green-300">
+                <flux:text class="text-sm font-medium text-green-700">
                     {{ __('profile.api_key_set') }}
                 </flux:text>
                 <flux:button class="hover:bg-red-50! text-red-500! hover:text-red-600! shrink-0" icon="trash" icon:variant="outline" wire:click="clearApiKey" wire:confirm="{{ __('profile.api_key_clear_confirm') }}" variant="ghost" size="xs">
@@ -70,7 +70,7 @@
                 {{-- Card view (mobile) --}}
                 <div class="space-y-2 sm:hidden">
                     @foreach ($this->usageStats as $stat)
-                        <div class="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
+                        <div class="rounded-lg border border-zinc-200 p-3">
                             <div class="mb-2 text-sm font-semibold">{{ __('profile.operation_' . $stat['operation']) }}</div>
                             <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                                 <span class="text-zinc-500">{{ __('profile.stats_calls') }}</span>
@@ -84,7 +84,7 @@
                             </div>
                         </div>
                     @endforeach
-                    <div class="rounded-lg border border-zinc-300 bg-zinc-50 p-3 dark:border-zinc-600 dark:bg-zinc-800">
+                    <div class="rounded-lg border border-zinc-300 bg-zinc-50 p-3">
                         <div class="mb-2 text-sm font-semibold">{{ __('profile.stats_total') }}</div>
                         <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                             <span class="text-zinc-500">{{ __('profile.stats_calls') }}</span>
@@ -125,7 +125,7 @@
         </form>
 
         {{-- Help note --}}
-        <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800/50">
+        <div class="rounded-lg bg-zinc-50 p-4">
             <flux:text class="text-sm text-zinc-500">{{ __('credits.api_key_help') }}</flux:text>
         </div>
 
