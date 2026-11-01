@@ -22,7 +22,7 @@
 
     {{-- ── Pencil column: edit source text (hidden on mobile, modal handles editing) ── --}}
     <flux:table.cell class="py-2! whitespace-nowrap px-2 first:ps-2 last:pe-2 max-sm:hidden">
-        <div class="flex items-center whitespace-nowrap rounded-full border border-zinc-200 bg-white opacity-0 transition-opacity group-hover:opacity-100 [@media(hover:none)]:opacity-100" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 0">
+        <div class="flex items-center whitespace-nowrap rounded-full border border-zinc-200 bg-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 0">
             <flux:tooltip content="{{ __('csv_editor.edit_source_text') }}" position="top">
                 <button class="cursor-pointer rounded text-zinc-400 hover:text-blue-500" @click.stop="$store.csvEditing.rowIndex = rowIndex; $store.csvEditing.columnIndex = 0; $nextTick(() => $refs.input_0?.focus())">
                     <flux:icon.pencil class="m-2 size-4" />
@@ -34,7 +34,7 @@
     {{-- ── Column 1: Russian text (accent mode) ── --}}
     <flux:table.cell class="py-2! max-sm:border-t-0! px-2! w-1/2 whitespace-normal first:ps-2 last:pe-2 max-sm:block max-sm:w-full max-sm:pb-0 max-sm:pt-1">
         <div class="flex items-center gap-1" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1">
-            <div class="grow cursor-default" x-html="window.csvAccentMode.buildHtml($wire.pageRows[rowIndex]?.[1] ?? '')" @click="window.csvAccentMode.invalidateCache($wire.pageRows[rowIndex]?.[1] ?? ''); window.csvAccentMode.handleClick($event, $wire, 'cell', rowIndex, 1)"></div>
+            <div class="grow cursor-default rounded focus-visible:outline-2 focus-visible:outline-blue-300" role="group" aria-label="{{ __('csv_editor.accent_cell_keyboard_hint') }}" tabindex="0" x-html="window.csvAccentMode.buildHtml($wire.pageRows[rowIndex]?.[1] ?? '')" @click="window.csvAccentMode.invalidateCache($wire.pageRows[rowIndex]?.[1] ?? ''); window.csvAccentMode.handleClick($event, $wire, 'cell', rowIndex, 1)" @keydown="window.csvAccentMode.invalidateCache($wire.pageRows[rowIndex]?.[1] ?? ''); window.csvAccentMode.handleKeydown($event, $wire, 'cell', rowIndex, 1)"></div>
             <flux:icon.check-circle class="size-5 shrink-0 text-green-500 transition-opacity duration-500" x-show="rowAiResult?.success" x-transition:leave="opacity-0" />
             <flux:icon.x-circle class="size-5 shrink-0 text-red-500 transition-opacity duration-500" x-show="rowAiResult && !rowAiResult.success" x-transition:leave="opacity-0" />
         </div>
@@ -55,9 +55,9 @@
         {{-- Desktop: hover-reveal action buttons ── --}}
         <div class="flex justify-end gap-2 max-sm:hidden">
             @if (!empty(trim($row[0] ?? '')) || !empty(trim($row[1] ?? '')))
-                <div class="flex items-center whitespace-nowrap rounded-full border border-zinc-200 bg-white px-1 opacity-0 transition-opacity group-hover:opacity-100 [@media(hover:none)]:opacity-100">
+                <div class="flex items-center whitespace-nowrap rounded-full border border-zinc-200 bg-white px-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100">
                     <flux:tooltip content="{{ __('csv_editor.edit_russian_text') }}" position="top">
-                        <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-blue-500 group-hover:opacity-100 [@media(hover:none)]:opacity-100" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1" @click.stop="$store.csvEditing.rowIndex = rowIndex; $store.csvEditing.columnIndex = 1; $nextTick(() => $refs.input_1?.focus())">
+                        <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-blue-500 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 1" @click.stop="$store.csvEditing.rowIndex = rowIndex; $store.csvEditing.columnIndex = 1; $nextTick(() => $refs.input_1?.focus())">
                             <flux:icon.pencil class="mx-1 my-2 size-4" />
                         </button>
                     </flux:tooltip>
@@ -65,7 +65,7 @@
                     @if (!empty(trim($row[1] ?? '')))
                         <flux:tooltip content="{{ $this->isTtsBatchRunning ? __('csv_editor.bulk_tts_in_progress') : __('csv_editor.open_audio_player') }}" position="top">
                             <span>
-                                <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 [@media(hover:none)]:opacity-100" type="button" wire:click="openTtsModal({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})" @disabled($this->isTtsBatchRunning)>
+                                <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100" type="button" aria-label="{{ $this->isTtsBatchRunning ? __('csv_editor.bulk_tts_in_progress') : __('csv_editor.open_audio_player') }}" wire:click="openTtsModal({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})" @disabled($this->isTtsBatchRunning)>
                                     <span wire:loading.attr="disabled" wire:target="openTtsModal({{ $rowIndex }})">
                                         <flux:icon.speaker-wave class="mx-1 my-2 size-4" />
                                     </span>
@@ -76,7 +76,7 @@
 
                     @if (!empty(trim($row[0] ?? '')) && empty(trim($row[1] ?? '')))
                         <flux:tooltip content="{{ __('csv_editor.translate_with_chatgpt') }}" position="top">
-                            <button class="cursor-pointer rounded px-0 text-zinc-400 opacity-0 transition-opacity hover:text-violet-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 [@media(hover:none)]:opacity-100" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
+                            <button class="cursor-pointer rounded px-0 text-zinc-400 opacity-0 transition-opacity hover:text-violet-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
                                 <span wire:loading wire:target="translateWithChatGpt({{ $rowIndex }})">
                                     <flux:icon.arrow-path class="mx-1 my-2 size-4 animate-spin" />
                                 </span>
@@ -89,7 +89,7 @@
 
                     @if (!empty(trim($row[0] ?? '')) && !empty(trim($row[1] ?? '')))
                         <flux:tooltip content="{{ __('csv_editor.retranslate_with_chatgpt') }}" position="top">
-                            <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-violet-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 [@media(hover:none)]:opacity-100" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
+                            <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-violet-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100" wire:click="translateWithChatGpt({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="translateWithChatGpt({{ $rowIndex }})">
                                 <span wire:loading wire:target="translateWithChatGpt({{ $rowIndex }})">
                                     <flux:icon.arrow-path class="mx-1 my-2 size-4 animate-spin" />
                                 </span>
@@ -103,7 +103,7 @@
                     @if (!empty(trim($row[1] ?? '')))
                         <flux:tooltip content="{{ $this->isStressBatchRunning ? __('csv_editor.bulk_stress_in_progress') : __('csv_editor.fix_stress_marks') }}" position="top">
                             <span>
-                                <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-orange-500 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 [@media(hover:none)]:opacity-100" wire:click="correctStressMarks({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="correctStressMarks({{ $rowIndex }})" @disabled($this->isStressBatchRunning)>
+                                <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-orange-500 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100" aria-label="{{ $this->isStressBatchRunning ? __('csv_editor.bulk_stress_in_progress') : __('csv_editor.fix_stress_marks') }}" wire:click="correctStressMarks({{ $rowIndex }})" wire:loading.attr="disabled" wire:target="correctStressMarks({{ $rowIndex }})" @disabled($this->isStressBatchRunning)>
                                     <span wire:loading wire:target="correctStressMarks({{ $rowIndex }})">
                                         <flux:icon.arrow-path class="mx-1 my-2 size-4 animate-spin" />
                                     </span>
@@ -116,12 +116,12 @@
                     @endif
                 </div>
 
-                <flux:separator class="my-1 opacity-0 transition-opacity group-hover:opacity-75 [@media(hover:none)]:opacity-75" vertical />
+                <flux:separator class="my-1 opacity-0 transition-opacity group-hover:opacity-75 group-focus-within:opacity-75 [@media(hover:none)]:opacity-75" vertical />
             @endif
 
-            <div class="flex items-center whitespace-nowrap rounded-full border border-zinc-200 bg-white opacity-0 transition-opacity group-hover:opacity-100 [@media(hover:none)]:opacity-100">
+            <div class="flex items-center whitespace-nowrap rounded-full border border-zinc-200 bg-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100">
                 <flux:tooltip content="{{ __('csv_editor.delete_row') }}" position="top">
-                    <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-red-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 [@media(hover:none)]:opacity-100" wire:loading.attr="disabled" wire:target="deleteRow({{ $rowIndex }})" @click="($wire.pageRows[rowIndex]?.[1] ?? '').trim() ? $dispatch('request-delete-row', { rowIndex }) : $wire.deleteRow(rowIndex)">
+                    <button class="cursor-pointer rounded text-zinc-400 opacity-0 transition-opacity hover:text-red-500 disabled:cursor-wait disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100" wire:loading.attr="disabled" wire:target="deleteRow({{ $rowIndex }})" @click="($wire.pageRows[rowIndex]?.[1] ?? '').trim() ? $dispatch('request-delete-row', { rowIndex }) : $wire.deleteRow(rowIndex)">
                         <span wire:loading wire:target="deleteRow({{ $rowIndex }})"><flux:icon.arrow-path class="m-2 size-4 animate-spin" /></span>
                         <span wire:loading.remove wire:target="deleteRow({{ $rowIndex }})">
                             <flux:icon.trash class="m-2 size-4" />

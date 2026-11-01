@@ -22,12 +22,12 @@
             <flux:text class="text-sm font-medium">{{ __('credits.configure_purchase') }}</flux:text>
 
             <div class="flex items-center gap-3">
-                <flux:button class="rounded-full!" square size="sm" variant="ghost" icon="minus" wire:click="decrement" :disabled="$this->quantity <= $minQuantity" />
+                <flux:button class="rounded-full!" square size="sm" variant="ghost" icon="minus" :aria-label="__('credits.decrease_quantity')" wire:click="decrement" :disabled="$this->quantity <= $minQuantity" />
                 <div class="flex min-w-0 flex-1 flex-col items-center">
                     <span class="text-3xl font-bold tabular-nums leading-none">{{ number_format($this->priceBreakdown['total_credits'] / 1000, 0, ',', ' ') }}k</span>
                     <span class="mt-1 text-xs text-zinc-400">{{ __('credits.credits') }}</span>
                 </div>
-                <flux:button class="rounded-full!" square size="sm" variant="ghost" icon="plus" wire:click="increment" :disabled="$this->quantity >= $maxQuantity" />
+                <flux:button class="rounded-full!" square size="sm" variant="ghost" icon="plus" :aria-label="__('credits.increase_quantity')" wire:click="increment" :disabled="$this->quantity >= $maxQuantity" />
             </div>
 
             {{-- Progress bar --}}

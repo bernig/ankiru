@@ -43,7 +43,7 @@
                 <flux:label class="flex items-center gap-2">
                     {{ __('csv_editor.generate_rows_context_label') }}
                     <flux:tooltip toggleable :content="__('csv_editor.generate_rows_context_tooltip')">
-                        <flux:button class="text-zinc-400!" icon="information-circle" variant="ghost" size="xs" />
+                        <flux:button class="text-zinc-400!" icon="information-circle" variant="ghost" size="xs" :aria-label="__('csv_editor.more_information')" />
                     </flux:tooltip>
                 </flux:label>
                 <flux:description>

@@ -106,7 +106,10 @@
                         <div class="my-4 border-t border-zinc-100"></div>
 
                         <div class="flex flex-col items-center gap-3 py-2 text-center">
-                            <div class="cursor-default text-xl font-medium text-zinc-900 sm:text-2xl" x-html="window.csvAccentMode.buildHtml($wire.testCards[$wire.testQueue[$wire.testQueuePosition]]?.[1] ?? '')" @click="
+                            <div class="cursor-default rounded text-xl font-medium text-zinc-900 focus-visible:outline-2 focus-visible:outline-blue-300 sm:text-2xl" role="group" aria-label="{{ __('csv_editor.accent_cell_keyboard_hint') }}" tabindex="0" @keydown="
+                                    window.csvAccentMode.invalidateCache($wire.testCards[$wire.testQueue[$wire.testQueuePosition]]?.[1] ?? '');
+                                    window.csvAccentMode.handleKeydown($event, $wire, 'cell', $wire.testQueue[$wire.testQueuePosition], 1)
+                                " x-html="window.csvAccentMode.buildHtml($wire.testCards[$wire.testQueue[$wire.testQueuePosition]]?.[1] ?? '')" @click="
                                     const t = $wire.testCards[$wire.testQueue[$wire.testQueuePosition]]?.[1] ?? '';
                                     window.csvAccentMode.invalidateCache(t);
                                     window.csvAccentMode.handleClick($event, $wire, 'cell', $wire.testQueue[$wire.testQueuePosition], 1)

@@ -64,6 +64,12 @@
     padding: 0 1px;
 }
 
+/* Vowel reached with the arrow keys (see csvAccentMode.handleKeydown) */
+[data-vowel-pos]:focus-visible {
+    outline: 2px solid #1d4ed8;
+    outline-offset: 1px;
+}
+
 .rv-vowel-accented:hover {
     filter: brightness(0.75);
 }

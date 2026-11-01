@@ -81,4 +81,5 @@ return [
     'log_refresh_info' => 'Обновление каждые 2с · :count записей',
     'log_lines' => ':count строк',
     'log_empty' => 'Журнал пуст.',
+    'job_delete' => 'Удалить',
 ];

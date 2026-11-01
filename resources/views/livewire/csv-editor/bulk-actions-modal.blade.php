@@ -38,7 +38,7 @@
                 <flux:icon.sparkles class="size-5 shrink-0 text-zinc-500" />
                 <flux:text class="font-semibold">{{ __('csv_editor.bulk_stress_title') }}</flux:text>
                 <flux:tooltip toggleable :content="__('csv_editor.bulk_stress_tooltip')">
-                    <flux:button class="text-zinc-400!" icon="information-circle" variant="ghost" size="xs" />
+                    <flux:button class="text-zinc-400!" icon="information-circle" variant="ghost" size="xs" :aria-label="__('csv_editor.more_information')" />
                 </flux:tooltip>
             </div>
 
@@ -137,7 +137,7 @@
                 <flux:icon.musical-note class="size-5 shrink-0 text-zinc-500" />
                 <flux:text class="font-semibold">{{ __('csv_editor.bulk_tts_title') }}</flux:text>
                 <flux:tooltip toggleable :content="__('csv_editor.bulk_tts_tooltip')">
-                    <flux:button class="text-zinc-400!" icon="information-circle" variant="ghost" size="xs" />
+                    <flux:button class="text-zinc-400!" icon="information-circle" variant="ghost" size="xs" :aria-label="__('csv_editor.more_information')" />
                 </flux:tooltip>
             </div>
 

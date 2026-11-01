@@ -126,7 +126,7 @@
                                 <flux:button size="xs" icon="arrow-path" wire:click="retryJob('{{ $job->uuid }}')" wire:confirm="{{ __('admin.job_retry_confirm') }}">
                                     {{ __('admin.job_retry') }}
                                 </flux:button>
-                                <flux:button size="xs" variant="danger" icon="trash" wire:click="deleteFailedJob('{{ $job->uuid }}')" wire:confirm="{{ __('admin.job_delete_confirm') }}" />
+                                <flux:button size="xs" variant="danger" icon="trash" :aria-label="__('admin.job_delete')" wire:click="deleteFailedJob('{{ $job->uuid }}')" wire:confirm="{{ __('admin.job_delete_confirm') }}" />
                             </div>
                         </flux:table.cell>
                     </flux:table.row>

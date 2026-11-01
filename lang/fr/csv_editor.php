@@ -164,4 +164,6 @@ return [
     'tour_new_file_tip_text' => "Ajoutez une première carte manuellement, ou laissez l'IA en générer plusieurs sur un thème donné.",
     'tour_first_row_tip_title' => 'Votre première carte',
     'tour_first_row_tip_text' => 'Cliquez dans la colonne de gauche pour écrire une phrase dans votre langue. Puis écrivez vous-même sa traduction en russe dans la colonne de droite, ou cliquez sur le bouton de traduction automatique qui apparaît au survol pour la traduire avec ChatGPT.',
+    'more_information' => "Plus d'informations",
+    'accent_cell_keyboard_hint' => "Texte russe : flèches pour choisir une voyelle, Entrée pour placer l'accent",
 ];

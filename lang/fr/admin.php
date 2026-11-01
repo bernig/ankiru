@@ -81,4 +81,5 @@ return [
     'log_refresh_info' => 'Actualisation toutes les 2s · :count entrées',
     'log_lines' => ':count lignes',
     'log_empty' => 'Aucune entrée dans le log.',
+    'job_delete' => 'Supprimer',
 ];

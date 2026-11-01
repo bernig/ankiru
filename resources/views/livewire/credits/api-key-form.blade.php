@@ -39,7 +39,7 @@
                                 <div class="flex items-center justify-end gap-1">
                                     {{ __('profile.stats_tokens_in_out') }}
                                     <flux:tooltip toggleable :content="__('profile.stats_tokens_tooltip')">
-                                        <flux:button class="text-zinc-400!" icon="information-circle" variant="ghost" size="xs" />
+                                        <flux:button class="text-zinc-400!" icon="information-circle" variant="ghost" size="xs" :aria-label="__('csv_editor.more_information')" />
                                     </flux:tooltip>
                                 </div>
                             </flux:table.column>

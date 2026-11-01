@@ -164,4 +164,6 @@ return [
     'tour_new_file_tip_text' => 'Add a first card manually, or let AI generate several on a given topic.',
     'tour_first_row_tip_title' => 'Your first card',
     'tour_first_row_tip_text' => 'Click the left column to write a sentence in your language. Then either type its Russian translation yourself in the right column, or click the translate button that appears on hover to translate it automatically with ChatGPT.',
+    'more_information' => 'More information',
+    'accent_cell_keyboard_hint' => 'Russian text: arrow keys to pick a vowel, Enter to place the stress',
 ];

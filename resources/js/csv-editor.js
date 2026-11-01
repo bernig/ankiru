@@ -248,13 +248,13 @@ window.csvAccentMode = (function () {
                         // Multi-syllable word: render as a clickable vowel span.
                         if (isAccented) {
                             if (anyStyleActive) {
-                                result += `<span class="rv-vowel-accented" data-vowel-pos="${pos}">${unicodeDisplay}</span>`;
+                                result += `<span class="rv-vowel-accented" data-vowel-pos="${pos}" tabindex="-1">${unicodeDisplay}</span>`;
                             } else {
                                 // No active style: plain span retains click target and stored position.
-                                result += `<span data-vowel-pos="${pos}">${ch}</span>`;
+                                result += `<span data-vowel-pos="${pos}" tabindex="-1">${ch}</span>`;
                             }
                         } else {
-                            result += `<span class="rv-vowel" data-vowel-pos="${pos}">${ch}</span>`;
+                            result += `<span class="rv-vowel" data-vowel-pos="${pos}" tabindex="-1">${ch}</span>`;
                         }
                     }
                 } else if (seg.bold) {
@@ -363,6 +363,66 @@ window.csvAccentMode = (function () {
     }
 
     /**
+     * Keyboard counterpart of handleClick(), bound on the Russian cell itself.
+     *
+     * The cell is a single Tab stop (tabindex="0"); its clickable vowels carry
+     * tabindex="-1", so they can receive focus from script without adding one
+     * Tab stop per vowel ("roving focus"). Keys:
+     *   - ArrowRight / ArrowLeft: move focus to the next / previous vowel.
+     *   - Enter / Space on a focused vowel: place the accent on it.
+     *
+     * Placing the accent re-renders the cell (x-html), which destroys the focused
+     * span; focusVowel() puts focus back on the vowel at the same position.
+     *
+     * @param {KeyboardEvent}    event
+     * @param {object}           wire
+     * @param {'cell'|'header'}  type
+     * @param {number}           primary
+     * @param {number|undefined} secondary
+     */
+    function handleKeydown(event, wire, type, primary, secondary) {
+        const cell = event.currentTarget;
+        const vowels = [...cell.querySelectorAll('[data-vowel-pos]')];
+        if (vowels.length === 0) return;
+
+        const current = vowels.indexOf(document.activeElement);
+        const last = vowels.length - 1;
+        // Stop at both ends instead of wrapping: more predictable with a screen reader.
+        const targets = {
+            ArrowRight: current === -1 ? 0 : Math.min(current + 1, last),
+            ArrowLeft: current === -1 ? last : Math.max(current - 1, 0),
+            Home: 0,
+            End: last,
+        };
+
+        if (event.key in targets) {
+            event.preventDefault();
+            vowels[targets[event.key]].focus();
+
+            return;
+        }
+
+        if ((event.key === 'Enter' || event.key === ' ') && current !== -1) {
+            event.preventDefault();
+            // Read before handleClick(): the re-render destroys the focused span.
+            const vowelPos = parseInt(vowels[current].dataset.vowelPos, 10);
+            handleClick(event, wire, type, primary, secondary);
+            focusVowel(cell, vowelPos);
+        }
+    }
+
+    /**
+     * Focus the vowel at plain-text position vowelPos inside cell, after
+     * Alpine has re-rendered it.
+     *
+     * @param {HTMLElement} cell
+     * @param {number}      vowelPos
+     */
+    function focusVowel(cell, vowelPos) {
+        requestAnimationFrame(() => cell.querySelector(`[data-vowel-pos="${vowelPos}"]`)?.focus());
+    }
+
+    /**
      * Return true when rawText contains at least one Russian word with more than
      * 2 vowels that carries no <b> accent mark.
      *
@@ -464,7 +524,7 @@ window.csvAccentMode = (function () {
         }
     }
 
-    return { buildHtml, sanitizeRichText, handleClick, cellNeedsAccent, invalidateCache, setStyleMode, moveAccentToPosition };
+    return { buildHtml, sanitizeRichText, handleClick, handleKeydown, cellNeedsAccent, invalidateCache, setStyleMode, moveAccentToPosition };
 
 }());
 
