@@ -44,4 +44,5 @@ return [
     'has_key_description' => 'Your credits take priority over your personal key whenever your balance is positive.',
     'no_key_title' => 'No key configured',
     'no_key_description' => 'Set up your API key in the left column, or buy credits on the right.',
+    'checkout_product_name' => 'Anki AI: :amountk credits',
 ];

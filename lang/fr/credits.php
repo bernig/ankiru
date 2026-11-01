@@ -44,4 +44,5 @@ return [
     'has_key_description' => 'Vos crédits seront prioritaires sur votre clé personnelle dès que votre solde est positif.',
     'no_key_title' => 'Aucune clé configurée',
     'no_key_description' => 'Configurez votre clé API dans la colonne de gauche, ou achetez des crédits ci-contre.',
+    'checkout_product_name' => 'Anki AI : :amountk crédits',
 ];

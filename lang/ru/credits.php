@@ -44,4 +44,5 @@ return [
     'has_key_description' => 'Кредиты будут иметь приоритет над личным ключом, пока баланс положительный.',
     'no_key_title' => 'Ключ не настроен',
     'no_key_description' => 'Настройте ключ API в левой колонке или купите кредиты справа.',
+    'checkout_product_name' => 'Anki AI: :amountk кредитов',
 ];

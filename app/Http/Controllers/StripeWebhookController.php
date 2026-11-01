@@ -34,15 +34,26 @@ class StripeWebhookController extends Controller
             return response('Signature invalide.', 400);
         }
 
-        if ($event->type === 'checkout.session.completed') {
-            $this->handleCheckoutSessionCompleted($event->data->object);
+        // Asynchronous methods (SEPA, bank transfer) complete the session
+        // before the money arrives, then send async_payment_succeeded.
+        if (in_array($event->type, ['checkout.session.completed', 'checkout.session.async_payment_succeeded'], true)) {
+            $this->handleCheckoutSessionPaid($event->data->object);
         }
 
         return response('OK', 200);
     }
 
-    private function handleCheckoutSessionCompleted(object $session): void
+    private function handleCheckoutSessionPaid(object $session): void
     {
+        if (($session->payment_status ?? null) !== 'paid') {
+            Log::info('Stripe webhook: session non payée, crédits non accordés.', [
+                'session_id' => $session->id,
+                'payment_status' => $session->payment_status ?? null,
+            ]);
+
+            return;
+        }
+
         $purchaseId = $session->metadata->purchase_id ?? null;
 
         if (! $purchaseId) {
@@ -64,6 +75,17 @@ class StripeWebhookController extends Controller
         }
 
         if ($purchase->isCompleted()) {
+            return;
+        }
+
+        // The purchase must belong to this very Checkout Session: metadata
+        // alone could point at any pending purchase.
+        if ($purchase->stripe_session_id !== $session->id) {
+            Log::error('Stripe webhook: session Stripe différente de celle de l\'achat.', [
+                'purchase_id' => $purchase->id,
+                'session_id' => $session->id,
+            ]);
+
             return;
         }
 

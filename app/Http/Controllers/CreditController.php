@@ -53,7 +53,7 @@ class CreditController extends Controller
                     'currency' => 'eur',
                     'unit_amount' => $totalCents,
                     'product_data' => [
-                        'name' => 'Anki AI — '.number_format($totalCredits / 1000, 0, '.', ' ').'k crédits',
+                        'name' => __('credits.checkout_product_name', ['amount' => number_format($totalCredits / 1000, 0, '.', ' ')]),
                         'description' => $this->buildFeeDescription($quantity),
                     ],
                 ],

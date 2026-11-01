@@ -16,13 +16,14 @@ function buildStripeSignature(string $payload, string $secret): string
     return "t={$timestamp},v1={$signature}";
 }
 
-function stripeWebhookPayload(string $sessionId, int $purchaseId, int $userId, string $type = 'checkout.session.completed'): string
+function stripeWebhookPayload(string $sessionId, int $purchaseId, int $userId, string $type = 'checkout.session.completed', string $paymentStatus = 'paid'): string
 {
     return json_encode([
         'type' => $type,
         'data' => [
             'object' => [
                 'id' => $sessionId,
+                'payment_status' => $paymentStatus,
                 'payment_intent' => 'pi_test_xxx',
                 'metadata' => [
                     'purchase_id' => $purchaseId,
@@ -109,4 +110,41 @@ test('retourne 200 si purchase_id est manquant dans metadata', function (): void
     $this->postJson(route('stripe.webhook'), json_decode($payload, true), [
         'Stripe-Signature' => buildStripeSignature($payload, 'whsec_test_secret'),
     ])->assertOk();
+});
+
+// ── Statut de paiement et identité de la session ─────────────────────────────
+
+/**
+ * Post a signed webhook for a pending 1 000-credit purchase tied to cs_test_pending,
+ * and return the user's resulting balance.
+ */
+function postWebhookForPendingPurchase(string $eventSessionId, string $type = 'checkout.session.completed', string $paymentStatus = 'paid'): int
+{
+    $user = User::factory()->create(['credits' => 0]);
+    $purchase = CreditPurchase::factory()->create([
+        'user_id' => $user->id,
+        'credits' => 1_000,
+        'status' => 'pending',
+        'stripe_session_id' => 'cs_test_pending',
+    ]);
+
+    $payload = stripeWebhookPayload($eventSessionId, $purchase->id, $user->id, $type, $paymentStatus);
+
+    test()->postJson(route('stripe.webhook'), json_decode($payload, true), [
+        'Stripe-Signature' => buildStripeSignature($payload, 'whsec_test_secret'),
+    ])->assertOk();
+
+    return $user->fresh()->credits;
+}
+
+test('ne crédite pas une session terminée dont le paiement est encore en attente', function (): void {
+    expect(postWebhookForPendingPurchase('cs_test_pending', paymentStatus: 'unpaid'))->toBe(0);
+});
+
+test('crédite le compte quand un paiement différé aboutit', function (): void {
+    expect(postWebhookForPendingPurchase('cs_test_pending', 'checkout.session.async_payment_succeeded'))->toBe(1_000);
+});
+
+test("ne crédite pas si la session Stripe ne correspond pas à celle de l'achat", function (): void {
+    expect(postWebhookForPendingPurchase('cs_test_other_session'))->toBe(0);
 });

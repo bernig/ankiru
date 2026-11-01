@@ -45,6 +45,7 @@ test('redirige vers Stripe checkout pour une quantité valide', function (): voi
     $sessionsMock
         ->shouldReceive('create')
         ->once()
+        ->withArgs(fn (array $params): bool => $params['line_items'][0]['price_data']['product_data']['name'] === __('credits.checkout_product_name', ['amount' => '500']))
         ->andReturn((object) [
             'id' => 'cs_test_qty5',
             'url' => 'https://checkout.stripe.com/pay/cs_test_qty5',
