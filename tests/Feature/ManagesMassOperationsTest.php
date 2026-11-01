@@ -4,6 +4,7 @@ use App\Ai\Agents\RussianStressCorrectorAgent;
 use App\Enums\OperationType;
 use App\Jobs\MassOperationJob;
 use App\Livewire\CsvEditor;
+use App\Models\CsvDraft;
 use App\Models\User;
 use App\Services\MassOperationService;
 use App\Services\OpenAiTranslationService;
@@ -114,7 +115,7 @@ it('refreshes running batch progress from cache when a websocket update is misse
     Storage::fake('local');
 
     $sessionId = session()->getId();
-    Cache::put("mass_op:{$sessionId}:stress:row:0", 'Я говор<b>ю</b>.', now()->addMinutes(10));
+    Cache::put("mass_op:{$sessionId}:stress:row:0", ['original' => 'Я говорю.', 'corrected' => 'Я говор<b>ю</b>.'], now()->addMinutes(10));
 
     $mockService = Mockery::mock(MassOperationService::class);
 
@@ -240,8 +241,8 @@ it('immediately applies stress batch completion when the sync queue driver runs 
     $sessionId = session()->getId();
 
     // Pre-seed cache to simulate all jobs having finished inline.
-    Cache::put("mass_op:{$sessionId}:stress:row:0", 'Я говор<b>ю</b>.', now()->addMinutes(10));
-    Cache::put("mass_op:{$sessionId}:stress:row:1", 'Хорош<b>а</b>я погод<b>а</b>.', now()->addMinutes(10));
+    Cache::put("mass_op:{$sessionId}:stress:row:0", ['original' => 'Я говорю.', 'corrected' => 'Я говор<b>ю</b>.'], now()->addMinutes(10));
+    Cache::put("mass_op:{$sessionId}:stress:row:1", ['original' => 'Хорошая погода.', 'corrected' => 'Хорош<b>а</b>я погод<b>а</b>.'], now()->addMinutes(10));
 
     $rowsNeedingCorrection = [
         ['Je parle.', 'Я говорю.'],
@@ -339,8 +340,8 @@ it('merges pending stress corrections when the modal is opened after a missed do
     $sessionId = session()->getId();
 
     // Simulate the corrected texts sitting in cache (jobs ran, but 'done' event was missed).
-    Cache::put("mass_op:{$sessionId}:stress:row:0", 'Я говор<b>ю</b>.', now()->addMinutes(10));
-    Cache::put("mass_op:{$sessionId}:stress:row:1", 'Хорош<b>а</b>я погод<b>а</b>.', now()->addMinutes(10));
+    Cache::put("mass_op:{$sessionId}:stress:row:0", ['original' => 'Я говорю.', 'corrected' => 'Я говор<b>ю</b>.'], now()->addMinutes(10));
+    Cache::put("mass_op:{$sessionId}:stress:row:1", ['original' => 'Хорошая погода.', 'corrected' => 'Хорош<b>а</b>я погод<b>а</b>.'], now()->addMinutes(10));
 
     $rowsNeedingCorrection = [
         ['Je parle.', 'Я говорю.'],
@@ -418,8 +419,8 @@ it('updates TTS state from a progress broadcast', function () {
 it('merges stress results from cache into csvRows when stress batch completes', function () {
     $sessionId = session()->getId();
 
-    Cache::put("mass_op:{$sessionId}:stress:row:0", 'Я говорю́.', now()->addMinutes(10));
-    Cache::put("mass_op:{$sessionId}:stress:row:1", 'Хоро́шая поро́да.', now()->addMinutes(10));
+    Cache::put("mass_op:{$sessionId}:stress:row:0", ['original' => 'Я раб<b>о</b>таю из д<b>о</b>ма.', 'corrected' => 'Я говорю́.'], now()->addMinutes(10));
+    Cache::put("mass_op:{$sessionId}:stress:row:1", ['original' => 'Я веб-разраб<b>о</b>тчик.', 'corrected' => 'Хоро́шая поро́да.'], now()->addMinutes(10));
 
     $lw = Livewire::test(CsvEditor::class)
         ->set('csvRows', massOpRows())
@@ -669,4 +670,68 @@ it('renders the TTS button as disabled when a TTS batch is running', function ()
         ->set('hasCsvLoaded', true)
         ->set('ttsBatchStatus', 'running')
         ->assertSeeHtml('disabled');
+});
+
+// ---------------------------------------------------------------------------
+// Stress merge safety: rows changed or file switched while the batch ran
+// ---------------------------------------------------------------------------
+
+/**
+ * Seed the cache as if a finished stress batch had corrected the given rows.
+ *
+ * @param  array<int, array{original: string, corrected: string}>  $resultsByRowIndex
+ */
+function seedFinishedStressBatch(array $resultsByRowIndex, ?int $draftId): void
+{
+    $prefix = 'mass_op:'.session()->getId().':stress';
+
+    Cache::put("{$prefix}:draft_id", $draftId, 600);
+    Cache::put("{$prefix}:row_indexes", array_keys($resultsByRowIndex), 600);
+
+    foreach ($resultsByRowIndex as $rowIndex => $result) {
+        Cache::put("{$prefix}:row:{$rowIndex}", $result, 600);
+    }
+}
+
+/**
+ * @return array{operationType: string, status: string, processedCount: int, totalCount: int, failedCount: int}
+ */
+function stressDoneEvent(int $total): array
+{
+    return ['operationType' => 'stress', 'status' => 'done', 'processedCount' => $total, 'totalCount' => $total, 'failedCount' => 0];
+}
+
+it('applies a correction to the row that moved after an earlier row was deleted', function () {
+    seedFinishedStressBatch([1 => ['original' => 'Хорошая погода.', 'corrected' => 'Хор<b>о</b>шая пог<b>о</b>да.']], null);
+
+    Livewire::test(CsvEditor::class)
+        ->set('hasCsvLoaded', true)
+        ->set('csvRows', [['Il fait beau.', 'Хорошая погода.']])
+        ->call('handleBatchProgressUpdate', stressDoneEvent(1))
+        ->assertSet('csvRows', [['Il fait beau.', 'Хор<b>о</b>шая пог<b>о</b>да.']]);
+});
+
+it('drops a correction when the row was edited during the batch', function () {
+    seedFinishedStressBatch([0 => ['original' => 'Я говорю.', 'corrected' => 'Я говор<b>ю</b>.']], null);
+
+    Livewire::test(CsvEditor::class)
+        ->set('hasCsvLoaded', true)
+        ->set('csvRows', [['Je dis.', 'Я сказал.']])
+        ->call('handleBatchProgressUpdate', stressDoneEvent(1))
+        ->assertSet('csvRows', [['Je dis.', 'Я сказал.']]);
+});
+
+it('merges corrections into the original draft when the user switched files during the batch', function () {
+    $batchDraft = CsvDraft::factory()->for(auth()->user())->create(['csv_rows' => [['Je parle.', 'Я говорю.']]]);
+    $otherDraft = CsvDraft::factory()->for(auth()->user())->create(['csv_rows' => [['Je parle.', 'Я говорю.']]]);
+
+    seedFinishedStressBatch([0 => ['original' => 'Я говорю.', 'corrected' => 'Я говор<b>ю</b>.']], $batchDraft->id);
+
+    Livewire::test(CsvEditor::class)
+        ->call('switchToDraft', $otherDraft->id)
+        ->call('handleBatchProgressUpdate', stressDoneEvent(1))
+        ->assertSet('csvRows', [['Je parle.', 'Я говорю.']]);
+
+    expect($batchDraft->fresh()->csv_rows)->toBe([['Je parle.', 'Я говор<b>ю</b>.']])
+        ->and($otherDraft->fresh()->csv_rows)->toBe([['Je parle.', 'Я говорю.']]);
 });

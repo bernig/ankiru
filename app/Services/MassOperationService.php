@@ -100,8 +100,9 @@ class MassOperationService
      * per qualifying row. Returns the number of jobs dispatched (0 if none).
      *
      * @param  array<int, array<int, string>>  $csvRows
+     * @param  int|null  $draftId  Draft the rows belong to (results are merged back into it).
      */
-    public function dispatchStressBatch(array $csvRows, string $sessionId): int
+    public function dispatchStressBatch(array $csvRows, string $sessionId, ?int $draftId = null): int
     {
         $qualifyingRows = $this->collectStressRows($csvRows);
         if (empty($qualifyingRows)) {
@@ -109,6 +110,13 @@ class MassOperationService
         }
         $total = count($qualifyingRows);
         $this->initialiseCacheKeys($sessionId, OperationType::Stress, $total);
+
+        // Remember which draft and rows this batch targets, so results are merged
+        // into the right file even if the user switched files in the meantime.
+        Cache::putMany([
+            "mass_op:{$sessionId}:stress:draft_id" => $draftId,
+            "mass_op:{$sessionId}:stress:row_indexes" => array_column($qualifyingRows, 0),
+        ], 3600);
         $userId = Auth::id();
 
         $forceDebugError = config('app.debug') && session('debug_force_ai_error');

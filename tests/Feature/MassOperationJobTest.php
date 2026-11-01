@@ -83,7 +83,7 @@ it('writes corrected text to the per-row cache key', function (): void {
         app(RussianTextToSpeechService::class),
     );
 
-    expect(Cache::get(massOpCacheKey('stress', 'row:3')))->toBe($corrected);
+    expect(Cache::get(massOpCacheKey('stress', 'row:3')))->toBe(['original' => $russianText, 'corrected' => $corrected]);
 });
 
 it('increments the processed counter after a successful stress job', function (): void {

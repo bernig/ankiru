@@ -147,6 +147,14 @@ it('initialises cache keys when dispatching a stress batch', function (): void {
         ->and((int) Cache::get('mass_op:sess-2:stress:processed'))->toBe(0)
         ->and((int) Cache::get('mass_op:sess-2:stress:failed'))->toBe(0);
 });
+it('records the target draft and row indexes when dispatching a stress batch', function (): void {
+    Queue::fake();
+    $rows = stressSampleRows();
+    makeService()->dispatchStressBatch($rows, 'sess-3', 42);
+    $expectedRowIndexes = array_keys(array_filter($rows, fn (array $row): bool => (new RussianAccentService)->textNeedsStressCorrection($row[1] ?? '')));
+    expect(Cache::get('mass_op:sess-3:stress:draft_id'))->toBe(42)
+        ->and(Cache::get('mass_op:sess-3:stress:row_indexes'))->toBe($expectedRowIndexes);
+});
 it('returns 0 and dispatches nothing when no rows need stress correction', function (): void {
     Queue::fake();
     $rows = [['Source', 'Хор<b>о</b>шо.']];

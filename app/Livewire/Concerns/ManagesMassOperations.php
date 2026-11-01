@@ -3,6 +3,7 @@
 namespace App\Livewire\Concerns;
 
 use App\Enums\OperationType;
+use App\Models\CsvDraft;
 use App\Services\CreditService;
 use App\Services\MassOperationService;
 use Illuminate\Support\Facades\Auth;
@@ -19,6 +20,7 @@ use Livewire\Attributes\Computed;
  *
  * @property array<int, array<int, string>> $csvRows
  * @property bool $hasCsvLoaded
+ * @property int $activeDraftId
  * @property MassOperationService $massOperationService
  * @property CreditService $creditService
  */
@@ -164,6 +166,7 @@ trait ManagesMassOperations
         $dispatched = $this->massOperationService->dispatchStressBatch(
             $this->csvRows,
             $sessionId,
+            $this->activeDraftId > 0 ? $this->activeDraftId : null,
         );
         if ($dispatched > 0) {
             $this->stressBatchStatus = 'running';
@@ -368,25 +371,36 @@ trait ManagesMassOperations
 
     /**
      * Read all per-row stress-correction results from cache and merge them
-     * into $csvRows. Called once when the stress batch status transitions to
-     * 'done'. Also reads the token-usage report accumulated by the jobs.
-     * Clears the cache keys after merging to avoid stale data.
+     * into the draft the batch was started on. Called once when the stress
+     * batch status transitions to 'done'. Also reads the token-usage report
+     * accumulated by the jobs. Clears the cache keys after merging.
+     *
+     * The target draft is the one recorded at dispatch time: when it is the
+     * active draft the in-memory rows are updated, otherwise the stored draft
+     * is updated directly so results never land in the wrong file.
      */
     private function mergeStressResultsFromCache(): void
     {
         $sessionId = $this->getMassOpSessionId();
-        $anyMerged = false;
-        foreach (array_keys($this->csvRows) as $rowIndex) {
-            $cacheKey = "mass_op:{$sessionId}:stress:row:{$rowIndex}";
-            $correctedText = Cache::get($cacheKey);
-            if ($correctedText !== null) {
-                $this->csvRows[$rowIndex][1] = $correctedText;
-                Cache::forget($cacheKey);
-                $anyMerged = true;
+        $prefix = "mass_op:{$sessionId}:stress";
+        $targetDraftId = Cache::pull("{$prefix}:draft_id");
+        $rowIndexes = Cache::pull("{$prefix}:row_indexes") ?? array_keys($this->csvRows);
+
+        $corrections = [];
+        foreach ($rowIndexes as $rowIndex) {
+            $result = Cache::pull("{$prefix}:row:{$rowIndex}");
+            if (is_array($result) && isset($result['original'], $result['corrected'])) {
+                $corrections[$rowIndex] = $result;
             }
         }
-        if ($anyMerged) {
-            $this->autoSaveDraft();
+
+        if ($corrections !== []) {
+            if ($targetDraftId === null || (int) $targetDraftId === $this->activeDraftId) {
+                $this->csvRows = $this->applyStressCorrections($this->csvRows, $corrections);
+                $this->autoSaveDraft();
+            } else {
+                $this->applyStressCorrectionsToStoredDraft((int) $targetDraftId, $corrections);
+            }
         }
 
         // Read the exact token usage and corrected-row count accumulated by the jobs.
@@ -405,6 +419,63 @@ trait ManagesMassOperations
         $report = $this->massOperationService->getTtsReport($this->getMassOpSessionId());
         $this->ttsBatchGeneratedCount = $report['generated'];
         $this->ttsBatchActualChars = $report['actualChars'];
+    }
+
+    /**
+     * Apply stress corrections only to rows that still hold the exact text the
+     * correction was computed from. The original row index is tried first;
+     * if that row changed (edited, or shifted by a deletion), the first other
+     * row with the same original text receives it. Otherwise it is dropped.
+     *
+     * @param  array<int, array<int, string>>  $rows
+     * @param  array<int, array{original: string, corrected: string}>  $corrections  Keyed by row index at dispatch time.
+     * @return array<int, array<int, string>>
+     */
+    private function applyStressCorrections(array $rows, array $corrections): array
+    {
+        $correctedRowIndexes = [];
+
+        foreach ($corrections as $dispatchedRowIndex => $correction) {
+            $targetRowIndex = ($rows[$dispatchedRowIndex][1] ?? null) === $correction['original']
+                && ! isset($correctedRowIndexes[$dispatchedRowIndex])
+                ? $dispatchedRowIndex
+                : null;
+
+            if ($targetRowIndex === null) {
+                foreach ($rows as $rowIndex => $row) {
+                    if (($row[1] ?? null) === $correction['original'] && ! isset($correctedRowIndexes[$rowIndex])) {
+                        $targetRowIndex = $rowIndex;
+                        break;
+                    }
+                }
+            }
+
+            if ($targetRowIndex !== null) {
+                $rows[$targetRowIndex][1] = $correction['corrected'];
+                $correctedRowIndexes[$targetRowIndex] = true;
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Merge stress corrections into a draft that is not currently open.
+     *
+     * @param  array<int, array{original: string, corrected: string}>  $corrections
+     */
+    private function applyStressCorrectionsToStoredDraft(int $draftId, array $corrections): void
+    {
+        $draft = CsvDraft::query()
+            ->where('id', $draftId)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if ($draft === null) {
+            return;
+        }
+
+        $draft->update(['csv_rows' => $this->applyStressCorrections($draft->csv_rows ?? [], $corrections)]);
     }
 
     /**

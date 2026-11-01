@@ -157,11 +157,12 @@ class MassOperationJob implements ShouldQueue
         // Count successfully corrected rows (distinct from total processed).
         Cache::increment($this->cacheKey('corrected'));
 
-        // Store the corrected text so the Livewire component can merge it back
-        // into $csvRows when it receives the 'done' broadcast event.
+        // Store the corrected text with the text it was computed from, so the
+        // Livewire component only applies it to a row that still holds that
+        // exact text (rows may have been edited, deleted or reordered meanwhile).
         Cache::put(
             $this->cacheKey("row:{$this->rowIndex}"),
-            $result['text'],
+            ['original' => $this->russianText, 'corrected' => $result['text']],
             ttl: 3600,
         );
 
