@@ -55,10 +55,6 @@
 
             <flux:table.rows class="max-sm:block">
                 @forelse ($this->paginatedRows as $rowIndex => $row)
-                    @php
-                        $rowHasAudio = $this->audioExistenceByRowIndex[$rowIndex] ?? false;
-                    @endphp
-
                     @include('livewire.csv-editor.table-row')
                 @empty
                     <flux:table.row class="max-sm:block" wire:key="empty-state-row">

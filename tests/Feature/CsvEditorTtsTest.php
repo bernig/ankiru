@@ -320,3 +320,27 @@ test('tts generation is blocked and an error is set after exceeding the rate lim
     Audio::assertNothingGenerated();
     RateLimiter::clear($rateLimitKey);
 });
+
+test('the audio indicator follows the rows when a row before them is deleted', function (): void {
+    Storage::fake('local');
+    $ttsService = app(RussianTextToSpeechService::class);
+    Storage::disk('local')->put('tts/'.$ttsService->buildFilenameHash('Привет').'.mp3', 'audio');
+
+    Livewire::test(CsvEditor::class)
+        ->setRows([['Bonjour', 'Привет'], ['Merci', 'Спасибо']])
+        ->assertSet('pageAudio', [0 => true, 1 => false])
+        ->call('deleteRow', 0)
+        ->assertSet('pageAudio', [0 => false]);
+});
+
+test('the audio indicator updates once the audio of a row is deleted', function (): void {
+    Storage::fake('local');
+    $ttsService = app(RussianTextToSpeechService::class);
+    Storage::disk('local')->put('tts/'.$ttsService->buildFilenameHash('Привет').'.mp3', 'audio');
+
+    Livewire::test(CsvEditor::class)
+        ->setRows([['Bonjour', 'Привет']])
+        ->assertSet('pageAudio', [0 => true])
+        ->call('deleteTtsAudio', 0)
+        ->assertSet('pageAudio', [0 => false]);
+});

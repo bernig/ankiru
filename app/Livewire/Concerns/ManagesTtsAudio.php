@@ -144,8 +144,6 @@ trait ManagesTtsAudio
             // Append a cache-busting timestamp so browsers always fetch the latest audio.
             $audioUrl = route('tts.serve', $filenameHash).'?v='.time();
             $this->dispatch('tts-audio-ready', audioUrl: $audioUrl, createdAt: $this->formatTimestamp(time()));
-            // Notify the row's Alpine component so it can update its rowHasAudio state.
-            $this->dispatch('tts-audio-generated', rowIndex: $rowIndex);
         } catch (Exception|FailoverableException $exception) {
             $this->ttsError = __('csv_editor.error_audio_generation_failed', ['message' => $exception->getMessage()]);
         } finally {
@@ -166,8 +164,6 @@ trait ManagesTtsAudio
         }
 
         $this->ttsService->deleteAudio($rawRussianText);
-        // Notify the row's Alpine component so it can revert its rowHasAudio state.
-        $this->dispatch('tts-audio-deleted', rowIndex: $rowIndex);
     }
 
     /**

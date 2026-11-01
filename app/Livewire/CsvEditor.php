@@ -63,6 +63,17 @@ class CsvEditor extends Component
      */
     public array $pageRows = [];
 
+    /**
+     * Whether each row of the current page has cached audio, keyed like
+     * $pageRows. Derived on every render, so the row indicator always matches
+     * the row now shown at that index (Alpine keeps a row's x-data state when
+     * Livewire morphs it, which made a value frozen there go stale after a
+     * deletion). Never read back.
+     *
+     * @var array<int, bool>
+     */
+    public array $pageAudio = [];
+
     public string $originalFileName = '';
 
     public string $validationError = '';
@@ -579,6 +590,7 @@ class CsvEditor extends Component
     public function render(): View
     {
         $this->pageRows = $this->paginatedRows->all();
+        $this->pageAudio = $this->audioExistenceByRowIndex;
         $this->syncTestCards();
 
         return view('livewire.csv-editor');
