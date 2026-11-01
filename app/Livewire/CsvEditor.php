@@ -12,6 +12,7 @@ use App\Models\CsvDraft;
 use App\Services\AnkiPackageExporterService;
 use App\Services\CreditService;
 use App\Services\CsvImportService;
+use App\Services\DeckExportService;
 use App\Services\MassOperationService;
 use App\Services\OpenAiTranslationService;
 use App\Services\RowGenerationService;
@@ -148,6 +149,8 @@ class CsvEditor extends Component
 
     protected CsvImportService $csvImportService;
 
+    protected DeckExportService $deckExportService;
+
     /**
      * Called by Livewire before every action (mount and subsequent requests).
      */
@@ -160,6 +163,7 @@ class CsvEditor extends Component
         RowGenerationService $rowGenerationService,
         CreditService $creditService,
         CsvImportService $csvImportService,
+        DeckExportService $deckExportService,
     ): void {
         $this->translationService = $translationService;
         $this->accentService = $accentService;
@@ -169,6 +173,7 @@ class CsvEditor extends Component
         $this->rowGenerationService = $rowGenerationService;
         $this->creditService = $creditService;
         $this->csvImportService = $csvImportService;
+        $this->deckExportService = $deckExportService;
     }
 
     /**
@@ -228,25 +233,15 @@ class CsvEditor extends Component
             return;
         }
 
-        /** @var array<int, array<int, string>>|false $parsed */
-        $parsed = $this->csvImportService->parse($fileContent);
+        $parsedRows = $this->csvImportService->parse($fileContent);
 
-        if ($parsed === false || count($parsed) === 0) {
+        if ($parsedRows === false) {
             $this->validationError = __('csv_editor.error_csv_empty_or_malformed');
 
             return;
         }
 
-        $columnCount = count($parsed[0]);
-
-        // Normalize each row to match the first row's column count, and convert
-        // any accent-marker format (font tags, combining accents) to <b>…</b>.
-        $this->csvRows = array_map(function (array $row) use ($columnCount): array {
-            $normalised = array_pad($row, $columnCount, '');
-            $normalised = array_slice($normalised, 0, $columnCount);
-
-            return array_map($this->accentService->normalizeImportedCellValue(...), $normalised);
-        }, $parsed);
+        $this->csvRows = $parsedRows;
 
         $this->hasCsvLoaded = true;
         $this->uploadedCsvFile = null;
@@ -415,7 +410,7 @@ class CsvEditor extends Component
      */
     public function downloadCsv(): StreamedResponse
     {
-        $csvContent = $this->buildCsvContent();
+        $csvContent = $this->deckExportService->toCsv($this->csvRows, $this->accentColor, $this->accentBold, $this->accentUnicode);
         $downloadFileName = $this->buildBaseFileName().'_edited_'.now()->format('Ymd_His').'.csv';
 
         return response()->streamDownload(function () use ($csvContent): void {
@@ -433,7 +428,7 @@ class CsvEditor extends Component
      */
     public function downloadAnkiPackage(): StreamedResponse
     {
-        $cards = $this->buildAnkiCardsFromCsvRows($this->csvRows, $this->activeDraftId);
+        $cards = $this->deckExportService->toAnkiCards($this->csvRows, $this->activeDraftId);
         $deckName = pathinfo($this->originalFileName, PATHINFO_FILENAME) ?: 'French-Russian';
         $apkgPath = $this->ankiExporterService->export($cards, $deckName);
 
@@ -458,13 +453,13 @@ class CsvEditor extends Component
         foreach ($allDrafts as $draft) {
             $decks[] = [
                 'deckName' => pathinfo($draft->original_file_name, PATHINFO_FILENAME) ?: 'Deck',
-                'cards' => $this->buildAnkiCardsFromCsvRows($draft->csv_rows ?? [], $draft->id),
+                'cards' => $this->deckExportService->toAnkiCards($draft->csv_rows ?? [], $draft->id),
             ];
         }
 
         $parentName = trim($this->collectionExportName) ?: 'Collection';
         $apkgPath = $this->ankiExporterService->exportCollection($decks, $parentName);
-        $downloadFileName = $this->toDownloadFileName($parentName, 'Collection').'_'.now()->format('Ymd_His').'.apkg';
+        $downloadFileName = $this->deckExportService->toDownloadFileName($parentName, 'Collection').'_'.now()->format('Ymd_His').'.apkg';
 
         return $this->streamApkgFileDownload($apkgPath, $downloadFileName);
     }
@@ -767,156 +762,12 @@ class CsvEditor extends Component
     }
 
     /**
-     * Build a CSV string from the current rows (no header row).
-     *
-     * Stressed vowels (stored as <b>X</b>) are re-encoded using the user's
-     * current accent style: a <font color> wrapper is added when a color is
-     * selected, and the <b> wrapper is kept or removed based on the bold flag.
-     */
-    private function buildCsvContent(): string
-    {
-        $buffer = fopen('php://temp', 'r+');
-
-        if ($buffer === false) {
-            return '';
-        }
-
-        try {
-            foreach ($this->csvRows as $row) {
-                fputcsv($buffer, array_map($this->applyAccentStyle(...), $row));
-            }
-
-            rewind($buffer);
-
-            return stream_get_contents($buffer) ?: '';
-        } finally {
-            fclose($buffer);
-        }
-    }
-
-    /**
-     * Re-encode <b>X</b> accent markers in a cell value using the user's
-     * chosen export style (color and/or bold).
-     *
-     * Possible outputs for a stressed vowel X:
-     *   color + bold  → <font color="#HEX"><b>X</b></font>
-     *   color only    → <font color="#HEX">X</font>
-     *   bold only     → <b>X</b>  (unchanged, no color tag added)
-     *
-     * When multiple options are active they are combined:
-     *   unicode + color + bold → <font color="#HEX"><b>X́</b></font>
-     */
-    private function applyAccentStyle(string $cellValue): string
-    {
-        if (! str_contains($cellValue, '<b>')) {
-            return $cellValue;
-        }
-
-        $unicode = $this->accentUnicode;
-        $bold = $this->accentBold;
-        $color = $this->accentColor
-            ? htmlspecialchars($this->accentColor, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
-            : null;
-
-        // Nothing to do, keep the raw <b> tags as the accent position marker.
-        if (! $unicode && ! $bold && ! $color) {
-            return $cellValue;
-        }
-
-        return preg_replace_callback('/<b>(.*?)<\/b>/s', static function (array $m) use ($unicode, $bold, $color): string {
-            $vowel = $m[1];
-
-            // 1. Optionally append the combining acute accent (U+0301).
-            //    ё/Ё are inherently stressed, no additional mark needed.
-            $content = ($unicode && $vowel !== 'ё' && $vowel !== 'Ё')
-                ? $vowel."\u{0301}"
-                : $vowel;
-
-            // 2. Optionally wrap in <b>.
-            if ($bold) {
-                $content = "<b>{$content}</b>";
-            }
-
-            // 3. Optionally wrap in <font color>.
-            if ($color) {
-                $content = "<font color=\"{$color}\">{$content}</font>";
-            }
-
-            return $content;
-        }, $cellValue) ?? $cellValue;
-    }
-
-    /**
      * Derive the base file name (without extension) used for all download file names.
      * Falls back to 'export' when no original file name is available.
      */
     private function buildBaseFileName(): string
     {
-        return $this->toDownloadFileName(pathinfo($this->originalFileName, PATHINFO_FILENAME), 'export');
-    }
-
-    /**
-     * Make a user-chosen name usable as a download file name. Symfony rejects
-     * "/" and "\" in a Content-Disposition header (an exception, so a 500),
-     * and control characters have no place there either; each is replaced
-     * by a hyphen. The deck name inside the package keeps the original text.
-     */
-    private function toDownloadFileName(string $name, string $fallback): string
-    {
-        $safeName = trim((string) preg_replace('/[\/\\\\\x00-\x1F\x7F]+/u', '-', $name), ' -.');
-
-        return $safeName === '' ? $fallback : $safeName;
-    }
-
-    /**
-     * Build the card data array expected by AnkiPackageExporterService
-     * from the given CSV rows, attaching cached MP3 references where available.
-     *
-     * Audio existence is checked once per distinct phrase via audioFilesExistBatch().
-     *
-     * @param  array<int, array<int, string>>  $csvRows
-     * @param  int  $draftId  Draft the rows belong to, part of each note's stable GUID.
-     * @return array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null, guid: string}>
-     */
-    private function buildAnkiCardsFromCsvRows(array $csvRows, int $draftId): array
-    {
-        $russianTexts = array_values(array_filter(
-            array_map(fn (array $row): string => $row[1] ?? '', $csvRows),
-            fn (string $text): bool => trim($text) !== '',
-        ));
-
-        $audioExistence = $this->ttsService->audioFilesExistBatch($russianTexts);
-
-        $cards = [];
-        $occurrencesBySourceText = [];
-
-        foreach ($csvRows as $row) {
-            $sourceText = $row[0] ?? '';
-            $sourceKey = trim($sourceText);
-            $occurrence = $occurrencesBySourceText[$sourceKey] ?? 0;
-            $occurrencesBySourceText[$sourceKey] = $occurrence + 1;
-            $rawRussianText = $row[1] ?? '';
-            $backFieldValue = trim($rawRussianText);
-            $mp3StoragePath = null;
-            $mp3FileName = null;
-
-            if ($backFieldValue !== '' && ($audioExistence[$rawRussianText] ?? false)) {
-                $filenameHash = $this->ttsService->buildFilenameHash($rawRussianText);
-                $mp3FileName = "{$filenameHash}.mp3";
-                $mp3StoragePath = "tts/{$mp3FileName}";
-                $backFieldValue .= " [sound:{$mp3FileName}]";
-            }
-
-            $cards[] = [
-                'front' => $sourceText,
-                'back' => $backFieldValue,
-                'mp3StoragePath' => $mp3StoragePath,
-                'mp3FileName' => $mp3FileName,
-                'guid' => AnkiPackageExporterService::noteGuid($draftId, $sourceText, $occurrence),
-            ];
-        }
-
-        return $cards;
+        return $this->deckExportService->toDownloadFileName(pathinfo($this->originalFileName, PATHINFO_FILENAME), 'export');
     }
 
     /**

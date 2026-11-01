@@ -9,7 +9,9 @@ namespace App\Services;
  * "Unicode text" export is UTF-16 with tabs, older tools write a legacy
  * code page (Windows-1251 for Russian, Windows-1252 for French), and most
  * add a byte order mark. All of these are normalised to UTF-8 rows
- * here, so the editor only ever deals with one shape.
+ * here, so the editor only ever deals with one shape: every row has the
+ * first row's column count, and every accent format is converted to the
+ * canonical <b>vowel</b> tags.
  */
 class CsvImportService
 {
@@ -18,6 +20,8 @@ class CsvImportService
 
     /** Number of non-empty lines inspected to guess the delimiter. */
     private const int DELIMITER_SAMPLE_LINES = 20;
+
+    public function __construct(private readonly RussianAccentService $accentService) {}
 
     /**
      * @return array<int, array<int, string>>|false False when no row could be read.
@@ -48,10 +52,27 @@ class CsvImportService
                 $rows[] = array_map('strval', $row);
             }
 
-            return count($rows) > 0 ? $rows : false;
+            return count($rows) > 0 ? $this->normaliseRows($rows) : false;
         } finally {
             fclose($handle);
         }
+    }
+
+    /**
+     * Pad or truncate each row to the first row's column count, and convert
+     * any accent-marker format (font tags, combining accents) to <b>…</b>.
+     *
+     * @param  non-empty-array<int, array<int, string>>  $rows
+     * @return array<int, array<int, string>>
+     */
+    private function normaliseRows(array $rows): array
+    {
+        $columnCount = count($rows[0]);
+
+        return array_map(fn (array $row): array => array_map(
+            $this->accentService->normalizeImportedCellValue(...),
+            array_slice(array_pad($row, $columnCount, ''), 0, $columnCount),
+        ), $rows);
     }
 
     /**
