@@ -15,7 +15,7 @@
     {{-- ── Column 0: Source text ── --}}
     <flux:table.cell class="py-2! max-sm:border-t-0! px-2! w-1/2 whitespace-normal first:ps-2 last:pe-2 max-sm:block max-sm:w-full max-sm:pb-0">
         <div class="cursor-default" x-show="$store.csvEditing.rowIndex !== rowIndex || $store.csvEditing.columnIndex !== 0" x-html="$wire.csvRows[rowIndex][0] !== undefined && $wire.csvRows[rowIndex][0] !== ''
-                     ? $wire.csvRows[rowIndex][0]
+                     ? window.csvAccentMode.sanitizeRichText($wire.csvRows[rowIndex][0])
                      : '-'"></div>
 
         <input class="border-accent w-full rounded border bg-white p-1.5 outline-none transition-colors" x-show="$store.csvEditing.rowIndex === rowIndex && $store.csvEditing.columnIndex === 0" x-ref="input_0" :value="$wire.csvRows[rowIndex][0]" @blur="$wire.updateCell(rowIndex, 0, $event.target.value); $store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @keydown.enter="$el.blur()" @keydown.escape="$store.csvEditing.rowIndex = -1; $store.csvEditing.columnIndex = -1" @click.stop placeholder="-" />

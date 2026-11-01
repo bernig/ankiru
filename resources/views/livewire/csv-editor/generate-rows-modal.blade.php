@@ -18,7 +18,7 @@
                     <div class="flex items-start gap-3 px-4 py-2.5 text-sm odd:bg-white even:bg-zinc-50 dark:odd:bg-zinc-800/40 dark:even:bg-zinc-800/20">
                         <span class="min-w-0 flex-1 text-zinc-600 dark:text-zinc-400">{{ $pair['source'] }}</span>
                         <flux:icon.arrow-right class="mt-0.5 size-4 shrink-0 text-zinc-300 dark:text-zinc-600" />
-                        <span class="min-w-0 flex-1 font-medium text-zinc-900 dark:text-zinc-100">{!! strip_tags($pair['russian'], '<b>') !!}</span>
+                        <span class="min-w-0 flex-1 font-medium text-zinc-900 dark:text-zinc-100">{!! str_replace(['&lt;b&gt;', '&lt;/b&gt;'], ['<b>', '</b>'], e(strip_tags($pair['russian'], '<b>'))) !!}</span>
                     </div>
                 @endforeach
             </div>

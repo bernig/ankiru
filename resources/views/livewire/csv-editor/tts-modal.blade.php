@@ -5,7 +5,7 @@
         if (player) { player.pause(); player.removeAttribute('src'); }
     ">
     <div class="flex flex-col gap-5">
-        <flux:heading class="pr-8" size="lg" x-html="ttsModal.russianText"></flux:heading>
+        <flux:heading class="pr-8" size="lg" x-html="window.csvAccentMode.sanitizeRichText(ttsModal.russianText)"></flux:heading>
 
         <div x-show="ttsModal.audioExists">
             <div class="flex flex-col gap-2">

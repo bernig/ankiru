@@ -88,6 +88,31 @@ window.csvAccentMode = (function () {
     const _buildHtmlCache = new Map();
     const _cellNeedsAccentCache = new Map();
 
+    /** HTML entity replacements used by escapeHtml(). */
+    const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+    /**
+     * Escape every HTML-significant character so the string renders as text.
+     *
+     * @param  {string} text
+     * @returns {string}
+     */
+    function escapeHtml(text) {
+        return String(text).replace(/[&<>"']/g, ch => HTML_ESCAPES[ch]);
+    }
+
+    /**
+     * Make a raw cell value safe for x-html while keeping the canonical
+     * <b>…</b> stress markers: everything is escaped, then only the exact,
+     * attribute-free <b> and </b> tags are restored.
+     *
+     * @param  {string} rawText
+     * @returns {string}
+     */
+    function sanitizeRichText(rawText) {
+        return escapeHtml(rawText ?? '').replace(/&lt;(\/?)b&gt;/g, '<$1b>');
+    }
+
     /**
      * Walk rawText character-by-character, respecting <b>…</b> tags, and return
      * an array of {text, bold} segments.
@@ -234,9 +259,9 @@ window.csvAccentMode = (function () {
                     }
                 } else if (seg.bold) {
                     // Non-vowel inside <b> (edge case) - preserve bold rendering.
-                    result += `<b>${ch}</b>`;
+                    result += `<b>${escapeHtml(ch)}</b>`;
                 } else {
-                    result += ch;
+                    result += escapeHtml(ch);
                 }
             }
             plainPos += seg.text.length;
@@ -433,7 +458,7 @@ window.csvAccentMode = (function () {
         }
     }
 
-    return { buildHtml, handleClick, cellNeedsAccent, invalidateCache, setStyleMode, moveAccentToPosition };
+    return { buildHtml, sanitizeRichText, handleClick, cellNeedsAccent, invalidateCache, setStyleMode, moveAccentToPosition };
 
 }());
 
