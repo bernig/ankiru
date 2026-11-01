@@ -30,7 +30,11 @@ This is a web-based Anki flashcard creation tool specialized for French → Russ
 - `CsvEditor` is the main Livewire 4 component. Its rows (`protected array $csvRows`) are **not** in the Livewire snapshot: `hydrate()` reloads them from the active draft on every request. The client only receives derived public arrays rebuilt in `render()` and never read back: `pageRows` (current page, keyed by absolute row index), `pageAudio` (audio flag per row index) and `testCards` (only while test mode is open). In tests, use the `setRows()`, `rows()`, `assertRowsSet()` and `assertRowCount()` Testable macros from `tests/Pest.php`.
 - `CsvEditor` is decomposed into concern traits:
   - `ManagesMassOperations`: batch dispatch, progress polling, cancellation
-  - `ManagesPersistence`: CsvDraft CRUD, draft switching, auto-save
+  - `ManagesStressBatchResults`: merging a finished stress batch into its draft, and undoing it
+  - `ManagesRowFilters`: search, filters, pagination (`setPage()` stays in `CsvEditor`, it overrides `WithPagination`)
+  - `ManagesRowEditing`: cell edits, accent placement, add/delete row, undo of the last deletion
+  - `ManagesGuidedTour`: one-off guided tour and tips
+  - `ManagesPersistence`: CsvDraft CRUD, draft switching, renaming, auto-save
   - `ManagesRowGeneration`: AI row generation modal
   - `ManagesTranslation`: single-cell and single-row translation
   - `ManagesTtsAudio`: TTS modal, individual audio generation/deletion

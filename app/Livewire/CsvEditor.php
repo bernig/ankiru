@@ -2,13 +2,16 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\ManagesGuidedTour;
 use App\Livewire\Concerns\ManagesMassOperations;
 use App\Livewire\Concerns\ManagesPersistence;
+use App\Livewire\Concerns\ManagesRowEditing;
+use App\Livewire\Concerns\ManagesRowFilters;
 use App\Livewire\Concerns\ManagesRowGeneration;
+use App\Livewire\Concerns\ManagesStressBatchResults;
 use App\Livewire\Concerns\ManagesTestMode;
 use App\Livewire\Concerns\ManagesTranslation;
 use App\Livewire\Concerns\ManagesTtsAudio;
-use App\Models\CsvDraft;
 use App\Services\CreditService;
 use App\Services\CsvImportService;
 use App\Services\MassOperationService;
@@ -16,7 +19,6 @@ use App\Services\OpenAiTranslationService;
 use App\Services\RowGenerationService;
 use App\Services\RussianAccentService;
 use App\Services\RussianTextToSpeechService;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -28,9 +30,13 @@ use Livewire\WithPagination;
 
 class CsvEditor extends Component
 {
+    use ManagesGuidedTour;
     use ManagesMassOperations;
     use ManagesPersistence;
+    use ManagesRowEditing;
+    use ManagesRowFilters;
     use ManagesRowGeneration;
+    use ManagesStressBatchResults;
     use ManagesTestMode;
     use ManagesTranslation;
     use ManagesTtsAudio;
@@ -43,21 +49,6 @@ class CsvEditor extends Component
     use WithPagination {
         setPage as paginationSetPage;
     }
-
-    /** @var list<int> Page sizes offered by the per-page selector. */
-    private const array ALLOWED_PER_PAGE = [10, 25, 50, 100];
-
-    /** Number of rows displayed per page (user-configurable). */
-    public int $perPage = 50;
-
-    /**
-     * The row removed by the last deleteRow(), so undoDeleteRow() can put it
-     * back where it was. Cleared once restored or when another file opens.
-     *
-     * @var array{draftId: int, index: int, row: array<int, string>}|null
-     */
-    #[Locked]
-    public ?array $lastDeletedRow = null;
 
     /** @var TemporaryUploadedFile|null */
     public $uploadedCsvFile = null;
@@ -86,30 +77,11 @@ class CsvEditor extends Component
 
     public string $validationError = '';
 
-    public string $searchQuery = '';
-
-    public bool $filterAccentNeeded = false;
-
-    public bool $filterNoAudio = false;
-
     public bool $hasCsvLoaded = false;
 
     /** Database ID of the currently displayed draft. 0 means no draft persisted yet. */
     #[Locked]
     public int $activeDraftId = 0;
-
-    /**
-     * Lightweight list of all drafts for the file selector.
-     *
-     * @var array<int, array{id: int, original_file_name: string}>
-     */
-    public array $allDraftsMeta = [];
-
-    /** Whether the rename input for the active file is visible. */
-    public bool $isRenamingFile = false;
-
-    /** The value bound to the rename input field. */
-    public string $renameInput = '';
 
     /** Hex color applied to stressed vowels in the exported CSV (#RRGGBB), or null for plain bold only. */
     public ?string $accentColor = null;
@@ -252,67 +224,14 @@ class CsvEditor extends Component
     }
 
     // -------------------------------------------------------------------------
-    // Pagination
+    // Pagination (the rest lives in ManagesRowFilters)
     // -------------------------------------------------------------------------
 
     /**
-     * Rows visible on the current page wrapped in a LengthAwarePaginator so
-     * flux:pagination can consume it directly. Original array keys are
-     * preserved so all row-index-based actions still work.
-     */
-    #[Computed]
-    public function paginatedRows(): LengthAwarePaginator
-    {
-        $rows = $this->filteredRows;
-        $currentPage = $this->getPage();
-        $offset = ($currentPage - 1) * $this->perPage;
-        $slicedItems = collect(array_slice($rows, $offset, $this->perPage, true));
-
-        return new LengthAwarePaginator(
-            $slicedItems,
-            count($rows),
-            $this->perPage,
-            $currentPage,
-            ['path' => request()->url()]
-        );
-    }
-
-    /**
-     * Total number of pages given the current row count and page size.
-     */
-    #[Computed]
-    public function totalPages(): int
-    {
-        return max(1, (int) ceil(count($this->filteredRows) / $this->perPage));
-    }
-
-    public function updatedSearchQuery(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterAccentNeeded(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterNoAudio(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedPerPage(): void
-    {
-        if (! in_array($this->perPage, self::ALLOWED_PER_PAGE, true)) {
-            $this->perPage = 50;
-        }
-
-        $this->resetPage();
-    }
-
-    /**
      * Navigate to the given page number (clamped to valid range).
-     * Overrides WithPagination::setPage() to prevent out-of-range navigation.
+     * Overrides WithPagination::setPage() to prevent out-of-range navigation;
+     * it stays in the class, since a trait method of the same name would
+     * collide with the one of WithPagination.
      *
      * @param  int|string  $page
      */
@@ -322,215 +241,8 @@ class CsvEditor extends Component
     }
 
     // -------------------------------------------------------------------------
-    // Cell & Row Editing
+    // Rendering
     // -------------------------------------------------------------------------
-
-    /**
-     * Move the <b> accent marker to the Russian vowel at the given plain-text
-     * character position within a data cell.
-     *
-     * @param  int  $charPosition  0-based character index in the stripped plain text.
-     */
-    public function placeAccentOnVowel(int $rowIndex, int $columnIndex, int $charPosition): void
-    {
-        if (! isset($this->csvRows[$rowIndex][$columnIndex])) {
-            return;
-        }
-
-        $this->csvRows[$rowIndex][$columnIndex] = $this->accentService->moveAccentToPosition(
-            $this->csvRows[$rowIndex][$columnIndex],
-            $charPosition
-        );
-
-        $this->autoSaveDraft();
-    }
-
-    /**
-     * Update a single cell value and persist the change.
-     */
-    public function updateCell(int $rowIndex, int $columnIndex, string $value): void
-    {
-        if (! isset($this->csvRows[$rowIndex])) {
-            return;
-        }
-
-        $this->csvRows[$rowIndex][$columnIndex] = $value;
-
-        $this->autoSaveDraft();
-    }
-
-    /**
-     * Append an empty row filled with empty strings for each column,
-     * then navigate to the last page where the new row appears.
-     */
-    public function addRow(): void
-    {
-        $columnCount = count(reset($this->csvRows) ?: []) ?: 2;
-        $this->csvRows[] = array_fill(0, $columnCount, '');
-        $newRowIndex = array_key_last($this->csvRows);
-        $this->autoSaveDraft();
-        // Clear all filters so the new (empty) row is visible and totalPages is accurate.
-        $this->searchQuery = '';
-        $this->filterAccentNeeded = false;
-        $this->filterNoAudio = false;
-        // Land on the last page so the new row is immediately visible.
-        $this->setPage($this->totalPages);
-        $this->dispatch('csv-row-added', rowIndex: $newRowIndex);
-
-        if ($newRowIndex === 0) {
-            $this->maybeStartFirstRowTip();
-        }
-    }
-
-    /**
-     * Delete a row by its index and re-index the rows array.
-     */
-    public function deleteRow(int $rowIndex): void
-    {
-        if (! isset($this->csvRows[$rowIndex])) {
-            return;
-        }
-
-        $this->lastDeletedRow = ['draftId' => $this->activeDraftId, 'index' => $rowIndex, 'row' => $this->csvRows[$rowIndex]];
-        $this->dispatch('row-deleted');
-
-        unset($this->csvRows[$rowIndex]);
-        $this->csvRows = array_values($this->csvRows);
-        // Close the audio modal, since indices have shifted and references would be stale.
-        $this->ttsModalRowIndex = -1;
-        $this->autoSaveDraft();
-        // Clamp the current page in case the last page was emptied by this deletion.
-        if ($this->getPage() > $this->totalPages) {
-            $this->setPage($this->totalPages);
-        }
-    }
-
-    /**
-     * Put back the row removed by the last deleteRow(), at its former index
-     * (or at the end when rows were removed since), and show its page.
-     */
-    public function undoDeleteRow(): void
-    {
-        $deleted = $this->lastDeletedRow;
-        $this->lastDeletedRow = null;
-
-        if ($deleted === null || $deleted['draftId'] !== $this->activeDraftId) {
-            return;
-        }
-
-        $index = min($deleted['index'], count($this->csvRows));
-        array_splice($this->csvRows, $index, 0, [$deleted['row']]);
-        $this->autoSaveDraft();
-        $this->setPage(intdiv($index, $this->perPage) + 1);
-    }
-
-    /**
-     * Delete the active file. If other drafts remain, switch to the most recent one;
-     * otherwise return to the upload screen.
-     */
-    public function resetEditor(): void
-    {
-        $this->clearDraft();
-
-        /** @var CsvDraft|null $next */
-        $next = CsvDraft::query()
-            ->where('user_id', auth()->id())
-            ->latest()
-            ->first();
-
-        if ($next !== null) {
-            $this->loadDraftIntoState($next);
-        } else {
-            $this->csvRows = [];
-            $this->originalFileName = '';
-            $this->validationError = '';
-            $this->hasCsvLoaded = false;
-            $this->uploadedCsvFile = null;
-            $this->activeDraftId = 0;
-        }
-
-        $this->resetFiltersAndPagination();
-        $this->dispatch('csv-file-switched');
-    }
-
-    /**
-     * Switch the editor to a different draft owned by the authenticated user.
-     */
-    public function switchToDraft(int $draftId): void
-    {
-        /** @var CsvDraft|null $draft */
-        $draft = CsvDraft::query()
-            ->where('id', $draftId)
-            ->where('user_id', auth()->id())
-            ->first();
-
-        if ($draft === null) {
-            return;
-        }
-
-        $this->loadDraftIntoState($draft);
-        $this->resetFiltersAndPagination();
-
-        $draft->update(['last_accessed_at' => now()]);
-
-        $this->dispatch('csv-file-switched');
-    }
-
-    /**
-     * Create a new empty file, persist it, and open the rename prompt immediately.
-     */
-    public function createNewFile(): void
-    {
-        $this->csvRows = [];
-        $this->originalFileName = __('csv_editor.new_file_default_name').'.csv';
-        $this->hasCsvLoaded = true;
-        $this->activeDraftId = 0;
-        $this->resetFiltersAndPagination();
-        $this->dispatch('csv-file-switched');
-
-        $this->autoSaveDraft();
-        $this->startRenameDraft();
-        $this->maybeStartNewFileTip();
-    }
-
-    /**
-     * Show the rename input pre-filled with the current file base name.
-     */
-    public function startRenameDraft(): void
-    {
-        $this->renameInput = CsvDraft::baseName($this->originalFileName);
-        $this->isRenamingFile = true;
-    }
-
-    /**
-     * Apply the new file name and persist it.
-     */
-    public function confirmRenameDraft(): void
-    {
-        $newBaseName = trim($this->renameInput);
-
-        if ($newBaseName === '') {
-            $this->isRenamingFile = false;
-
-            return;
-        }
-
-        $extension = CsvDraft::extension($this->originalFileName);
-        $this->originalFileName = $newBaseName.($extension !== '' ? ".{$extension}" : '');
-        $this->isRenamingFile = false;
-        $this->renameInput = '';
-
-        $this->autoSaveDraft();
-    }
-
-    /**
-     * Dismiss the rename input without saving.
-     */
-    public function cancelRenameDraft(): void
-    {
-        $this->isRenamingFile = false;
-        $this->renameInput = '';
-    }
 
     public function render(): View
     {
@@ -549,108 +261,6 @@ class CsvEditor extends Component
     public function hasAnyRussianText(): bool
     {
         return collect($this->csvRows)->contains(fn (array $row): bool => trim($row[1] ?? '') !== '');
-    }
-
-    /**
-     * Return the subset of csvRows matching the active search query and toggle
-     * filters, preserving original array keys so row-index-based actions work.
-     *
-     * @return array<int, array<int, string>>
-     */
-    #[Computed]
-    public function filteredRows(): array
-    {
-        $rows = $this->csvRows;
-
-        $normalizedQuery = $this->normalizeForSearch(trim($this->searchQuery));
-
-        if ($normalizedQuery !== '') {
-            $rows = array_filter(
-                $rows,
-                fn (array $row): bool => str_contains($this->normalizeForSearch($row[0] ?? ''), $normalizedQuery)
-                    || str_contains($this->normalizeForSearch($row[1] ?? ''), $normalizedQuery)
-            );
-        }
-
-        if ($this->filterAccentNeeded) {
-            $rows = array_filter(
-                $rows,
-                fn (array $row): bool => $this->accentService->textNeedsStressCorrection($row[1] ?? '')
-            );
-        }
-
-        if ($this->filterNoAudio) {
-            $russianTexts = array_values(array_filter(
-                array_map(fn (array $row): string => $row[1] ?? '', $rows),
-                fn (string $text): bool => trim($text) !== '',
-            ));
-            $audioExistence = $this->ttsService->audioFilesExistBatch($russianTexts);
-            $rows = array_filter(
-                $rows,
-                fn (array $row): bool => trim($row[1] ?? '') !== '' && ! ($audioExistence[$row[1] ?? ''] ?? false)
-            );
-        }
-
-        return $rows;
-    }
-
-    /**
-     * Auto-starts the full guided tour the first time this user has a loaded
-     * file with at least one row, so there is something on screen to point
-     * at. Marked as seen immediately so it never fires again automatically,
-     * regardless of whether the user finishes or dismisses it; the header's
-     * "Guided tour" button remains available to replay it manually.
-     */
-    private function maybeAutoStartMainTour(): void
-    {
-        $user = auth()->user();
-
-        if (! $user || $user->tour_completed_at || ! $this->hasCsvLoaded || count($this->csvRows) === 0) {
-            return;
-        }
-
-        $user->tour_completed_at = now();
-        $user->save();
-
-        $this->dispatch('start-main-tour');
-    }
-
-    /**
-     * Shows a one-off tip pointing at the row's action icons the first time
-     * this user ever adds a row to a file, since that's the moment the
-     * translate/stress/audio icons first become relevant.
-     */
-    private function maybeStartFirstRowTip(): void
-    {
-        $user = auth()->user();
-
-        if (! $user || $user->tour_first_row_tip_seen_at) {
-            return;
-        }
-
-        $user->tour_first_row_tip_seen_at = now();
-        $user->save();
-
-        $this->dispatch('start-first-row-tip');
-    }
-
-    /**
-     * Shows a one-off tip pointing at the "add row" area the first time
-     * this user ever creates a new empty file, since that's the moment
-     * they most need to know how to get started.
-     */
-    private function maybeStartNewFileTip(): void
-    {
-        $user = auth()->user();
-
-        if (! $user || $user->tour_new_file_tip_seen_at) {
-            return;
-        }
-
-        $user->tour_new_file_tip_seen_at = now();
-        $user->save();
-
-        $this->dispatch('start-new-file-tip');
     }
 
     // -------------------------------------------------------------------------
@@ -674,10 +284,6 @@ class CsvEditor extends Component
     }
 
     /**
-     * Reset UI-only state that must be cleared whenever a different file is
-     * opened (filters, search, rename input, TTS modal, pagination).
-     */
-    /**
      * Whether the current user can start an AI action estimated at
      * $estimatedCredits. When the platform balance falls short, opens the
      * credits shop and returns false; the caller then shows its own error.
@@ -693,6 +299,10 @@ class CsvEditor extends Component
         return false;
     }
 
+    /**
+     * Reset UI-only state that must be cleared whenever a different file is
+     * opened (filters, search, rename input, TTS modal, undo, pagination).
+     */
     private function resetFiltersAndPagination(): void
     {
         $this->isRenamingFile = false;
@@ -704,17 +314,5 @@ class CsvEditor extends Component
         $this->lastDeletedRow = null;
         $this->forgetStressBatchUndo();
         $this->resetPage();
-    }
-
-    /**
-     * Strip HTML tags, remove combining acute accents (U+0301), and lowercase.
-     * Mirrors the normalisation done client-side in window.csvSearch.normalizeText().
-     */
-    private function normalizeForSearch(string $text): string
-    {
-        $text = strip_tags($text);
-        $text = preg_replace('/\x{0301}/u', '', $text) ?? $text;
-
-        return mb_strtolower($text);
     }
 }
