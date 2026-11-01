@@ -21,7 +21,7 @@ test('does not call the tts api when the russian column is empty', function () {
     Audio::fake()->preventStrayAudio();
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille.', '']])
+        ->setRows([['Je travaille.', '']])
         ->set('hasCsvLoaded', true)
         ->call('generateTtsAudio', 0);
 
@@ -33,7 +33,7 @@ test('generates tts audio from the russian phrase and dispatches a playback even
     Audio::fake([base64_encode('fake-mp3-binary')]);
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille.', 'Я раб<b>о</b>таю.']])
+        ->setRows([['Je travaille.', 'Я раб<b>о</b>таю.']])
         ->set('hasCsvLoaded', true)
         ->call('generateTtsAudio', 0)
         ->assertDispatched('tts-audio-ready')
@@ -53,7 +53,7 @@ test('reuses the cached audio file without calling the tts api a second time', f
     });
 
     $component = Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille.', 'Я раб<b>о</b>таю.']])
+        ->setRows([['Je travaille.', 'Я раб<b>о</b>таю.']])
         ->set('hasCsvLoaded', true);
 
     // First call: audio is generated and written to (fake) storage.
@@ -72,7 +72,7 @@ test('sets a tts error when audio generation throws an exception', function () {
     });
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille.', 'Я работаю.']])
+        ->setRows([['Je travaille.', 'Я работаю.']])
         ->set('hasCsvLoaded', true)
         ->call('generateTtsAudio', 0)
         ->assertSet('ttsError', __('csv_editor.error_audio_generation_failed', ['message' => 'TTS provider error.']))
@@ -132,7 +132,7 @@ test('deletes cached tts audio file from storage', function () {
     expect(Storage::disk('local')->exists("tts/{$filenameHash}.mp3"))->toBeTrue();
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille.', $rawRussianText]])
+        ->setRows([['Je travaille.', $rawRussianText]])
         ->set('hasCsvLoaded', true)
         ->call('deleteTtsAudio', 0);
 
@@ -143,7 +143,7 @@ test('deleting tts audio for a row with no cached file does nothing gracefully',
     Storage::fake('local');
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille.', 'Я работаю.']])
+        ->setRows([['Je travaille.', 'Я работаю.']])
         ->set('hasCsvLoaded', true)
         ->call('deleteTtsAudio', 0);
 
@@ -223,7 +223,7 @@ test('audio existence by row index returns a map matching per-row audio state', 
     Storage::disk('local')->put("tts/{$hash}.mp3", 'fake-mp3');
 
     $component = Livewire::test(CsvEditor::class)
-        ->set('csvRows', [
+        ->setRows([
             ['Je travaille.', $presentPhrase],  // has audio
             ['Bonjour.', $absentPhrase],         // no audio
             ['Test.', ''],                       // empty Russian text
@@ -242,7 +242,7 @@ test('openTtsModal sets ttsModalRowIndex and dispatches open-tts-modal event wit
     Storage::fake('local');
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille.', 'Я работаю.']])
+        ->setRows([['Je travaille.', 'Я работаю.']])
         ->set('hasCsvLoaded', true)
         ->call('openTtsModal', 0)
         ->assertSet('ttsModalRowIndex', 0)
@@ -261,7 +261,7 @@ test('openTtsModal dispatches open-tts-modal event with audio url when cached fi
     Storage::disk('local')->put("tts/{$filenameHash}.mp3", 'fake-mp3-binary');
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille.', $rawText]])
+        ->setRows([['Je travaille.', $rawText]])
         ->set('hasCsvLoaded', true)
         ->call('openTtsModal', 0)
         ->assertSet('ttsModalRowIndex', 0)
@@ -281,7 +281,7 @@ test('refreshTtsAudio deletes the existing file and regenerates fresh audio', fu
     Storage::disk('local')->put("tts/{$filenameHash}.mp3", 'old-mp3-binary');
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille.', $rawText]])
+        ->setRows([['Je travaille.', $rawText]])
         ->set('hasCsvLoaded', true)
         ->call('refreshTtsAudio', 0)
         ->assertDispatched('tts-audio-ready')
@@ -293,7 +293,7 @@ test('refreshTtsAudio deletes the existing file and regenerates fresh audio', fu
 
 test('deleteRow resets ttsModalRowIndex to prevent stale references', function () {
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille.', 'Я работаю.'], ['Bonjour.', 'Привет.']])
+        ->setRows([['Je travaille.', 'Я работаю.'], ['Bonjour.', 'Привет.']])
         ->set('hasCsvLoaded', true)
         ->call('openTtsModal', 0)
         ->call('deleteRow', 0)
@@ -312,7 +312,7 @@ test('tts generation is blocked and an error is set after exceeding the rate lim
     }
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille.', 'Я работаю.']])
+        ->setRows([['Je travaille.', 'Я работаю.']])
         ->set('hasCsvLoaded', true)
         ->call('generateTtsAudio', 0)
         ->assertSet('ttsError', __('csv_editor.error_rate_limit'));

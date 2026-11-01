@@ -33,7 +33,7 @@ test('csv export wraps stressed vowels with font and bold tags when color and bo
 
     $test = Livewire::actingAs($user)
         ->test(CsvEditor::class)
-        ->set('csvRows', [['Bonjour', 'раб<b>о</b>тать']])
+        ->setRows([['Bonjour', 'раб<b>о</b>тать']])
         ->set('hasCsvLoaded', true)
         ->set('originalFileName', 'test.csv')
         ->call('downloadCsv');
@@ -50,7 +50,7 @@ test('csv export wraps stressed vowels with font tag only when color is set and 
 
     $test = Livewire::actingAs($user)
         ->test(CsvEditor::class)
-        ->set('csvRows', [['Bonjour', 'раб<b>о</b>тать']])
+        ->setRows([['Bonjour', 'раб<b>о</b>тать']])
         ->set('hasCsvLoaded', true)
         ->set('originalFileName', 'test.csv')
         ->call('downloadCsv');
@@ -72,7 +72,7 @@ test('csv export replaces stressed vowels with combining acute accent in unicode
 
     $test = Livewire::actingAs($user)
         ->test(CsvEditor::class)
-        ->set('csvRows', [['Bonjour', 'раб<b>о</b>тать']])
+        ->setRows([['Bonjour', 'раб<b>о</b>тать']])
         ->set('hasCsvLoaded', true)
         ->set('originalFileName', 'test.csv')
         ->call('downloadCsv');
@@ -95,7 +95,7 @@ test('csv export does not add combining accent to ё in unicode mode', function 
 
     $test = Livewire::actingAs($user)
         ->test(CsvEditor::class)
-        ->set('csvRows', [['Bonjour', 'в<b>ё</b>л']])
+        ->setRows([['Bonjour', 'в<b>ё</b>л']])
         ->set('hasCsvLoaded', true)
         ->set('originalFileName', 'test.csv')
         ->call('downloadCsv');
@@ -117,7 +117,7 @@ test('csv export combines unicode accent, color, and bold when all three options
 
     $test = Livewire::actingAs($user)
         ->test(CsvEditor::class)
-        ->set('csvRows', [['Bonjour', 'раб<b>о</b>тать']])
+        ->setRows([['Bonjour', 'раб<b>о</b>тать']])
         ->set('hasCsvLoaded', true)
         ->set('originalFileName', 'test.csv')
         ->call('downloadCsv');
@@ -135,7 +135,7 @@ test('csv export keeps plain bold tags when no color is set', function (): void 
 
     $test = Livewire::actingAs($user)
         ->test(CsvEditor::class)
-        ->set('csvRows', [['Bonjour', 'раб<b>о</b>тать']])
+        ->setRows([['Bonjour', 'раб<b>о</b>тать']])
         ->set('hasCsvLoaded', true)
         ->set('originalFileName', 'test.csv')
         ->call('downloadCsv');

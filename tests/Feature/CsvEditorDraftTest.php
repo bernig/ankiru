@@ -17,19 +17,19 @@ beforeEach(function (): void {
 // ── Reset Editor ───────────────────────────────────────────────────────────
 test('resetting the editor clears state and returns to the upload panel', function () {
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
+        ->setRows(sampleRows())
         ->set('hasCsvLoaded', true)
         ->set('originalFileName', 'sample.csv')
         ->call('resetEditor')
         ->assertSet('hasCsvLoaded', false)
-        ->assertSet('csvRows', [])
+        ->assertRowsSet('', [])
         ->assertSet('originalFileName', '')
         ->assertSee(__('csv_editor.upload_heading'));
 });
 
 test('resetting the editor deletes the saved draft if it exists', function () {
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
+        ->setRows(sampleRows())
         ->set('originalFileName', 'sample.csv')
         ->set('hasCsvLoaded', true)
         ->call('updateCell', 0, 0, 'Je travaille depuis chez moi.');
@@ -45,7 +45,7 @@ test('resetting the editor deletes the saved draft if it exists', function () {
 // ── Draft Persistence ───────────────────────────────────────────────────────
 test('restores editor state from the saved draft on mount', function () {
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
+        ->setRows(sampleRows())
         ->set('originalFileName', 'restored.csv')
         ->set('hasCsvLoaded', true)
         ->call('updateCell', 0, 0, 'Je travaille depuis chez moi.');
@@ -53,14 +53,14 @@ test('restores editor state from the saved draft on mount', function () {
     Livewire::test(CsvEditor::class)
         ->assertSet('hasCsvLoaded', true)
         ->assertSet('originalFileName', 'restored.csv')
-        ->assertCount('csvRows', 2)
-        ->assertSet('csvRows.0.0', 'Je travaille depuis chez moi.');
+        ->assertRowCount(2)
+        ->assertRowsSet('0.0', 'Je travaille depuis chez moi.');
 });
 
 test('starts fresh when no saved draft exists', function () {
     Livewire::test(CsvEditor::class)
         ->assertSet('hasCsvLoaded', false)
-        ->assertSet('csvRows', []);
+        ->assertRowsSet('', []);
 });
 
 // ── Multiple Files ──────────────────────────────────────────────────────────
@@ -104,7 +104,7 @@ test('switching drafts loads the rows of the selected file', function () {
     $component
         ->call('switchToDraft', $firstDraftId)
         ->assertSet('originalFileName', 'first.csv')
-        ->assertSet('csvRows.0.0', 'Row A');
+        ->assertRowsSet('0.0', 'Row A');
 });
 
 test('resetting with multiple files switches to the next draft instead of showing the upload panel', function () {
@@ -152,7 +152,7 @@ test('creating a new file sets hasCsvLoaded and opens the rename prompt', functi
     Livewire::test(CsvEditor::class)
         ->call('createNewFile')
         ->assertSet('hasCsvLoaded', true)
-        ->assertSet('csvRows', [])
+        ->assertRowsSet('', [])
         ->assertSet('isRenamingFile', true);
 
     expect(CsvDraft::query()->count())->toBe(1);
@@ -215,7 +215,7 @@ test('mount never restores a draft owned by another user', function () {
 
     Livewire::test(CsvEditor::class)
         ->assertSet('hasCsvLoaded', false)
-        ->assertSet('csvRows', [])
+        ->assertRowsSet('', [])
         ->assertDontSee('secret.csv');
 });
 
@@ -224,7 +224,7 @@ test('switching to a draft owned by another user changes nothing', function () {
 
     Livewire::test(CsvEditor::class)
         ->call('switchToDraft', $foreignDraft->id)
-        ->assertSet('csvRows', [])
+        ->assertRowsSet('', [])
         ->assertSet('originalFileName', '');
 
     expect($foreignDraft->fresh()->last_accessed_at->isToday())->toBeFalse();
@@ -236,8 +236,10 @@ test('a tampered draft id cannot overwrite or delete another user\'s draft', fun
     Livewire::test(CsvEditor::class)
         ->set('activeDraftId', $foreignDraft->id)
         ->set('hasCsvLoaded', true)
-        ->set('csvRows', [['Overwritten', 'Перезаписано']])
-        ->call('updateCell', 0, 0, 'Overwritten again')
+        ->assertRowsSet('', [])
+        ->assertSet('pageRows', [])
+        ->call('updateCell', 0, 0, 'Overwritten')
+        ->call('addRow')
         ->call('resetEditor');
 
     expect($foreignDraft->fresh())

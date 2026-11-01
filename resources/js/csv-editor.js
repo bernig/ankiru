@@ -345,11 +345,17 @@ window.csvAccentMode = (function () {
         // in the local Alpine/Livewire reactive state so the DOM updates instantly,
         // before the server round-trip completes. The server call below confirms and
         // persists the same change; on response the value stays identical (no flicker).
+        // The deck rows are not on the client: only the visible page (pageRows)
+        // and, while test mode is open, the queued cards (testCards).
         if (type === 'cell' && secondary !== undefined) {
-            const oldValue = (wire.csvRows[primary] ?? [])[secondary] ?? '';
-            const newValue = moveAccentToPosition(oldValue, vowelPos);
-            if (newValue !== oldValue) {
-                wire.csvRows[primary][secondary] = newValue;
+            for (const rows of [wire.pageRows, wire.testCards]) {
+                const row = rows?.[primary];
+                if (!row || row[secondary] === undefined) continue;
+
+                const newValue = moveAccentToPosition(row[secondary], vowelPos);
+                if (newValue !== row[secondary]) {
+                    row[secondary] = newValue;
+                }
             }
         }
 

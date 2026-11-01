@@ -52,6 +52,26 @@ trait ManagesPersistence
     }
 
     /**
+     * Read the rows of the active draft, scoped to the authenticated user.
+     *
+     * @return array<int, array<int, string>>
+     */
+    private function loadActiveDraftRows(): array
+    {
+        if (! auth()->check() || $this->activeDraftId <= 0) {
+            return [];
+        }
+
+        /** @var CsvDraft|null $draft */
+        $draft = CsvDraft::query()
+            ->where('id', $this->activeDraftId)
+            ->where('user_id', auth()->id())
+            ->first(['id', 'csv_rows']);
+
+        return $draft?->csv_rows ?? [];
+    }
+
+    /**
      * Restore editor state from the most recent draft on mount.
      */
     private function restoreFromDraft(): void

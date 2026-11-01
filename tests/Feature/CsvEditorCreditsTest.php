@@ -17,7 +17,7 @@ test('dispatch open-openai-key-setup si ni clé ni crédits', function (): void 
     SourceToRussianTranslatorAgent::fake()->preventStrayPrompts();
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Bonjour', '']])
+        ->setRows([['Bonjour', '']])
         ->set('hasCsvLoaded', true)
         ->call('translateWithChatGpt', 0)
         ->assertDispatched('open-openai-key-setup')
@@ -35,11 +35,11 @@ test('autorise la traduction avec clé personnelle (sans crédits), ne déduit p
     SourceToRussianTranslatorAgent::fake(['Бонж<b>у</b>р']);
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Bonjour', '']])
+        ->setRows([['Bonjour', '']])
         ->set('hasCsvLoaded', true)
         ->call('translateWithChatGpt', 0)
         ->assertSet('translationError', '')
-        ->assertSet('csvRows.0.1', 'Бонж<b>у</b>р');
+        ->assertRowsSet('0.1', 'Бонж<b>у</b>р');
 
     expect($user->fresh()->credits)->toBe(0);
 });
@@ -54,7 +54,7 @@ test('les crédits ont la priorité sur la clé personnelle', function (): void 
     SourceToRussianTranslatorAgent::fake(['Бонж<b>у</b>р']);
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Bonjour', '']])
+        ->setRows([['Bonjour', '']])
         ->set('hasCsvLoaded', true)
         ->call('translateWithChatGpt', 0)
         ->assertSet('translationError', '');
@@ -72,11 +72,11 @@ test('autorise la traduction avec crédits suffisants sans bloquer l\'opération
     SourceToRussianTranslatorAgent::fake(['Бонж<b>у</b>р']);
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Bonjour', '']])
+        ->setRows([['Bonjour', '']])
         ->set('hasCsvLoaded', true)
         ->call('translateWithChatGpt', 0)
         ->assertSet('translationError', '')
-        ->assertSet('csvRows.0.1', 'Бонж<b>у</b>р');
+        ->assertRowsSet('0.1', 'Бонж<b>у</b>р');
 
     expect($user->fresh()->credits)->toBeLessThanOrEqual(100_000);
 });
@@ -89,7 +89,7 @@ test('bloque la traduction si crédits insuffisants', function (): void {
     SourceToRussianTranslatorAgent::fake()->preventStrayPrompts();
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Bonjour', '']])
+        ->setRows([['Bonjour', '']])
         ->set('hasCsvLoaded', true)
         ->call('translateWithChatGpt', 0)
         ->assertSet('translationError', __('csv_editor.error_insufficient_credits'))

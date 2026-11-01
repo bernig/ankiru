@@ -98,7 +98,7 @@
 
                     {{-- Recto (texte source) --}}
                     <div class="flex min-h-28 flex-col items-center justify-center gap-2 py-2 text-center">
-                        <p class="text-xl font-medium text-zinc-900 sm:text-2xl dark:text-zinc-100" x-html="window.csvAccentMode.sanitizeRichText($wire.csvRows[$wire.testQueue[$wire.testQueuePosition]]?.[0] ?? '')"></p>
+                        <p class="text-xl font-medium text-zinc-900 sm:text-2xl dark:text-zinc-100" x-html="window.csvAccentMode.sanitizeRichText($wire.testCards[$wire.testQueue[$wire.testQueuePosition]]?.[0] ?? '')"></p>
                     </div>
 
                     {{-- Séparateur + verso (affiché quand retourné) --}}
@@ -106,8 +106,8 @@
                         <div class="my-4 border-t border-zinc-100 dark:border-zinc-700"></div>
 
                         <div class="flex flex-col items-center gap-3 py-2 text-center">
-                            <div class="cursor-default text-xl font-medium text-zinc-900 sm:text-2xl dark:text-zinc-100" x-html="window.csvAccentMode.buildHtml($wire.csvRows[$wire.testQueue[$wire.testQueuePosition]]?.[1] ?? '')" @click="
-                                    const t = $wire.csvRows[$wire.testQueue[$wire.testQueuePosition]]?.[1] ?? '';
+                            <div class="cursor-default text-xl font-medium text-zinc-900 sm:text-2xl dark:text-zinc-100" x-html="window.csvAccentMode.buildHtml($wire.testCards[$wire.testQueue[$wire.testQueuePosition]]?.[1] ?? '')" @click="
+                                    const t = $wire.testCards[$wire.testQueue[$wire.testQueuePosition]]?.[1] ?? '';
                                     window.csvAccentMode.invalidateCache(t);
                                     window.csvAccentMode.handleClick($event, $wire, 'cell', $wire.testQueue[$wire.testQueuePosition], 1)
                                 "></div>

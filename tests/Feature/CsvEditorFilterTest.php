@@ -29,7 +29,7 @@ test('filterAccentNeeded shows no-results message when all rows already have acc
     ];
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', $rows)
+        ->setRows($rows)
         ->set('hasCsvLoaded', true)
         ->set('filterAccentNeeded', true)
         ->assertSee(__('csv_editor.no_search_results'));
@@ -42,7 +42,7 @@ test('filterAccentNeeded does not show no-results message when some rows need ac
     ];
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', $rows)
+        ->setRows($rows)
         ->set('hasCsvLoaded', true)
         ->set('filterAccentNeeded', true)
         ->assertDontSee(__('csv_editor.no_search_results'));
@@ -50,7 +50,7 @@ test('filterAccentNeeded does not show no-results message when some rows need ac
 
 test('filterAccentNeeded can be toggled on and off', function (): void {
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
+        ->setRows(sampleRows())
         ->set('hasCsvLoaded', true)
         ->set('filterAccentNeeded', true)
         ->assertSet('filterAccentNeeded', true)
@@ -68,7 +68,7 @@ test('filterNoAudio shows no-results message when all rows have audio', function
     Storage::disk('local')->put("tts/{$hash}.mp3", 'fake-audio');
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Row A', $russianText]])
+        ->setRows([['Row A', $russianText]])
         ->set('hasCsvLoaded', true)
         ->set('filterNoAudio', true)
         ->assertSee(__('csv_editor.no_search_results'));
@@ -83,7 +83,7 @@ test('filterNoAudio does not show no-results when some rows are missing audio', 
     Storage::disk('local')->put("tts/{$hash}.mp3", 'fake-audio');
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [$rowWithAudio, $rowWithoutAudio])
+        ->setRows([$rowWithAudio, $rowWithoutAudio])
         ->set('hasCsvLoaded', true)
         ->set('filterNoAudio', true)
         ->assertDontSee(__('csv_editor.no_search_results'));
@@ -98,7 +98,7 @@ test('filterNoAudio excludes rows with empty russian text', function (): void {
     ];
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', $rows)
+        ->setRows($rows)
         ->set('hasCsvLoaded', true)
         ->set('filterNoAudio', true)
         ->assertDontSee(__('csv_editor.no_search_results'));
@@ -115,7 +115,7 @@ test('filterAccentNeeded and search query can be combined', function (): void {
 
     // Only "Bonjour / работать" should pass both filters.
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', $rows)
+        ->setRows($rows)
         ->set('hasCsvLoaded', true)
         ->set('filterAccentNeeded', true)
         ->set('searchQuery', 'Bonjour')
@@ -126,7 +126,7 @@ test('filterAccentNeeded and search query can be combined', function (): void {
 
 test('filters are cleared when resetting the editor', function (): void {
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
+        ->setRows(sampleRows())
         ->set('hasCsvLoaded', true)
         ->set('filterAccentNeeded', true)
         ->set('filterNoAudio', true)
@@ -137,7 +137,7 @@ test('filters are cleared when resetting the editor', function (): void {
 
 test('filters are cleared when creating a new file', function (): void {
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
+        ->setRows(sampleRows())
         ->set('hasCsvLoaded', true)
         ->set('filterAccentNeeded', true)
         ->set('filterNoAudio', true)
@@ -156,7 +156,7 @@ test('perPage accepts the sizes offered by the selector', function (): void {
 
 test('perPage falls back to the default for values outside the selector', function (int $invalidPerPage): void {
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Row A', 'Привет']])
+        ->setRows([['Row A', 'Привет']])
         ->set('hasCsvLoaded', true)
         ->set('perPage', $invalidPerPage)
         ->assertSet('perPage', 50)

@@ -28,11 +28,11 @@ test('hides the upload panel and shows rows when a csv is loaded', function () {
     // Cell content is rendered via Alpine x-html (client-side), so assertSee is not
     // appropriate here. We verify state instead, and confirm the upload panel is gone.
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
+        ->setRows(sampleRows())
         ->set('hasCsvLoaded', true)
         ->assertDontSee(__('csv_editor.upload_heading'))
         ->assertSet('hasCsvLoaded', true)
-        ->assertCount('csvRows', 2);
+        ->assertRowCount(2);
 });
 
 // ── CSV Upload ──────────────────────────────────────────────────────────────
@@ -47,10 +47,10 @@ test('parses an uploaded csv file into component state', function () {
         ->set('uploadedCsvFile', $uploadedFile)
         ->assertSet('hasCsvLoaded', true)
         ->assertSet('originalFileName', 'translations.csv')
-        ->assertCount('csvRows', 2)
-        ->assertSet('csvRows.0.0', 'Je travaille depuis chez moi.')
-        ->assertSet('csvRows.0.1', 'Я раб<b>о</b>таю из д<b>о</b>ма.')
-        ->assertSet('csvRows.1.0', 'Je suis développeur web.');
+        ->assertRowCount(2)
+        ->assertRowsSet('0.0', 'Je travaille depuis chez moi.')
+        ->assertRowsSet('0.1', 'Я раб<b>о</b>таю из д<b>о</b>ма.')
+        ->assertRowsSet('1.0', 'Je suis développeur web.');
 });
 
 test('imports a semicolon-separated Excel export with a byte order mark', function (): void {
@@ -60,7 +60,7 @@ test('imports a semicolon-separated Excel export with a byte order mark', functi
     Livewire::test(CsvEditor::class)
         ->set('uploadedCsvFile', $uploadedFile)
         ->assertSet('hasCsvLoaded', true)
-        ->assertSet('csvRows', [['Oui, merci', 'Да, спасибо'], ['Bonjour', 'Привет']]);
+        ->assertRowsSet('', [['Oui, merci', 'Да, спасибо'], ['Bonjour', 'Привет']]);
 });
 
 test('normalises colour+bold font wrappers to plain bold tags on import', function (): void {
@@ -69,7 +69,7 @@ test('normalises colour+bold font wrappers to plain bold tags on import', functi
 
     Livewire::test(CsvEditor::class)
         ->set('uploadedCsvFile', $uploadedFile)
-        ->assertSet('csvRows.0.1', 'раб<b>о</b>тать');
+        ->assertRowsSet('0.1', 'раб<b>о</b>тать');
 });
 
 test('normalises colour-only font wrappers to bold tags on import', function (): void {
@@ -78,7 +78,7 @@ test('normalises colour-only font wrappers to bold tags on import', function ():
 
     Livewire::test(CsvEditor::class)
         ->set('uploadedCsvFile', $uploadedFile)
-        ->assertSet('csvRows.0.1', 'раб<b>о</b>тать');
+        ->assertRowsSet('0.1', 'раб<b>о</b>тать');
 });
 
 test('normalises combining acute accent to bold tags on import', function (): void {
@@ -88,7 +88,7 @@ test('normalises combining acute accent to bold tags on import', function (): vo
 
     Livewire::test(CsvEditor::class)
         ->set('uploadedCsvFile', $uploadedFile)
-        ->assertSet('csvRows.0.1', 'раб<b>о</b>тать');
+        ->assertRowsSet('0.1', 'раб<b>о</b>тать');
 });
 
 test('rejects a non-csv file with a validation error', function () {

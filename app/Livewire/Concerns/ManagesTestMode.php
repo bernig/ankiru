@@ -49,6 +49,16 @@ trait ManagesTestMode
     #[Locked]
     public array $testCardAudioUrls = [];
 
+    /**
+     * Texts of the queued cards, keyed by row index, for the modal's Alpine
+     * bindings. The deck rows are not in the snapshot, so the modal gets only
+     * the cards it shows, and only while it is open. Derived on every render
+     * and never read back.
+     *
+     * @var array<int, array<int, string>>
+     */
+    public array $testCards = [];
+
     public function openTestMode(): void
     {
         if ($this->activeDraftId === 0) {
@@ -100,6 +110,17 @@ trait ManagesTestMode
         $this->testCardFlipped = false;
         $this->testSessionDone = false;
         $this->testCardAudioUrl = null;
+    }
+
+    /**
+     * Refresh the card texts from the deck rows, so an accent placed from the
+     * modal shows up after the round-trip.
+     */
+    private function syncTestCards(): void
+    {
+        $this->testCards = $this->testModeOpen
+            ? array_intersect_key($this->csvRows, array_flip($this->testQueue))
+            : [];
     }
 
     private function buildAudioUrl(string $russianText): ?string

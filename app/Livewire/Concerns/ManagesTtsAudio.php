@@ -41,7 +41,7 @@ trait ManagesTtsAudio
 
     /**
      * Pre-built map of rowIndex → bool for all visible rows on the current page,
-     * computed in a single directory scan rather than one Storage::exists() per row.
+     * checking each distinct phrase once via audioFilesExistBatch().
      *
      * @return array<int, bool>
      */

@@ -302,8 +302,7 @@ class MassOperationService
     /**
      * Collect rows whose Russian phrase has no cached audio file.
      *
-     * Uses audioFilesExistBatch() for a single filesystem scan instead of
-     * one Storage::exists() call per row.
+     * Uses audioFilesExistBatch(), which checks each distinct phrase once.
      *
      * @param  array<int, array<int, string>>  $csvRows
      * @return array<int, array{0: int, 1: string, 2: string}> [rowIndex, sourceText, russianText]

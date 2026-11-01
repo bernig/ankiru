@@ -16,7 +16,7 @@ beforeEach(function (): void {
 // ── CSV Download ───────────────────────────────────────────────────────────
 test('downloading the csv triggers a file download', function () {
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', sampleRows())
+        ->setRows(sampleRows())
         ->set('hasCsvLoaded', true)
         ->set('originalFileName', 'sample.csv')
         ->call('downloadCsv')
@@ -42,7 +42,7 @@ test('anki package export keeps russian stress tags in back fields', function ()
         });
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille.', 'Я раб<b>о</b>таю.']])
+        ->setRows([['Je travaille.', 'Я раб<b>о</b>таю.']])
         ->set('hasCsvLoaded', true)
         ->set('originalFileName', 'sample.csv')
         ->call('downloadAnkiPackage')

@@ -55,11 +55,13 @@ class CsvEditor extends Component
     public $uploadedCsvFile = null;
 
     /**
-     * Rows stored as array of arrays indexed by column position.
+     * Rows of the current page, keyed by their absolute index in $csvRows,
+     * for the Alpine cell bindings. Derived from $csvRows on every render and
+     * never read back, so a client-side change to it has no effect.
      *
      * @var array<int, array<int, string>>
      */
-    public array $csvRows = [];
+    public array $pageRows = [];
 
     public string $originalFileName = '';
 
@@ -100,6 +102,19 @@ class CsvEditor extends Component
 
     /** When true, stressed vowels are exported as vowel + U+0301 (combining acute accent) instead of HTML tags. */
     public bool $accentUnicode = false;
+
+    /**
+     * All rows of the active draft, indexed by column position.
+     *
+     * Kept out of the Livewire snapshot on purpose: a deck can hold thousands
+     * of rows, and a public property would travel to the browser and back on
+     * every request. The draft in the database is the source of truth, reloaded
+     * once per request in hydrate(); only the visible page is sent to the
+     * client, through $pageRows.
+     *
+     * @var array<int, array<int, string>>
+     */
+    protected array $csvRows = [];
 
     /**
      * Services are injected as protected so they are accessible from concern traits.
@@ -143,6 +158,15 @@ class CsvEditor extends Component
         $this->rowGenerationService = $rowGenerationService;
         $this->creditService = $creditService;
         $this->csvImportService = $csvImportService;
+    }
+
+    /**
+     * Reload the rows from the database on every subsequent request, since
+     * they are not part of the snapshot.
+     */
+    public function hydrate(): void
+    {
+        $this->csvRows = $this->loadActiveDraftRows();
     }
 
     public function mount(): void
@@ -542,9 +566,32 @@ class CsvEditor extends Component
         $this->renameInput = '';
     }
 
+    /**
+     * The client is not meant to change the active draft directly (that goes
+     * through switchToDraft), but if it does, the rows must follow so they are
+     * never saved into another draft.
+     */
+    public function updatedActiveDraftId(): void
+    {
+        $this->csvRows = $this->loadActiveDraftRows();
+    }
+
     public function render(): View
     {
+        $this->pageRows = $this->paginatedRows->all();
+        $this->syncTestCards();
+
         return view('livewire.csv-editor');
+    }
+
+    /**
+     * Whether at least one row of the deck has Russian text, used by the
+     * mobile edit modal to label its AI actions.
+     */
+    #[Computed]
+    public function hasAnyRussianText(): bool
+    {
+        return collect($this->csvRows)->contains(fn (array $row): bool => trim($row[1] ?? '') !== '');
     }
 
     /**
@@ -802,8 +849,7 @@ class CsvEditor extends Component
      * Build the card data array expected by AnkiPackageExporterService
      * from the given CSV rows, attaching cached MP3 references where available.
      *
-     * Audio existence is checked in a single filesystem scan via audioFilesExistBatch()
-     * instead of one Storage::exists() call per row.
+     * Audio existence is checked once per distinct phrase via audioFilesExistBatch().
      *
      * @param  array<int, array<int, string>>  $csvRows
      * @param  int  $draftId  Draft the rows belong to, part of each note's stable GUID.

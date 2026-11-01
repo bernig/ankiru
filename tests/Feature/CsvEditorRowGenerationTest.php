@@ -27,7 +27,7 @@ test('navigates to the last page after generation so new rows are immediately vi
 
     $component = Livewire::test(CsvEditor::class)
         ->set('hasCsvLoaded', true)
-        ->set('csvRows', $existing)
+        ->setRows($existing)
         ->set('generateRowsPrompt', 'One more word')
         ->set('generateRowsCount', 1)
         ->call('generateRows');
@@ -41,7 +41,7 @@ test('clears active filters after generation so new rows are not hidden', functi
 
     Livewire::test(CsvEditor::class)
         ->set('hasCsvLoaded', true)
-        ->set('csvRows', [['Bonjour', 'При<b>в</b>ет']])
+        ->setRows([['Bonjour', 'При<b>в</b>ет']])
         ->set('searchQuery', 'Bonjour')
         ->set('filterAccentNeeded', true)
         ->set('generateRowsPrompt', 'Greetings')
@@ -59,16 +59,16 @@ test('generates rows and appends them to csvRows', function () {
 
     $component = Livewire::test(CsvEditor::class)
         ->set('hasCsvLoaded', true)
-        ->set('csvRows', [['Bonjour', 'При<b>в</b>ет']])
+        ->setRows([['Bonjour', 'При<b>в</b>ет']])
         ->set('generateRowsPrompt', 'Basic greetings')
         ->set('generateRowsCount', 2)
         ->call('generateRows');
 
-    expect($component->instance()->csvRows)->toHaveCount(3)
-        ->and($component->instance()->csvRows[1][0])->toBe('Hello')
-        ->and($component->instance()->csvRows[1][1])->toBe('При<b>в</b>ет')
-        ->and($component->instance()->csvRows[2][0])->toBe('Thank you')
-        ->and($component->instance()->csvRows[2][1])->toBe('Спас<b>и</b>бо');
+    expect($component->rows())->toHaveCount(3)
+        ->and($component->rows()[1][0])->toBe('Hello')
+        ->and($component->rows()[1][1])->toBe('При<b>в</b>ет')
+        ->and($component->rows()[2][0])->toBe('Thank you')
+        ->and($component->rows()[2][1])->toBe('Спас<b>и</b>бо');
 
     $component->assertSet('translationError', '')->assertSet('generateRowsPrompt', '');
 });
@@ -134,7 +134,7 @@ test('sends existing source phrases to the agent when the toggle is on and rows 
 
     Livewire::test(CsvEditor::class)
         ->set('hasCsvLoaded', true)
-        ->set('csvRows', [['Bonjour', 'При<b>в</b>ет'], ['Merci', 'Спас<b>и</b>бо']])
+        ->setRows([['Bonjour', 'При<b>в</b>ет'], ['Merci', 'Спас<b>и</b>бо']])
         ->set('generateRowsIncludeExisting', true)
         ->set('generateRowsPrompt', 'More greetings')
         ->set('generateRowsCount', 1)
@@ -155,7 +155,7 @@ test('sends only the count when existing phrases exceed the character threshold'
 
     Livewire::test(CsvEditor::class)
         ->set('hasCsvLoaded', true)
-        ->set('csvRows', $largeRows)
+        ->setRows($largeRows)
         ->set('generateRowsIncludeExisting', true)
         ->set('generateRowsPrompt', 'More phrases')
         ->set('generateRowsCount', 1)
@@ -173,7 +173,7 @@ test('does not mention existing phrases when the toggle is off', function () {
 
     Livewire::test(CsvEditor::class)
         ->set('hasCsvLoaded', true)
-        ->set('csvRows', [['Bonjour', 'При<b>в</b>ет']])
+        ->setRows([['Bonjour', 'При<b>в</b>ет']])
         ->set('generateRowsIncludeExisting', false)
         ->set('generateRowsPrompt', 'Greetings')
         ->set('generateRowsCount', 1)
@@ -209,12 +209,12 @@ test('does not log usage or deduct credits when the agent returns no usable pair
 
     Livewire::test(CsvEditor::class)
         ->set('hasCsvLoaded', true)
-        ->set('csvRows', [['Bonjour', 'Прив<b>е</b>т']])
+        ->setRows([['Bonjour', 'Прив<b>е</b>т']])
         ->set('generateRowsPrompt', 'Greetings')
         ->set('generateRowsCount', 1)
         ->call('generateRows')
         ->assertSet('generatedRows', [])
-        ->assertSet('csvRows', [['Bonjour', 'Прив<b>е</b>т']])
+        ->assertRowsSet('', [['Bonjour', 'Прив<b>е</b>т']])
         ->assertNotSet('translationError', '');
 
     expect(ApiUsageLog::count())->toBe(0)

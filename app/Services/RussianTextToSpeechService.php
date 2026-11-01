@@ -87,28 +87,28 @@ class RussianTextToSpeechService
     }
 
     /**
-     * Check whether cached audio files exist for multiple phrases in a single
-     * directory scan, returning a map of rawPhrase → bool.
+     * Check whether cached audio files exist for multiple phrases, returning a
+     * map of rawPhrase => bool.
      *
-     * More efficient than calling audioFileExists() per phrase because it lists
-     * the tts/ directory once instead of making one Storage::exists() call per phrase.
+     * Only the files asked for are checked, one existence test per distinct
+     * file. Listing the tts/ directory instead would cost more as it grows,
+     * since it holds the audio of every user.
      *
      * @param  string[]  $rawRussianPhrases
      * @return array<string, bool>
      */
     public function audioFilesExistBatch(array $rawRussianPhrases): array
     {
-        if (empty($rawRussianPhrases)) {
-            return [];
-        }
+        $disk = Storage::disk('local');
 
-        // One filesystem scan to build a lookup set of all existing TTS files.
-        $existingFiles = array_flip(Storage::disk('local')->files('tts'));
-
+        /** @var array<string, bool> $existenceByPath */
+        $existenceByPath = [];
         $result = [];
 
         foreach ($rawRussianPhrases as $rawPhrase) {
-            $result[$rawPhrase] = isset($existingFiles[$this->buildStoragePath($rawPhrase)]);
+            $storagePath = $this->buildStoragePath($rawPhrase);
+            $existenceByPath[$storagePath] ??= $disk->exists($storagePath);
+            $result[$rawPhrase] = $existenceByPath[$storagePath];
         }
 
         return $result;

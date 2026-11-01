@@ -119,42 +119,39 @@
         <div class="flex flex-col gap-5">
             <flux:field>
                 <flux:label>{{ __('csv_editor.source_column') }}</flux:label>
-                <textarea class="block w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm text-zinc-700 placeholder-zinc-400 outline-none transition-colors focus:border-zinc-400 dark:border-white/10 dark:bg-white/10 dark:text-zinc-300" rows="3" :value="$store.mobileEdit.rowIndex >= 0 ? ($wire.csvRows[$store.mobileEdit.rowIndex]?.[0] ?? '') : ''" x-on:blur="if ($store.mobileEdit.rowIndex >= 0) $wire.updateCell($store.mobileEdit.rowIndex, 0, $event.target.value)">
+                <textarea class="block w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm text-zinc-700 placeholder-zinc-400 outline-none transition-colors focus:border-zinc-400 dark:border-white/10 dark:bg-white/10 dark:text-zinc-300" rows="3" :value="$store.mobileEdit.rowIndex >= 0 ? ($wire.pageRows[$store.mobileEdit.rowIndex]?.[0] ?? '') : ''" x-on:blur="if ($store.mobileEdit.rowIndex >= 0) $wire.updateCell($store.mobileEdit.rowIndex, 0, $event.target.value)">
                 </textarea>
             </flux:field>
 
             <flux:field>
                 <flux:label>{{ __('csv_editor.russian_column') }}</flux:label>
-                <textarea class="block w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm text-zinc-700 placeholder-zinc-400 outline-none transition-colors focus:border-zinc-400 dark:border-white/10 dark:bg-white/10 dark:text-zinc-300" rows="3" :value="$store.mobileEdit.rowIndex >= 0 ? ($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '') : ''" x-on:blur="if ($store.mobileEdit.rowIndex >= 0) $wire.updateCell($store.mobileEdit.rowIndex, 1, $event.target.value)">
+                <textarea class="block w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm text-zinc-700 placeholder-zinc-400 outline-none transition-colors focus:border-zinc-400 dark:border-white/10 dark:bg-white/10 dark:text-zinc-300" rows="3" :value="$store.mobileEdit.rowIndex >= 0 ? ($wire.pageRows[$store.mobileEdit.rowIndex]?.[1] ?? '') : ''" x-on:blur="if ($store.mobileEdit.rowIndex >= 0) $wire.updateCell($store.mobileEdit.rowIndex, 1, $event.target.value)">
                 </textarea>
             </flux:field>
 
-            @php
-                $hasAnyRussianText = collect($csvRows)->some(fn($row) => !empty(trim($row[1] ?? '')));
-            @endphp
             <flux:button.group class="w-full flex-col">
-                @if ($hasAnyRussianText)
-                    <flux:button variant="ghost" x-show="($wire.csvRows[$store.mobileEdit.rowIndex]?.[0] ?? '').trim()" wire:loading.attr="disabled" wire:target="translateWithChatGpt" @click="$wire.translateWithChatGpt($store.mobileEdit.rowIndex)">
+                @if ($this->hasAnyRussianText)
+                    <flux:button variant="ghost" x-show="($wire.pageRows[$store.mobileEdit.rowIndex]?.[0] ?? '').trim()" wire:loading.attr="disabled" wire:target="translateWithChatGpt" @click="$wire.translateWithChatGpt($store.mobileEdit.rowIndex)">
                         <flux:icon.loading class="size-4" wire:loading wire:target="translateWithChatGpt" />
-                        <flux:icon.arrow-path class="size-4" wire:loading.remove wire:target="translateWithChatGpt" x-show="($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()" />
-                        <flux:icon.sparkles class="size-4" wire:loading.remove wire:target="translateWithChatGpt" x-show="!($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()" />
-                        <span x-text="($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()
+                        <flux:icon.arrow-path class="size-4" wire:loading.remove wire:target="translateWithChatGpt" x-show="($wire.pageRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()" />
+                        <flux:icon.sparkles class="size-4" wire:loading.remove wire:target="translateWithChatGpt" x-show="!($wire.pageRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()" />
+                        <span x-text="($wire.pageRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()
                             ? '{{ __('csv_editor.retranslate_with_chatgpt') }}'
                             : '{{ __('csv_editor.translate_with_chatgpt') }}'"></span>
                     </flux:button>
                 @else
-                    <flux:button variant="ghost" x-show="($wire.csvRows[$store.mobileEdit.rowIndex]?.[0] ?? '').trim()" wire:loading.attr="disabled" wire:target="translateWithChatGpt" @click="$wire.translateWithChatGpt($store.mobileEdit.rowIndex)">
+                    <flux:button variant="ghost" x-show="($wire.pageRows[$store.mobileEdit.rowIndex]?.[0] ?? '').trim()" wire:loading.attr="disabled" wire:target="translateWithChatGpt" @click="$wire.translateWithChatGpt($store.mobileEdit.rowIndex)">
                         <flux:icon.loading class="size-4" wire:loading wire:target="translateWithChatGpt" />
                         <flux:icon.sparkles class="size-4" wire:loading.remove wire:target="translateWithChatGpt" />
                         {{ __('csv_editor.translate_with_chatgpt') }}
                     </flux:button>
                 @endif
-                <flux:button variant="ghost" x-show="($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()" :disabled="$this->isStressBatchRunning" wire:loading.attr="disabled" wire:target="correctStressMarks" @click="$wire.correctStressMarks($store.mobileEdit.rowIndex)">
+                <flux:button variant="ghost" x-show="($wire.pageRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()" :disabled="$this->isStressBatchRunning" wire:loading.attr="disabled" wire:target="correctStressMarks" @click="$wire.correctStressMarks($store.mobileEdit.rowIndex)">
                     <flux:icon.loading class="size-4" wire:loading wire:target="correctStressMarks" />
                     <flux:icon.exclamation-circle class="size-4" wire:loading.remove wire:target="correctStressMarks" />
                     {{ __('csv_editor.fix_stress_marks') }}
                 </flux:button>
-                <flux:button variant="ghost" x-show="($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()" :disabled="$this->isTtsBatchRunning" wire:loading.attr="disabled" wire:target="openTtsModal" @click="$wire.openTtsModal($store.mobileEdit.rowIndex)">
+                <flux:button variant="ghost" x-show="($wire.pageRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim()" :disabled="$this->isTtsBatchRunning" wire:loading.attr="disabled" wire:target="openTtsModal" @click="$wire.openTtsModal($store.mobileEdit.rowIndex)">
                     <flux:icon.loading class="size-4" wire:loading wire:target="openTtsModal" />
                     <flux:icon.speaker-wave class="size-4" wire:loading.remove wire:target="openTtsModal" />
                     {{ __('csv_editor.open_audio_player') }}
@@ -162,7 +159,7 @@
             </flux:button.group>
 
             <div class="flex items-center justify-between border-t border-zinc-100 pt-3 dark:border-zinc-700">
-                <flux:button square icon="trash" icon:variant="outline" variant="danger" title="{{ __('csv_editor.delete_row') }}" @click="($wire.csvRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim() ? $dispatch('request-delete-row', { rowIndex: $store.mobileEdit.rowIndex }) : ($wire.deleteRow($store.mobileEdit.rowIndex), $flux.modal('mobile-edit').close())" />
+                <flux:button square icon="trash" icon:variant="outline" variant="danger" title="{{ __('csv_editor.delete_row') }}" @click="($wire.pageRows[$store.mobileEdit.rowIndex]?.[1] ?? '').trim() ? $dispatch('request-delete-row', { rowIndex: $store.mobileEdit.rowIndex }) : ($wire.deleteRow($store.mobileEdit.rowIndex), $flux.modal('mobile-edit').close())" />
                 <flux:modal.close>
                     <flux:button variant="filled" icon="check">{{ __('csv_editor.close') }}</flux:button>
                 </flux:modal.close>

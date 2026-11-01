@@ -19,10 +19,10 @@ test('translates french text to russian and stores the result', function () {
     SourceToRussianTranslatorAgent::fake(['Я раб<b>о</b>таю из д<b>о</b>ма.']);
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille depuis chez moi.', '']])
+        ->setRows([['Je travaille depuis chez moi.', '']])
         ->set('hasCsvLoaded', true)
         ->call('translateWithChatGpt', 0)
-        ->assertSet('csvRows.0.1', 'Я раб<b>о</b>таю из д<b>о</b>ма.')
+        ->assertRowsSet('0.1', 'Я раб<b>о</b>таю из д<b>о</b>ма.')
         ->assertSet('translationError', '')
         ->assertSet('translatingRowIndex', -1)
         ->assertDispatched('ai-row-result', rowIndex: 0, success: true);
@@ -36,7 +36,7 @@ test('sets a translation error when the agent throws an exception', function () 
     });
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille depuis chez moi.', '']])
+        ->setRows([['Je travaille depuis chez moi.', '']])
         ->set('hasCsvLoaded', true)
         ->call('translateWithChatGpt', 0)
         ->assertSet('translationError', 'Service unavailable.')
@@ -47,7 +47,7 @@ test('does nothing when the french column is empty', function () {
     SourceToRussianTranslatorAgent::fake()->preventStrayPrompts();
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['', '']])
+        ->setRows([['', '']])
         ->set('hasCsvLoaded', true)
         ->call('translateWithChatGpt', 0)
         ->assertSet('translationError', '');
@@ -62,7 +62,7 @@ test('shows an error when the stress correction agent throws an exception', func
     });
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille.', 'Я работаю.']])
+        ->setRows([['Je travaille.', 'Я работаю.']])
         ->set('hasCsvLoaded', true)
         ->call('correctStressMarks', 0)
         ->assertSet('translationError', 'Service unavailable.')
@@ -73,10 +73,10 @@ test('corrects stress marks and sends french context with the russian text', fun
     RussianStressCorrectorAgent::fake(['Я раб<b>о</b>таю из д<b>о</b>ма.']);
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille depuis chez moi.', 'Я работаю из дома.']])
+        ->setRows([['Je travaille depuis chez moi.', 'Я работаю из дома.']])
         ->set('hasCsvLoaded', true)
         ->call('correctStressMarks', 0)
-        ->assertSet('csvRows.0.1', 'Я раб<b>о</b>таю из д<b>о</b>ма.')
+        ->assertRowsSet('0.1', 'Я раб<b>о</b>таю из д<b>о</b>ма.')
         ->assertSet('correctingStressRowIndex', -1)
         ->assertDispatched('ai-row-result', rowIndex: 0, success: true);
 
@@ -96,10 +96,10 @@ test('skips the AI call and fixes bare ё directly when normalisation alone suff
     });
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Rentrons.', 'Пойдём дом<b>о</b>й.']])
+        ->setRows([['Rentrons.', 'Пойдём дом<b>о</b>й.']])
         ->set('hasCsvLoaded', true)
         ->call('correctStressMarks', 0)
-        ->assertSet('csvRows.0.1', 'Пойд<b>ё</b>м дом<b>о</b>й.')
+        ->assertRowsSet('0.1', 'Пойд<b>ё</b>м дом<b>о</b>й.')
         ->assertSet('translationError', '');
 
     RussianStressCorrectorAgent::assertNeverPrompted();
@@ -110,7 +110,7 @@ test('row needs stress correction returns false when the agent returns already c
     RussianStressCorrectorAgent::fake([$alreadyCorrectText]);
 
     $component = Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille depuis chez moi.', $alreadyCorrectText]])
+        ->setRows([['Je travaille depuis chez moi.', $alreadyCorrectText]])
         ->set('hasCsvLoaded', true)
         ->call('correctStressMarks', 0);
 
@@ -130,7 +130,7 @@ test('translation is blocked and an error is set after exceeding the rate limit'
     }
 
     Livewire::test(CsvEditor::class)
-        ->set('csvRows', [['Je travaille depuis chez moi.', '']])
+        ->setRows([['Je travaille depuis chez moi.', '']])
         ->set('hasCsvLoaded', true)
         ->call('translateWithChatGpt', 0)
         ->assertSet('translationError', __('csv_editor.error_rate_limit'));

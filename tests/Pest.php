@@ -1,6 +1,9 @@
 <?php
 
+use App\Models\CsvDraft;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Features\SupportTesting\Testable;
+use PHPUnit\Framework\Assert;
 use Tests\TestCase;
 
 /*
@@ -51,3 +54,70 @@ function sampleRows(): array
         ['Je suis développeur web.', 'Я веб-разраб<b>о</b>тчик.'],
     ];
 }
+
+/*
+|--------------------------------------------------------------------------
+| CsvEditor rows
+|--------------------------------------------------------------------------
+|
+| The editor rows are not a public Livewire property: they live in the active
+| draft and are reloaded from the database on every request. These macros
+| replace set('csvRows', ...) and assertSet('csvRows...', ...) accordingly.
+|
+*/
+
+/**
+ * Store the rows in the component's active draft (created for the acting user
+ * when there is none), then let the component reload them.
+ */
+Testable::macro('setRows', function (array $rows): Testable {
+    /** @var Testable $this */
+    $draft = CsvDraft::query()
+        ->where('user_id', auth()->id())
+        ->find($this->get('activeDraftId'));
+
+    if ($draft === null) {
+        $draft = CsvDraft::withoutEvents(fn (): CsvDraft => CsvDraft::factory()->create([
+            'user_id' => auth()->id(),
+            'csv_rows' => $rows,
+        ]));
+
+        return $this->set('activeDraftId', $draft->id);
+    }
+
+    $draft->update(['csv_rows' => $rows]);
+
+    return $this->call('$refresh');
+});
+
+/**
+ * The rows held by the component after the last request.
+ *
+ * @return array<int, array<int, string>>
+ */
+Testable::macro('rows', function (): array {
+    /** @var Testable $this */
+    return (function (): array {
+        return $this->csvRows;
+    })->call($this->instance());
+});
+
+/**
+ * Assert a value in the rows, by dot path ('0.1' is row 0, column 1), or the
+ * whole rows array when the path is empty.
+ */
+Testable::macro('assertRowsSet', function (string $path, mixed $expected): Testable {
+    /** @var Testable $this */
+    $rows = $this->rows();
+
+    Assert::assertEquals($expected, $path === '' ? $rows : data_get($rows, $path));
+
+    return $this;
+});
+
+Testable::macro('assertRowCount', function (int $expected): Testable {
+    /** @var Testable $this */
+    Assert::assertCount($expected, $this->rows());
+
+    return $this;
+});
