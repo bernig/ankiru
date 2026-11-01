@@ -26,6 +26,23 @@ class CsvDraft extends Model
         'last_accessed_at',
     ];
 
+    /**
+     * A file name without its extension. Unlike pathinfo(), a slash or backslash in
+     * a name the user typed is kept: "Russe/Verbes.csv" gives "Russe/Verbes".
+     */
+    public static function baseName(string $fileName): string
+    {
+        return (string) preg_replace('/\.[^.\/\\\\]*$/', '', $fileName);
+    }
+
+    /**
+     * The extension of a file name, without the dot ('' when there is none).
+     */
+    public static function extension(string $fileName): string
+    {
+        return preg_match('/\.([^.\/\\\\]*)$/', $fileName, $match) === 1 ? $match[1] : '';
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

@@ -43,7 +43,7 @@ return [
     'openai_api_key_moved' => 'La gestion de votre clé API OpenAI a été déplacée sur la page Crédits.',
     'api_key_set' => 'Clé API enregistrée',
     'api_key_clear' => 'Supprimer la clé',
-    'api_key_clear_confirm' => 'Supprimer votre clé API OpenAI ? La clé de l\'application sera utilisée à la place.',
+    'api_key_clear_confirm' => "Supprimer votre clé API OpenAI ? Les fonctions IA ne marcheront plus qu'avec des crédits achetés.",
     'go_to_api_keys' => 'Obtenir une clé d\'API',
     'go_to_api_usage' => 'Vérifier votre utilisation de l\'API',
     'openai_key_modal_title' => 'Accès IA requis',

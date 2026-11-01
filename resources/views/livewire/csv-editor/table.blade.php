@@ -165,7 +165,7 @@
     </flux:modal>
 
     {{-- ── Undo toast shown after a row deletion ── --}}
-    <div class="fixed inset-x-4 bottom-4 z-[60] mx-auto flex max-w-sm items-center justify-between gap-3 rounded-xl bg-zinc-800 px-4 py-3 text-sm text-white shadow-xl" role="status" x-data="{ visible: false, timer: null, hideLater() { clearTimeout(this.timer); this.timer = setTimeout(() => this.visible = false, 8000); } }" x-on:row-deleted.window="visible = true; hideLater()" x-on:mouseenter="clearTimeout(timer)" x-on:mouseleave="hideLater()" x-on:focusin="clearTimeout(timer)" x-on:focusout="hideLater()" x-on:csv-file-switched.window="visible = false" x-show="visible" x-transition x-cloak>
+    <div class="fixed inset-x-4 z-[60] mx-auto flex max-w-sm items-center justify-between gap-3 rounded-xl bg-zinc-800 px-4 py-3 text-sm text-white shadow-xl" role="status" :class="$wire.stressBatchStatus !== 'idle' || $wire.ttsBatchStatus !== 'idle' ? 'top-4' : 'bottom-4'" x-data="{ visible: false, timer: null, hideLater() { clearTimeout(this.timer); this.timer = setTimeout(() => this.visible = false, 8000); } }" x-on:row-deleted.window="visible = true; hideLater()" x-on:mouseenter="clearTimeout(timer)" x-on:mouseleave="hideLater()" x-on:focusin="clearTimeout(timer)" x-on:focusout="hideLater()" x-on:csv-file-switched.window="visible = false" x-show="visible" x-transition x-cloak>
         <span>{{ __('csv_editor.row_deleted') }}</span>
         <button class="cursor-pointer rounded font-semibold text-yellow-300 hover:text-yellow-200" type="button" wire:click="undoDeleteRow" x-on:click="visible = false">
             {{ __('csv_editor.undo') }}

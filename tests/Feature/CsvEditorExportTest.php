@@ -173,3 +173,31 @@ test('a file renamed with a backslash still downloads as csv', function (): void
         ->call('downloadCsv')
         ->assertFileDownloaded('Mes-phrases_edited_20261101_120000.csv');
 });
+
+test('a file renamed with a slash keeps its whole name in the download and the deck', function (): void {
+    $this->travelTo(now()->setDateTime(2026, 11, 1, 12, 0, 0));
+
+    $this->mock(AnkiPackageExporterService::class)
+        ->shouldReceive('export')
+        ->once()
+        ->with(Mockery::any(), 'Russe/Verbes')
+        ->andReturnUsing(function (): string {
+            $temporaryPackagePath = sys_get_temp_dir().'/'.uniqid('anki_test_', true).'.apkg';
+            file_put_contents($temporaryPackagePath, 'fake-apkg-content');
+
+            return $temporaryPackagePath;
+        });
+
+    $editor = Livewire::test(CsvEditor::class)
+        ->setRows(sampleRows())
+        ->set('hasCsvLoaded', true)
+        ->set('originalFileName', 'sample.csv')
+        ->call('startRenameDraft')
+        ->set('renameInput', 'Russe/Verbes')
+        ->call('confirmRenameDraft')
+        ->assertSet('originalFileName', 'Russe/Verbes.csv')
+        ->assertSee('Russe/Verbes');
+
+    $editor->call('downloadCsv')->assertFileDownloaded('Russe-Verbes_edited_20261101_120000.csv');
+    $editor->call('downloadAnkiPackage')->assertFileDownloaded('Russe-Verbes_20261101_120000.apkg');
+});

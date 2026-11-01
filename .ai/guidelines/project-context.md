@@ -38,6 +38,7 @@ This is a web-based Anki flashcard creation tool specialized for French → Russ
 - Services are injected in `boot()` (not `__construct`) because Livewire does not serialize protected properties between requests. Never move them to the constructor.
 - Mass operation progress is tracked in Laravel Cache under keys `mass_op:{batchId}:{operationType}:{suffix}` (e.g. `mass_op:abc123:tts:processed`), always built with `MassOperationService::batchCacheKey()`. The batch ID is a UUID generated at dispatch time; `mass_op:user:{userId}:{operationType}:current` points at the user's latest batch so a reloaded editor can find it. The billing mode (credits or personal key) is frozen per batch at dispatch.
 - Cancelling a batch only sets its `cancelled` flag (kept one week); queued jobs are not deleted and return early when they see it.
+- Undo: a deleted row is kept in the locked `lastDeletedRow` property (`undoDeleteRow()`, offered by an 8 s toast; only the last deletion). The corrections applied by the last stress batch are kept in the cache under `mass_op:user:{userId}:stress:undo` (`MassOperationService::stressUndoCacheKey()`), with only the `canUndoStressBatch` flag in the snapshot; `undoStressBatch()` reverts a row only while it still holds the corrected text. Both are dropped when another file opens.
 - AI usage goes through `CreditService`: `canAfford()` before the call (own-key users are never blocked), then `recordTokenUsage()` or `recordTtsUsage()`, which write `api_usage_logs` and deduct credits (balance floored at 0).
 - TTS audio is stored on the `local` disk (not `public`). It is embedded into `.apkg` exports as binary media entries.
 - The application is multilingual; locale is switched via `LocaleController` and applied by `SetApplicationLocale` middleware.
@@ -48,6 +49,7 @@ This is a web-based Anki flashcard creation tool specialized for French → Russ
 ## Business rules & constraints
 
 - **Stress mark format**: the canonical internal representation is `<b>vowel</b>`. All services, agents, and the CSV parser read and write this format. On export, the user's accent style preference (color `#RRGGBB`, bold, unicode U+0301) is applied by `applyAccentStyle()`, but the stored value is never changed.
+- **File names**: use `CsvDraft::baseName()` / `CsvDraft::extension()`, never `pathinfo()`: a renamed file may contain `/`, which `pathinfo()` reads as a directory.
 - **Row structure**: column 0 is always source language, column 1 is always Russian. The column count is inferred from the first row; all subsequent rows are padded or truncated to match.
 - **TTS hash**: the MP3 filename is the SHA-256 of the Russian text with `<b>`/`</b>` stripped and whitespace trimmed. Changing stress marks does not invalidate the cached audio.
 - **OpenAI key or credits required**: all AI actions (translate, generate, stress correct, TTS) check `apiKeyMissing()` first (credits or personal key) and open the key setup modal if neither is available, then check the credit estimate and open the credits shop if it falls short.

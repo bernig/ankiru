@@ -43,7 +43,7 @@ return [
     'openai_api_key_moved' => 'Your OpenAI API key management has been moved to the Credits page.',
     'api_key_set' => 'API key saved',
     'api_key_clear' => 'Remove key',
-    'api_key_clear_confirm' => 'Remove your OpenAI API key? The application key will be used instead.',
+    'api_key_clear_confirm' => 'Remove your OpenAI API key? AI features will then only work while you have purchased credits.',
     'go_to_api_keys' => 'Get an API key',
     'go_to_api_usage' => 'Check your API usage',
     'openai_key_modal_title' => 'AI Access Required',

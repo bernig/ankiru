@@ -16,13 +16,13 @@
                 @else
                     <flux:dropdown>
                         <flux:button class="rounded-full!" data-tour="file-menu" icon:trailing="chevron-down" variant="ghost">
-                            {{ pathinfo($originalFileName, PATHINFO_FILENAME) }}
+                            {{ \App\Models\CsvDraft::baseName($originalFileName) }}
                         </flux:button>
 
                         <flux:menu>
                             @foreach ($allDraftsMeta as $draft)
                                 <flux:menu.item wire:click="switchToDraft({{ $draft['id'] }})" :icon="$draft['id'] === $activeDraftId ? 'check' : null">
-                                    {{ pathinfo($draft['original_file_name'], PATHINFO_FILENAME) }}
+                                    {{ \App\Models\CsvDraft::baseName($draft['original_file_name']) }}
                                 </flux:menu.item>
                             @endforeach
 

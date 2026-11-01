@@ -466,7 +466,7 @@ class CsvEditor extends Component
     public function downloadAnkiPackage(): StreamedResponse
     {
         $cards = $this->deckExportService->toAnkiCards($this->csvRows, $this->activeDraftId);
-        $deckName = pathinfo($this->originalFileName, PATHINFO_FILENAME) ?: 'French-Russian';
+        $deckName = CsvDraft::baseName($this->originalFileName) ?: 'French-Russian';
         $apkgPath = $this->ankiExporterService->export($cards, $deckName);
 
         $downloadFileName = $this->buildBaseFileName().'_'.now()->format('Ymd_His').'.apkg';
@@ -489,7 +489,7 @@ class CsvEditor extends Component
 
         foreach ($allDrafts as $draft) {
             $decks[] = [
-                'deckName' => pathinfo($draft->original_file_name, PATHINFO_FILENAME) ?: 'Deck',
+                'deckName' => CsvDraft::baseName($draft->original_file_name) ?: 'Deck',
                 'cards' => $this->deckExportService->toAnkiCards($draft->csv_rows ?? [], $draft->id),
             ];
         }
@@ -575,7 +575,7 @@ class CsvEditor extends Component
      */
     public function startRenameDraft(): void
     {
-        $this->renameInput = pathinfo($this->originalFileName, PATHINFO_FILENAME);
+        $this->renameInput = CsvDraft::baseName($this->originalFileName);
         $this->isRenamingFile = true;
     }
 
@@ -592,7 +592,7 @@ class CsvEditor extends Component
             return;
         }
 
-        $extension = pathinfo($this->originalFileName, PATHINFO_EXTENSION);
+        $extension = CsvDraft::extension($this->originalFileName);
         $this->originalFileName = $newBaseName.($extension !== '' ? ".{$extension}" : '');
         $this->isRenamingFile = false;
         $this->renameInput = '';
@@ -822,7 +822,7 @@ class CsvEditor extends Component
      */
     private function buildBaseFileName(): string
     {
-        return $this->deckExportService->toDownloadFileName(pathinfo($this->originalFileName, PATHINFO_FILENAME), 'export');
+        return $this->deckExportService->toDownloadFileName(CsvDraft::baseName($this->originalFileName), 'export');
     }
 
     /**
