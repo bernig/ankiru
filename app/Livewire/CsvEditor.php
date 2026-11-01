@@ -736,19 +736,14 @@ class CsvEditor extends Component
     // -------------------------------------------------------------------------
 
     /**
-     * Returns true and opens the API key setup modal when the user has no
-     * OpenAI key configured. Callers should return immediately when true.
+     * Returns true and opens the API key setup modal when the user can use
+     * neither purchased credits nor a personal OpenAI key. Callers should
+     * return immediately when true.
      */
     private function apiKeyMissing(): bool
     {
-        $user = auth()->user();
-
-        if ($user?->credits > 0) {
-            return false; // Les crédits ont la priorité
-        }
-
-        if ($user?->hasPersonalApiKey()) {
-            return false; // Clé personnelle en fallback
+        if (auth()->user()?->canUseAi()) {
+            return false;
         }
 
         $this->dispatch('open-openai-key-setup');

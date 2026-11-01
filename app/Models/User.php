@@ -83,7 +83,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function canUseAi(): bool
     {
-        return $this->hasPersonalApiKey() || $this->credits > 0;
+        return $this->usesPlatformCredits() || $this->hasPersonalApiKey();
     }
 
     /**
