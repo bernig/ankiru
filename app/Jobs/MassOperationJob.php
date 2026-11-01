@@ -78,13 +78,15 @@ class MassOperationJob implements ShouldQueue
         OpenAiTranslationService $translationService,
         RussianTextToSpeechService $ttsService,
         CreditService $creditService,
+        MassOperationService $massOperationService,
+        AiManager $aiManager,
     ): void {
         if (Cache::get($this->cacheKey('cancelled'))) {
             return;
         }
 
-        if (! $this->applyUserApiKey()) {
-            $this->stopBatchForInsufficientCredits();
+        if (! $this->applyUserApiKey($aiManager)) {
+            $this->stopBatchForInsufficientCredits($massOperationService);
 
             return;
         }
@@ -232,7 +234,7 @@ class MassOperationJob implements ShouldQueue
      * Returns false when the user can no longer be billed: no credits and no
      * personal key, or a batch started on credits whose balance is now 0.
      */
-    private function applyUserApiKey(): bool
+    private function applyUserApiKey(AiManager $aiManager): bool
     {
         if ($this->userId === null) {
             Log::warning('MassOperationJob: userId is null, cannot apply API key.');
@@ -243,7 +245,7 @@ class MassOperationJob implements ShouldQueue
         $this->billsPlatformCredits = $this->user?->usesPlatformCredits() ?? false;
 
         config(['ai.providers.openai.key' => $apiKey ?? '']);
-        app(AiManager::class)->forgetInstance();
+        $aiManager->forgetInstance();
 
         if ($this->user === null) {
             return true;
@@ -259,9 +261,9 @@ class MassOperationJob implements ShouldQueue
      * reported as done so the editor merges the rows already processed and
      * tells the user why the rest was skipped.
      */
-    private function stopBatchForInsufficientCredits(): void
+    private function stopBatchForInsufficientCredits(MassOperationService $massOperationService): void
     {
-        app(MassOperationService::class)->cancelBatch($this->batchId, $this->operationType);
+        $massOperationService->cancelBatch($this->batchId, $this->operationType);
         Cache::put($this->cacheKey('stopped'), 'insufficient_credits', ttl: 3600);
 
         $this->broadcastProgress(forceDone: true);

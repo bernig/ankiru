@@ -14,6 +14,7 @@ use App\Services\RussianTextToSpeechService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Ai\AiManager;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 use Mockery\MockInterface;
@@ -620,7 +621,7 @@ it('a cancelled job skips processing', function () {
     $accentService = app(RussianAccentService::class);
     $translationService = app(OpenAiTranslationService::class);
 
-    $job->handle($accentService, app(OpenAiTranslationService::class), $ttsService, app(CreditService::class));
+    $job->handle($accentService, app(OpenAiTranslationService::class), $ttsService, app(CreditService::class), app(MassOperationService::class), app(AiManager::class));
 });
 
 // ---------------------------------------------------------------------------
