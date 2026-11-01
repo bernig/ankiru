@@ -41,7 +41,7 @@
 
             @auth
                 <flux:dropdown position="bottom" align="end">
-                    <flux:profile circle :avatar="$avatarUrl" :name="$displayName" />
+                    <flux:profile circle :name="$displayName" />
                     <flux:navmenu>
                         <flux:navmenu.item href="{{ route('profile') }}" icon="user-circle" icon:variant="outline" wire:navigate>
                             {{ __('profile.title') }}
@@ -83,7 +83,7 @@
 
             @auth
                 <div class="mb-2 flex items-center gap-3 px-2 py-1">
-                    <flux:avatar name="{{ $displayName }}" circle :src="$avatarUrl" size="sm" />
+                    <flux:avatar name="{{ $displayName }}" circle size="sm" />
                     <div class="flex flex-col">
                         <flux:heading>{{ $displayName }}</flux:heading>
                         <flux:text>{{ $email }}</flux:text>

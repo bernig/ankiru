@@ -86,11 +86,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasPersonalApiKey() || $this->credits > 0;
     }
 
-    public function avatarUrl(): string
-    {
-        return 'https://api.dicebear.com/9.x/identicon/svg?seed='.rawurlencode($this->email ?: $this->name);
-    }
-
     /**
      * @return array<string, string>
      */

@@ -13,12 +13,13 @@ test('admin rights and credit balance cannot be mass assigned', function (): voi
         ->name->toBe('Renamed');
 });
 
-test('the avatar follows the current email address', function (): void {
-    $user = User::factory()->create(['email' => 'first@example.com']);
-    $firstAvatar = $user->avatarUrl();
+test('the header avatar shows local initials without sending the email to a third party', function (): void {
+    $user = User::factory()->create(['name' => 'Marie Curie', 'email' => 'marie@example.com']);
 
-    $user->update(['email' => 'second+tag@example.com']);
-
-    expect($firstAvatar)->toBe('https://api.dicebear.com/9.x/identicon/svg?seed=first%40example.com')
-        ->and($user->avatarUrl())->toBe('https://api.dicebear.com/9.x/identicon/svg?seed=second%2Btag%40example.com');
+    $this->actingAs($user)
+        ->get(route('profile'))
+        ->assertOk()
+        ->assertSee('MC')
+        ->assertDontSee('dicebear')
+        ->assertDontSee(rawurlencode('marie@example.com'));
 });
