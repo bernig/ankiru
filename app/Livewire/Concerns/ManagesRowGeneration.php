@@ -7,6 +7,7 @@ use App\Services\RowGenerationService;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 
 /**
  * Manages the "Generate rows" feature for the CsvEditor component.
@@ -26,7 +27,12 @@ trait ManagesRowGeneration
 
     public bool $generateRowsIncludeExisting = false;
 
-    /** Pairs returned by the last successful generation, displayed as a report in the modal. */
+    /**
+     * Pairs returned by the last successful generation, displayed as a report in the modal.
+     *
+     * @var array<int, array{source: string, russian: string}>
+     */
+    #[Locked]
     public array $generatedRows = [];
 
     /**

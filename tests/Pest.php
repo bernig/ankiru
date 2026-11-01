@@ -82,7 +82,7 @@ Testable::macro('setRows', function (array $rows): Testable {
             'csv_rows' => $rows,
         ]));
 
-        return $this->set('activeDraftId', $draft->id);
+        return $this->call('switchToDraft', $draft->id);
     }
 
     $draft->update(['csv_rows' => $rows]);

@@ -21,7 +21,7 @@ test('test queue contains all cards with content on both sides', function () {
     ]);
 
     $component = Livewire::test(CsvEditor::class)
-        ->set('activeDraftId', $draft->id)
+        ->call('switchToDraft', $draft->id)
         ->setRows($draft->csv_rows)
         ->set('hasCsvLoaded', true)
         ->call('openTestMode');
@@ -46,7 +46,7 @@ test('cards with empty source or russian text are excluded from the queue', func
     ]);
 
     Livewire::test(CsvEditor::class)
-        ->set('activeDraftId', $draft->id)
+        ->call('switchToDraft', $draft->id)
         ->setRows($draft->csv_rows)
         ->set('hasCsvLoaded', true)
         ->call('openTestMode')
@@ -60,7 +60,7 @@ test('test queue is shuffled and includes all valid cards', function () {
     ]);
 
     $component = Livewire::test(CsvEditor::class)
-        ->set('activeDraftId', $draft->id)
+        ->call('switchToDraft', $draft->id)
         ->setRows($draft->csv_rows)
         ->set('hasCsvLoaded', true)
         ->call('openTestMode');
@@ -80,7 +80,7 @@ test('flip reveals the back of the card', function () {
     ]);
 
     Livewire::test(CsvEditor::class)
-        ->set('activeDraftId', $draft->id)
+        ->call('switchToDraft', $draft->id)
         ->setRows($draft->csv_rows)
         ->set('hasCsvLoaded', true)
         ->call('openTestMode')
@@ -98,7 +98,7 @@ test('next advances to the following card and resets flip state', function () {
     ]);
 
     Livewire::test(CsvEditor::class)
-        ->set('activeDraftId', $draft->id)
+        ->call('switchToDraft', $draft->id)
         ->setRows($draft->csv_rows)
         ->set('hasCsvLoaded', true)
         ->call('openTestMode')
@@ -118,7 +118,7 @@ test('session is done after going through all cards', function () {
     ]);
 
     Livewire::test(CsvEditor::class)
-        ->set('activeDraftId', $draft->id)
+        ->call('switchToDraft', $draft->id)
         ->setRows($draft->csv_rows)
         ->set('hasCsvLoaded', true)
         ->call('openTestMode')
@@ -135,7 +135,7 @@ test('restart reshuffles all cards and resets session state', function () {
     ]);
 
     Livewire::test(CsvEditor::class)
-        ->set('activeDraftId', $draft->id)
+        ->call('switchToDraft', $draft->id)
         ->setRows($draft->csv_rows)
         ->set('hasCsvLoaded', true)
         ->call('openTestMode')
@@ -154,7 +154,7 @@ test('openTestMode always rebuilds the queue from scratch', function () {
     ]);
 
     Livewire::test(CsvEditor::class)
-        ->set('activeDraftId', $draft->id)
+        ->call('switchToDraft', $draft->id)
         ->setRows($draft->csv_rows)
         ->set('hasCsvLoaded', true)
         ->call('openTestMode')

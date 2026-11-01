@@ -5,6 +5,7 @@ use App\Models\CsvDraft;
 use App\Models\User;
 use App\Services\AnkiPackageExporterService;
 use Illuminate\Http\UploadedFile;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 
 beforeEach(function (): void {
@@ -233,11 +234,12 @@ test('switching to a draft owned by another user changes nothing', function () {
 test('a tampered draft id cannot overwrite or delete another user\'s draft', function () {
     $foreignDraft = foreignDraft();
 
-    Livewire::test(CsvEditor::class)
-        ->set('activeDraftId', $foreignDraft->id)
-        ->set('hasCsvLoaded', true)
-        ->assertRowsSet('', [])
-        ->assertSet('pageRows', [])
+    $editor = Livewire::test(CsvEditor::class);
+
+    expect(fn () => $editor->set('activeDraftId', $foreignDraft->id))
+        ->toThrow(CannotUpdateLockedPropertyException::class);
+
+    $editor->set('hasCsvLoaded', true)
         ->call('updateCell', 0, 0, 'Overwritten')
         ->call('addRow')
         ->call('resetEditor');

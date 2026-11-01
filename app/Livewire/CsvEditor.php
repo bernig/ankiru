@@ -99,6 +99,7 @@ class CsvEditor extends Component
     public bool $hasCsvLoaded = false;
 
     /** Database ID of the currently displayed draft. 0 means no draft persisted yet. */
+    #[Locked]
     public int $activeDraftId = 0;
 
     /**
@@ -607,16 +608,6 @@ class CsvEditor extends Component
     {
         $this->isRenamingFile = false;
         $this->renameInput = '';
-    }
-
-    /**
-     * The client is not meant to change the active draft directly (that goes
-     * through switchToDraft), but if it does, the rows must follow so they are
-     * never saved into another draft.
-     */
-    public function updatedActiveDraftId(): void
-    {
-        $this->csvRows = $this->loadActiveDraftRows();
     }
 
     public function render(): View

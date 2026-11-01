@@ -275,9 +275,14 @@ test('is blocked when the AI rate limit is exceeded', function () {
 });
 
 test('escapes markup in generated Russian text while keeping stress tags', function () {
+    RowGeneratorAgent::fake(['[{"source": "Hello", "russian": "При<b onmouseover=\\"alert(1)\\">в</b>ет <b>д</b>а"}]']);
+
     Livewire::test(CsvEditor::class)
         ->set('hasCsvLoaded', true)
-        ->set('generatedRows', [['source' => 'Hello', 'russian' => 'При<b onmouseover="alert(1)">в</b>ет <b>д</b>а']])
+        ->set('generateRowsPrompt', 'Greetings')
+        ->set('generateRowsCount', 1)
+        ->call('generateRows')
+        ->assertSet('generatedRows.0.russian', 'При<b onmouseover="alert(1)">в</b>ет <b>д</b>а')
         ->assertDontSeeHtml('onmouseover="alert(1)"')
         ->assertSeeHtml('<b>д</b>а');
 });
