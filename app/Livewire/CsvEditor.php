@@ -398,7 +398,7 @@ class CsvEditor extends Component
      */
     public function downloadAnkiPackage(): StreamedResponse
     {
-        $cards = $this->buildAnkiCardsFromCsvRows($this->csvRows);
+        $cards = $this->buildAnkiCardsFromCsvRows($this->csvRows, $this->activeDraftId);
         $deckName = pathinfo($this->originalFileName, PATHINFO_FILENAME) ?: 'French-Russian';
         $apkgPath = $this->ankiExporterService->export($cards, $deckName);
 
@@ -423,7 +423,7 @@ class CsvEditor extends Component
         foreach ($allDrafts as $draft) {
             $decks[] = [
                 'deckName' => pathinfo($draft->original_file_name, PATHINFO_FILENAME) ?: 'Deck',
-                'cards' => $this->buildAnkiCardsFromCsvRows($draft->csv_rows ?? []),
+                'cards' => $this->buildAnkiCardsFromCsvRows($draft->csv_rows ?? [], $draft->id),
             ];
         }
 
@@ -806,9 +806,10 @@ class CsvEditor extends Component
      * instead of one Storage::exists() call per row.
      *
      * @param  array<int, array<int, string>>  $csvRows
-     * @return array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}>
+     * @param  int  $draftId  Draft the rows belong to, part of each note's stable GUID.
+     * @return array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null, guid: string}>
      */
-    private function buildAnkiCardsFromCsvRows(array $csvRows): array
+    private function buildAnkiCardsFromCsvRows(array $csvRows, int $draftId): array
     {
         $russianTexts = array_values(array_filter(
             array_map(fn (array $row): string => $row[1] ?? '', $csvRows),
@@ -818,9 +819,13 @@ class CsvEditor extends Component
         $audioExistence = $this->ttsService->audioFilesExistBatch($russianTexts);
 
         $cards = [];
+        $occurrencesBySourceText = [];
 
         foreach ($csvRows as $row) {
             $sourceText = $row[0] ?? '';
+            $sourceKey = trim($sourceText);
+            $occurrence = $occurrencesBySourceText[$sourceKey] ?? 0;
+            $occurrencesBySourceText[$sourceKey] = $occurrence + 1;
             $rawRussianText = $row[1] ?? '';
             $backFieldValue = trim($rawRussianText);
             $mp3StoragePath = null;
@@ -838,6 +843,7 @@ class CsvEditor extends Component
                 'back' => $backFieldValue,
                 'mp3StoragePath' => $mp3StoragePath,
                 'mp3FileName' => $mp3FileName,
+                'guid' => AnkiPackageExporterService::noteGuid($draftId, $sourceText, $occurrence),
             ];
         }
 

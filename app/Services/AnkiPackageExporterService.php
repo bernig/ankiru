@@ -32,15 +32,34 @@ class AnkiPackageExporterService
     private const DECK_ID = 1715000000001;
 
     /**
+     * Execute the INSERT statements for a single note and its associated card.
+     * Fields are joined with ASCII unit-separator (0x1f) as required by Anki.
+     *
+     * @param  array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null, guid?: string}  $card
+     */
+    /**
+     * Stable note GUID for a row of a draft. Anki matches notes by GUID on
+     * import, so re-importing an updated deck updates the existing notes
+     * (keeping their review history) instead of duplicating them.
+     *
+     * The occurrence rank keeps identical source texts of the same draft
+     * apart: two notes sharing a GUID in one package would collapse into one.
+     */
+    public static function noteGuid(int $draftId, string $sourceText, int $occurrence = 0): string
+    {
+        return substr(hash('sha256', $draftId."\x1F".trim($sourceText)."\x1F".$occurrence), 0, 16);
+    }
+
+    /**
      * Build a .apkg file from the given flashcard data and return its absolute path.
      * The caller is responsible for deleting the file after streaming it.
      *
-     * @param  array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}>  $cards
-     *                                                                                                                        Each element represents one flashcard:
-     *                                                                                                                        - front          : question side (French text, plain)
-     *                                                                                                                        - back           : answer side (Russian plain text + optional Anki sound tag)
-     *                                                                                                                        - mp3StoragePath : storage-relative path like "tts/hash.mp3", or null
-     *                                                                                                                        - mp3FileName    : original filename like "hash.mp3", or null
+     * @param  array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null, guid?: string}>  $cards
+     *                                                                                                                                       Each element represents one flashcard:
+     *                                                                                                                                       - front          : question side (French text, plain)
+     *                                                                                                                                       - back           : answer side (Russian plain text + optional Anki sound tag)
+     *                                                                                                                                       - mp3StoragePath : storage-relative path like "tts/hash.mp3", or null
+     *                                                                                                                                       - mp3FileName    : original filename like "hash.mp3", or null
      * @return string Absolute filesystem path to the generated .apkg file.
      *
      * @throws RuntimeException when the ZIP archive cannot be created.
@@ -65,7 +84,7 @@ class AnkiPackageExporterService
      * Build a multi-deck .apkg file and return its absolute path.
      * The caller is responsible for deleting the file after streaming it.
      *
-     * @param  array<int, array{deckName: string, cards: array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}>}>  $decks
+     * @param  array<int, array{deckName: string, cards: array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null, guid?: string}>}>  $decks
      * @return string Absolute filesystem path to the generated .apkg file.
      *
      * @throws RuntimeException when the ZIP archive cannot be created.
@@ -102,7 +121,7 @@ class AnkiPackageExporterService
     /**
      * Create and populate the collection.anki2 SQLite database.
      *
-     * @param  array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}>  $cards
+     * @param  array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null, guid?: string}>  $cards
      */
     private function buildCollectionDatabase(string $dbPath, array $cards, string $deckName): void
     {
@@ -229,7 +248,7 @@ class AnkiPackageExporterService
      * Note IDs are epoch-millisecond integers incremented per card so they are
      * unique without requiring any external state.
      *
-     * @param  array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}>  $cards
+     * @param  array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null, guid?: string}>  $cards
      */
     private function insertNotesAndCards(PDO $pdo, array $cards): void
     {
@@ -249,7 +268,7 @@ class AnkiPackageExporterService
     /**
      * Create and populate the collection.anki2 SQLite database for multiple decks.
      *
-     * @param  array<int, array{id: int, name: string, cards: array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}>}>  $deckConfigs
+     * @param  array<int, array{id: int, name: string, cards: array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null, guid?: string}>}>  $deckConfigs
      */
     private function buildMultiDeckDatabase(string $dbPath, array $deckConfigs, string $parentDeckName): void
     {
@@ -303,7 +322,7 @@ class AnkiPackageExporterService
     /**
      * Insert notes and cards for all decks in a multi-deck collection.
      *
-     * @param  array<int, array{id: int, name: string, cards: array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}>}>  $deckConfigs
+     * @param  array<int, array{id: int, name: string, cards: array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null, guid?: string}>}>  $deckConfigs
      */
     private function insertNotesAndCardsMultiple(PDO $pdo, array $deckConfigs): void
     {
@@ -334,7 +353,7 @@ class AnkiPackageExporterService
      * Media files are renamed to sequential integers inside the ZIP (Anki requirement).
      * The `media` JSON file maps these integers back to the original filenames.
      *
-     * @param  array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}>  $cards
+     * @param  array<int, array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null, guid?: string}>  $cards
      *
      * @throws RuntimeException when the ZIP archive cannot be opened.
      */
@@ -439,12 +458,6 @@ class AnkiPackageExporterService
         ]);
     }
 
-    /**
-     * Execute the INSERT statements for a single note and its associated card.
-     * Fields are joined with ASCII unit-separator (0x1f) as required by Anki.
-     *
-     * @param  array{front: string, back: string, mp3StoragePath: string|null, mp3FileName: string|null}  $card
-     */
     private function insertSingleNoteAndCard(
         \PDOStatement $noteStatement,
         \PDOStatement $cardStatement,
@@ -459,7 +472,7 @@ class AnkiPackageExporterService
 
         $noteStatement->execute([
             $noteId,
-            substr(md5((string) $noteId), 0, 10),  // guid: short unique stable string
+            $card['guid'] ?? substr(md5((string) $noteId), 0, 10),  // guid: see noteGuid()
             self::MODEL_ID,
             $now,
             -1,    // usn: -1 means "pending sync"

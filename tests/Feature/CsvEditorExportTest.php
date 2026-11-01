@@ -52,6 +52,39 @@ test('anki package export keeps russian stress tags in back fields', function ()
         ->and($capturedCards[0]['back'])->toBe('Я раб<b>о</b>таю.');
 });
 
+test('anki package export gives notes guids that survive re-exports and stay unique', function (): void {
+    $exportedGuids = [];
+
+    $this->mock(AnkiPackageExporterService::class)
+        ->shouldReceive('export')
+        ->twice()
+        ->withArgs(function (array $cards) use (&$exportedGuids): bool {
+            $exportedGuids[] = array_column($cards, 'guid');
+
+            return true;
+        })
+        ->andReturnUsing(function (): string {
+            $temporaryPackagePath = sys_get_temp_dir().'/'.uniqid('anki_test_', true).'.apkg';
+            file_put_contents($temporaryPackagePath, 'fake-apkg-content');
+
+            return $temporaryPackagePath;
+        });
+
+    $draft = CsvDraft::factory()->create([
+        'user_id' => auth()->id(),
+        'original_file_name' => 'sample.csv',
+        'csv_rows' => [['Bonjour', 'Привет'], ['Merci', 'Спасибо'], ['Bonjour', 'Здравствуйте']],
+    ]);
+
+    $editor = Livewire::test(CsvEditor::class)->assertSet('activeDraftId', $draft->id);
+    $editor->call('downloadAnkiPackage');
+    $editor->call('downloadAnkiPackage');
+
+    expect($exportedGuids[0])->toBe($exportedGuids[1])
+        ->and(array_unique($exportedGuids[0]))->toHaveCount(3)
+        ->and($exportedGuids[0][0])->toBe(AnkiPackageExporterService::noteGuid($draft->id, 'Bonjour'));
+});
+
 test('colpkg export groups all drafts as separate decks', function (): void {
     $capturedDecks = [];
 

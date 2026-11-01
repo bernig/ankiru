@@ -127,3 +127,20 @@ test('exports a collection as sub-decks of the parent deck', function (): void {
     expect($deckNameById)->toContain('Default', 'Russe', 'Russe::Salutations', 'Russe::Nombres')
         ->and($cardsPerDeckName)->toEqualCanonicalizing(['Russe::Salutations' => 2, 'Russe::Nombres' => 1]);
 });
+
+test('writes the card guid on its note', function (): void {
+    $apkg = openApkg(app(AnkiPackageExporterService::class)->export([
+        exporterCard(['front' => 'Bonjour', 'back' => 'Привет', 'guid' => 'stable-guid-1']),
+    ], 'Russe A1'));
+
+    expect($apkg['db']->query('SELECT guid FROM notes')->fetchColumn())->toBe('stable-guid-1');
+});
+
+test('derives note guids from the draft, the source text and its occurrence', function (): void {
+    $guid = AnkiPackageExporterService::noteGuid(7, 'Bonjour');
+
+    expect(AnkiPackageExporterService::noteGuid(7, ' Bonjour '))->toBe($guid)
+        ->and(AnkiPackageExporterService::noteGuid(8, 'Bonjour'))->not->toBe($guid)
+        ->and(AnkiPackageExporterService::noteGuid(7, 'Bonsoir'))->not->toBe($guid)
+        ->and(AnkiPackageExporterService::noteGuid(7, 'Bonjour', 1))->not->toBe($guid);
+});
