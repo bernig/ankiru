@@ -53,6 +53,16 @@ test('parses an uploaded csv file into component state', function () {
         ->assertSet('csvRows.1.0', 'Je suis développeur web.');
 });
 
+test('imports a semicolon-separated Excel export with a byte order mark', function (): void {
+    $csvContent = "\xEF\xBB\xBFOui, merci;Да, спасибо\r\nBonjour;Привет\r\n";
+    $uploadedFile = UploadedFile::fake()->createWithContent('excel.csv', $csvContent);
+
+    Livewire::test(CsvEditor::class)
+        ->set('uploadedCsvFile', $uploadedFile)
+        ->assertSet('hasCsvLoaded', true)
+        ->assertSet('csvRows', [['Oui, merci', 'Да, спасибо'], ['Bonjour', 'Привет']]);
+});
+
 test('normalises colour+bold font wrappers to plain bold tags on import', function (): void {
     $csvContent = '"Bonjour","раб<font color=""#ff0000""><b>о</b></font>тать"';
     $uploadedFile = UploadedFile::fake()->createWithContent('test.csv', $csvContent);

@@ -11,6 +11,7 @@ use App\Livewire\Concerns\ManagesTtsAudio;
 use App\Models\CsvDraft;
 use App\Services\AnkiPackageExporterService;
 use App\Services\CreditService;
+use App\Services\CsvImportService;
 use App\Services\MassOperationService;
 use App\Services\OpenAiTranslationService;
 use App\Services\RowGenerationService;
@@ -119,6 +120,8 @@ class CsvEditor extends Component
 
     protected CreditService $creditService;
 
+    protected CsvImportService $csvImportService;
+
     /**
      * Called by Livewire before every action (mount and subsequent requests).
      */
@@ -130,6 +133,7 @@ class CsvEditor extends Component
         MassOperationService $massOperationService,
         RowGenerationService $rowGenerationService,
         CreditService $creditService,
+        CsvImportService $csvImportService,
     ): void {
         $this->translationService = $translationService;
         $this->accentService = $accentService;
@@ -138,6 +142,7 @@ class CsvEditor extends Component
         $this->massOperationService = $massOperationService;
         $this->rowGenerationService = $rowGenerationService;
         $this->creditService = $creditService;
+        $this->csvImportService = $csvImportService;
     }
 
     public function mount(): void
@@ -189,7 +194,7 @@ class CsvEditor extends Component
         }
 
         /** @var array<int, array<int, string>>|false $parsed */
-        $parsed = $this->parseCsvContent($fileContent);
+        $parsed = $this->csvImportService->parse($fileContent);
 
         if ($parsed === false || count($parsed) === 0) {
             $this->validationError = __('csv_editor.error_csv_empty_or_malformed');
@@ -700,41 +705,6 @@ class CsvEditor extends Component
         }, $downloadFileName, [
             'Content-Type' => 'application/octet-stream',
         ]);
-    }
-
-    /**
-     * Parse raw CSV content into a 2D array using fgetcsv so that RFC 4180
-     * quoted fields containing newlines are handled correctly.
-     *
-     * @return array<int, array<int, string>>|false
-     */
-    private function parseCsvContent(string $content): array|false
-    {
-        $handle = fopen('php://temp', 'r+');
-
-        if ($handle === false) {
-            return false;
-        }
-
-        try {
-            fwrite($handle, $content);
-            rewind($handle);
-
-            $rows = [];
-
-            while (($row = fgetcsv($handle)) !== false) {
-                // fgetcsv returns [null] for completely blank lines: skip them.
-                if ($row === [null]) {
-                    continue;
-                }
-
-                $rows[] = array_map('strval', $row);
-            }
-
-            return count($rows) > 0 ? $rows : false;
-        } finally {
-            fclose($handle);
-        }
     }
 
     /**
