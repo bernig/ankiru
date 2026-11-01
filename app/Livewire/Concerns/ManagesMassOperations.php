@@ -425,13 +425,13 @@ trait ManagesMassOperations
     private function mergeStressResultsFromCache(): void
     {
         $batchId = $this->batchIdFor(OperationType::Stress);
-        $prefix = "mass_op:{$batchId}:stress";
-        $targetDraftId = Cache::pull("{$prefix}:draft_id");
-        $rowIndexes = Cache::pull("{$prefix}:row_indexes") ?? array_keys($this->csvRows);
+        $key = fn (string $suffix): string => MassOperationService::batchCacheKey($batchId, OperationType::Stress, $suffix);
+        $targetDraftId = Cache::pull($key('draft_id'));
+        $rowIndexes = Cache::pull($key('row_indexes')) ?? array_keys($this->csvRows);
 
         $corrections = [];
         foreach ($rowIndexes as $rowIndex) {
-            $result = Cache::pull("{$prefix}:row:{$rowIndex}");
+            $result = Cache::pull($key("row:{$rowIndex}"));
             if (is_array($result) && isset($result['original'], $result['corrected'])) {
                 $corrections[$rowIndex] = $result;
             }
@@ -701,7 +701,7 @@ trait ManagesMassOperations
      */
     private function notifyIfBatchStoppedForCredits(OperationType $operationType): void
     {
-        $stopReason = Cache::pull("mass_op:{$this->batchIdFor($operationType)}:{$operationType->value}:stopped");
+        $stopReason = Cache::pull(MassOperationService::batchCacheKey($this->batchIdFor($operationType), $operationType, 'stopped'));
 
         if ($stopReason === 'insufficient_credits') {
             $this->dispatch('open-credits-shop');

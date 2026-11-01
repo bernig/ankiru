@@ -43,6 +43,18 @@ class MassOperationService
         return "mass_op:user:{$userId}:{$operationType->value}:current";
     }
 
+    /**
+     * Cache key of one piece of a batch's state, shared by the service, the
+     * jobs and the editor.
+     *
+     * Key pattern: mass_op:{batchId}:{operationType}:{suffix}
+     * Example suffixes: 'processed', 'failed', 'status', 'row:42'
+     */
+    public static function batchCacheKey(string $batchId, OperationType $operationType, string $suffix): string
+    {
+        return "mass_op:{$batchId}:{$operationType->value}:{$suffix}";
+    }
+
     // -------------------------------------------------------------------------
     // Stress-correction estimation
     // -------------------------------------------------------------------------
@@ -123,8 +135,8 @@ class MassOperationService
         // Remember which draft and rows this batch targets, so results are merged
         // into the right file even if the user switched files in the meantime.
         Cache::putMany([
-            "mass_op:{$batchId}:stress:draft_id" => $draftId,
-            "mass_op:{$batchId}:stress:row_indexes" => array_column($qualifyingRows, 0),
+            self::batchCacheKey($batchId, OperationType::Stress, 'draft_id') => $draftId,
+            self::batchCacheKey($batchId, OperationType::Stress, 'row_indexes') => array_column($qualifyingRows, 0),
         ], 3600);
         $userId = Auth::id();
 
@@ -191,19 +203,19 @@ class MassOperationService
      */
     public function getOperationProgress(string $batchId, OperationType $operationType): array
     {
-        $prefix = "mass_op:{$batchId}:{$operationType->value}";
+        $key = fn (string $suffix): string => self::batchCacheKey($batchId, $operationType, $suffix);
         $values = Cache::many([
-            "{$prefix}:status",
-            "{$prefix}:total",
-            "{$prefix}:processed",
-            "{$prefix}:failed",
+            $key('status'),
+            $key('total'),
+            $key('processed'),
+            $key('failed'),
         ]);
 
         return [
-            'status' => (string) ($values["{$prefix}:status"] ?? 'idle'),
-            'total' => (int) ($values["{$prefix}:total"] ?? 0),
-            'processed' => (int) ($values["{$prefix}:processed"] ?? 0),
-            'failed' => (int) ($values["{$prefix}:failed"] ?? 0),
+            'status' => (string) ($values[$key('status')] ?? 'idle'),
+            'total' => (int) ($values[$key('total')] ?? 0),
+            'processed' => (int) ($values[$key('processed')] ?? 0),
+            'failed' => (int) ($values[$key('failed')] ?? 0),
         ];
     }
 
@@ -216,17 +228,17 @@ class MassOperationService
      */
     public function getStressReport(string $batchId): array
     {
-        $prefix = "mass_op:{$batchId}:stress";
+        $key = fn (string $suffix): string => self::batchCacheKey($batchId, OperationType::Stress, $suffix);
         $values = Cache::many([
-            "{$prefix}:corrected",
-            "{$prefix}:prompt_tokens",
-            "{$prefix}:completion_tokens",
+            $key('corrected'),
+            $key('prompt_tokens'),
+            $key('completion_tokens'),
         ]);
 
         return [
-            'corrected' => (int) ($values["{$prefix}:corrected"] ?? 0),
-            'promptTokens' => (int) ($values["{$prefix}:prompt_tokens"] ?? 0),
-            'completionTokens' => (int) ($values["{$prefix}:completion_tokens"] ?? 0),
+            'corrected' => (int) ($values[$key('corrected')] ?? 0),
+            'promptTokens' => (int) ($values[$key('prompt_tokens')] ?? 0),
+            'completionTokens' => (int) ($values[$key('completion_tokens')] ?? 0),
         ];
     }
 
@@ -239,15 +251,15 @@ class MassOperationService
      */
     public function getTtsReport(string $batchId): array
     {
-        $prefix = "mass_op:{$batchId}:tts";
+        $key = fn (string $suffix): string => self::batchCacheKey($batchId, OperationType::Tts, $suffix);
         $values = Cache::many([
-            "{$prefix}:generated",
-            "{$prefix}:actual_chars",
+            $key('generated'),
+            $key('actual_chars'),
         ]);
 
         return [
-            'generated' => (int) ($values["{$prefix}:generated"] ?? 0),
-            'actualChars' => (int) ($values["{$prefix}:actual_chars"] ?? 0),
+            'generated' => (int) ($values[$key('generated')] ?? 0),
+            'actualChars' => (int) ($values[$key('actual_chars')] ?? 0),
         ];
     }
 
@@ -272,8 +284,8 @@ class MassOperationService
 
         // Outlives the other batch keys: queued jobs may wait for a worker a
         // long time, and they must still find the flag when they run.
-        Cache::put("mass_op:{$batchId}:{$operationType->value}:cancelled", true, ttl: now()->addWeek());
-        Cache::put("mass_op:{$batchId}:{$operationType->value}:status", 'done', ttl: 3600);
+        Cache::put(self::batchCacheKey($batchId, $operationType, 'cancelled'), true, ttl: now()->addWeek());
+        Cache::put(self::batchCacheKey($batchId, $operationType, 'status'), 'done', ttl: 3600);
     }
 
     // -------------------------------------------------------------------------
@@ -335,30 +347,30 @@ class MassOperationService
      */
     private function initialiseCacheKeys(string $batchId, OperationType $operationType, int $total): void
     {
-        $prefix = "mass_op:{$batchId}:{$operationType->value}";
-        Cache::forget("{$prefix}:cancelled");
-        Cache::forget("{$prefix}:stopped");
+        $key = fn (string $suffix): string => self::batchCacheKey($batchId, $operationType, $suffix);
+        Cache::forget($key('cancelled'));
+        Cache::forget($key('stopped'));
 
         $typeCounters = match ($operationType) {
             OperationType::Stress => [
-                "{$prefix}:corrected" => 0,
-                "{$prefix}:prompt_tokens" => 0,
-                "{$prefix}:completion_tokens" => 0,
+                $key('corrected') => 0,
+                $key('prompt_tokens') => 0,
+                $key('completion_tokens') => 0,
             ],
             OperationType::Tts => [
-                "{$prefix}:generated" => 0,
-                "{$prefix}:actual_chars" => 0,
+                $key('generated') => 0,
+                $key('actual_chars') => 0,
             ],
         };
 
         Cache::putMany([
-            "{$prefix}:status" => 'running',
-            "{$prefix}:total" => $total,
-            "{$prefix}:processed" => 0,
-            "{$prefix}:failed" => 0,
+            $key('status') => 'running',
+            $key('total') => $total,
+            $key('processed') => 0,
+            $key('failed') => 0,
             // Billing mode is fixed for the whole batch: a batch started on
             // credits stops when they run out instead of switching keys.
-            "{$prefix}:billing" => Auth::user()?->usesPlatformCredits() ? 'credits' : 'personal',
+            $key('billing') => Auth::user()?->usesPlatformCredits() ? 'credits' : 'personal',
             ...$typeCounters,
         ], 3600);
 

@@ -21,10 +21,19 @@ class ApiUsageLog extends Model
         'characters',
     ];
 
+    /**
+     * Cache key of a user's usage statistics, shown on the API key page and
+     * invalidated by every new log.
+     */
+    public static function usageStatsCacheKey(int $userId): string
+    {
+        return "user_usage_stats:{$userId}";
+    }
+
     protected static function booted(): void
     {
         static::created(function (ApiUsageLog $log): void {
-            Cache::forget("user_usage_stats:{$log->user_id}");
+            Cache::forget(self::usageStatsCacheKey($log->user_id));
         });
     }
 

@@ -304,13 +304,10 @@ class MassOperationJob implements ShouldQueue
     }
 
     /**
-     * Build a namespaced cache key for this batch.
-     *
-     * Key pattern: mass_op:{batchId}:{operationType}:{suffix}
-     * Example suffixes: 'processed', 'failed', 'status', 'row:42'
+     * Cache key of this job's batch state; see MassOperationService::batchCacheKey().
      */
     private function cacheKey(string $suffix): string
     {
-        return "mass_op:{$this->batchId}:{$this->operationType->value}:{$suffix}";
+        return MassOperationService::batchCacheKey($this->batchId, $this->operationType, $suffix);
     }
 }

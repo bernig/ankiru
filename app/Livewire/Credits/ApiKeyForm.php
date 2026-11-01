@@ -35,7 +35,7 @@ class ApiKeyForm extends Component
         $outputPricePerMillion = (float) config('services.openai.gpt_5_4_output_price_per_million', 15.00);
         $ttsPricePerMillion = (float) config('services.openai.tts_price_per_million_chars', 30.00);
 
-        $cacheKey = 'user_usage_stats:'.Auth::id();
+        $cacheKey = ApiUsageLog::usageStatsCacheKey(Auth::id());
 
         $rows = Cache::get($cacheKey);
 
