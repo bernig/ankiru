@@ -13,6 +13,7 @@ use App\Services\RussianTextToSpeechService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 use Mockery\MockInterface;
 
@@ -47,6 +48,18 @@ function massOpRows(): array
  * return zero values. Used in tests that trigger estimate refreshes as a side
  * effect but do not assert on the estimate values themselves.
  */
+/**
+ * Mark a batch as running in the cache, as a worker would after dispatch.
+ * Batch status is locked against client updates, so tests reach the running
+ * state through openBulkActionsModal(), which syncs it from the cache.
+ */
+function markBatchRunning(OperationType $operationType, int $total = 1): void
+{
+    $prefix = 'mass_op:'.session()->getId().':'.$operationType->value;
+    Cache::put("{$prefix}:status", 'running', now()->addHour());
+    Cache::put("{$prefix}:total", $total, now()->addHour());
+}
+
 function stubMassServiceEstimates(MockInterface $mockService): void
 {
     $mockService->shouldReceive('estimateStressBatchCost')->andReturn([
@@ -121,7 +134,10 @@ it('refreshes running batch progress from cache when a websocket update is misse
 
     $mockService->shouldReceive('getOperationProgress')
         ->with(Mockery::any(), OperationType::Stress)
-        ->andReturn(['status' => 'done', 'total' => 1, 'processed' => 1, 'failed' => 0]);
+        ->andReturn(
+            ['status' => 'running', 'total' => 1, 'processed' => 0, 'failed' => 0],
+            ['status' => 'done', 'total' => 1, 'processed' => 1, 'failed' => 0],
+        );
 
     $mockService->shouldReceive('getOperationProgress')
         ->with(Mockery::any(), OperationType::Tts)
@@ -137,8 +153,8 @@ it('refreshes running batch progress from cache when a websocket update is misse
     $lw = Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je parle.', 'Я говорю.']])
         ->set('hasCsvLoaded', true)
-        ->set('stressBatchStatus', 'running')
-        ->set('stressBatchTotal', 1)
+        ->call('openBulkActionsModal')
+        ->assertSet('stressBatchStatus', 'running')
         ->call('refreshRunningBatchProgress');
 
     $lw->assertSet('stressBatchStatus', 'done')
@@ -179,7 +195,8 @@ it('does not dispatch stress jobs when batch is already running', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', massOpRows())
         ->set('hasCsvLoaded', true)
-        ->set('stressBatchStatus', 'running')
+        ->tap(fn () => markBatchRunning(OperationType::Stress))
+        ->call('openBulkActionsModal')
         ->call('dispatchStressBatch');
 
     Queue::assertNothingPushed();
@@ -225,7 +242,8 @@ it('does not dispatch TTS jobs when batch is already running', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', massOpRows())
         ->set('hasCsvLoaded', true)
-        ->set('ttsBatchStatus', 'running')
+        ->tap(fn () => markBatchRunning(OperationType::Tts))
+        ->call('openBulkActionsModal')
         ->call('dispatchTtsBatch');
 
     Queue::assertNothingPushed();
@@ -425,7 +443,8 @@ it('merges stress results from cache into csvRows when stress batch completes', 
     $lw = Livewire::test(CsvEditor::class)
         ->set('csvRows', massOpRows())
         ->set('hasCsvLoaded', true)
-        ->set('stressBatchStatus', 'running')
+        ->tap(fn () => markBatchRunning(OperationType::Stress))
+        ->call('openBulkActionsModal')
         ->call('handleBatchProgressUpdate', [
             'operationType' => 'stress',
             'status' => 'done',
@@ -453,16 +472,20 @@ it('populates TTS report props when TTS batch completes', function () {
         ->andReturn(['generated' => 8, 'actualChars' => 320]);
 
     stubMassServiceEstimates($mockService);
-    $mockService->shouldReceive('getOperationProgress')->andReturn([
-        'status' => 'idle', 'total' => 0, 'processed' => 0, 'failed' => 0,
-    ]);
+    $mockService->shouldReceive('getOperationProgress')
+        ->with(Mockery::any(), OperationType::Stress)
+        ->andReturn(['status' => 'idle', 'total' => 0, 'processed' => 0, 'failed' => 0]);
+    $mockService->shouldReceive('getOperationProgress')
+        ->with(Mockery::any(), OperationType::Tts)
+        ->andReturn(['status' => 'running', 'total' => 8, 'processed' => 0, 'failed' => 0]);
 
     app()->instance(MassOperationService::class, $mockService);
 
     Livewire::test(CsvEditor::class)
         ->set('csvRows', massOpRows())
         ->set('hasCsvLoaded', true)
-        ->set('ttsBatchStatus', 'running')
+        ->call('openBulkActionsModal')
+        ->assertSet('ttsBatchStatus', 'running')
         ->call('handleBatchProgressUpdate', [
             'operationType' => 'tts',
             'status' => 'done',
@@ -582,21 +605,21 @@ it('a cancelled job skips processing', function () {
 
 it('reports isStressBatchRunning correctly', function () {
     Livewire::test(CsvEditor::class)
-        ->set('stressBatchStatus', 'idle')
         ->assertSet('isStressBatchRunning', false)
-        ->set('stressBatchStatus', 'running')
+        ->tap(fn () => markBatchRunning(OperationType::Stress))
+        ->call('openBulkActionsModal')
         ->assertSet('isStressBatchRunning', true)
-        ->set('stressBatchStatus', 'done')
+        ->call('cancelStressBatch')
         ->assertSet('isStressBatchRunning', false);
 });
 
 it('reports isTtsBatchRunning correctly', function () {
     Livewire::test(CsvEditor::class)
-        ->set('ttsBatchStatus', 'idle')
         ->assertSet('isTtsBatchRunning', false)
-        ->set('ttsBatchStatus', 'running')
+        ->tap(fn () => markBatchRunning(OperationType::Tts))
+        ->call('openBulkActionsModal')
         ->assertSet('isTtsBatchRunning', true)
-        ->set('ttsBatchStatus', 'done')
+        ->call('cancelTtsBatch')
         ->assertSet('isTtsBatchRunning', false);
 });
 
@@ -612,7 +635,8 @@ it('blocks translateWithChatGpt while a stress batch is running', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je parle.', '']])
         ->set('hasCsvLoaded', true)
-        ->set('stressBatchStatus', 'running')
+        ->tap(fn () => markBatchRunning(OperationType::Stress))
+        ->call('openBulkActionsModal')
         ->call('translateWithChatGpt', 0)
         ->assertSet('translatingRowIndex', -1);
 });
@@ -625,7 +649,8 @@ it('blocks correctStressMarks while a stress batch is running', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je parle.', 'Я говорю.']])
         ->set('hasCsvLoaded', true)
-        ->set('stressBatchStatus', 'running')
+        ->tap(fn () => markBatchRunning(OperationType::Stress))
+        ->call('openBulkActionsModal')
         ->call('correctStressMarks', 0)
         ->assertSet('correctingStressRowIndex', -1);
 });
@@ -642,7 +667,8 @@ it('blocks generateTtsAudio while a TTS batch is running', function () {
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je parle.', 'Я говорю.']])
         ->set('hasCsvLoaded', true)
-        ->set('ttsBatchStatus', 'running')
+        ->tap(fn () => markBatchRunning(OperationType::Tts))
+        ->call('openBulkActionsModal')
         ->call('generateTtsAudio', 0)
         ->assertSet('ttsGeneratingRowIndex', -1);
 });
@@ -657,7 +683,8 @@ it('renders the stress-correction button as disabled when a stress batch is runn
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je parle.', 'Я говорю.']])
         ->set('hasCsvLoaded', true)
-        ->set('stressBatchStatus', 'running')
+        ->tap(fn () => markBatchRunning(OperationType::Stress))
+        ->call('openBulkActionsModal')
         ->assertSeeHtml('wire:poll.3s="refreshRunningBatchProgress"')
         ->assertSeeHtml('disabled');
 });
@@ -668,7 +695,8 @@ it('renders the TTS button as disabled when a TTS batch is running', function ()
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je parle.', 'Я говорю.']])
         ->set('hasCsvLoaded', true)
-        ->set('ttsBatchStatus', 'running')
+        ->tap(fn () => markBatchRunning(OperationType::Tts))
+        ->call('openBulkActionsModal')
         ->assertSeeHtml('disabled');
 });
 
@@ -735,3 +763,12 @@ it('merges corrections into the original draft when the user switched files duri
     expect($batchDraft->fresh()->csv_rows)->toBe([['Je parle.', 'Я говор<b>ю</b>.']])
         ->and($otherDraft->fresh()->csv_rows)->toBe([['Je parle.', 'Я говорю.']]);
 });
+
+// ---------------------------------------------------------------------------
+// Locked batch state
+// ---------------------------------------------------------------------------
+
+it('rejects client updates to the batch status', function (string $property) {
+    Livewire::test(CsvEditor::class)->set($property, 'idle');
+})->with(['stressBatchStatus', 'ttsBatchStatus'])
+    ->throws(CannotUpdateLockedPropertyException::class);

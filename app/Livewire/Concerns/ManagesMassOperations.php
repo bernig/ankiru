@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 
 /**
  * Manages the "Bulk Actions" feature for the CsvEditor component.
@@ -30,52 +31,72 @@ trait ManagesMassOperations
     // Public state (serialised by Livewire between requests)
     // -------------------------------------------------------------------------
     /** 'idle' | 'running' | 'done' */
+    #[Locked]
     public string $stressBatchStatus = 'idle';
 
+    #[Locked]
     public int $stressBatchTotal = 0;
 
     /** Rows processed so far (successes + failures). */
+    #[Locked]
     public int $stressBatchProgress = 0;
 
+    #[Locked]
     public int $stressBatchFailed = 0;
 
     /** Rows where the API was actually called and returned corrected text. */
+    #[Locked]
     public int $stressBatchCorrectedCount = 0;
 
     /** Actual prompt (input) tokens consumed by the batch, from the API. */
+    #[Locked]
     public int $stressBatchPromptTokens = 0;
 
     /** Actual completion (output) tokens consumed by the batch, from the API. */
+    #[Locked]
     public int $stressBatchCompletionTokens = 0;
 
     /** 'idle' | 'running' | 'done' */
+    #[Locked]
     public string $ttsBatchStatus = 'idle';
 
+    #[Locked]
     public int $ttsBatchTotal = 0;
 
+    #[Locked]
     public int $ttsBatchProgress = 0;
 
+    #[Locked]
     public int $ttsBatchFailed = 0;
 
     /** Audio files actually generated during the batch. */
+    #[Locked]
     public int $ttsBatchGeneratedCount = 0;
 
     /** Exact character count sent to the TTS API during the batch. */
+    #[Locked]
     public int $ttsBatchActualChars = 0;
 
     // Estimates - only populated after openBulkActionsModal() is called.
+    #[Locked]
     public int $estimatedStressInputTokens = 0;
 
+    #[Locked]
     public int $estimatedStressOutputTokens = 0;
 
+    #[Locked]
     public float $estimatedStressCost = 0.0;
 
+    #[Locked]
     public int $missingStressRowCount = 0;
 
+    #[Locked]
     public int $estimatedTtsChars = 0;
 
+    #[Locked]
     public float $estimatedTtsCost = 0.0;
 
+    #[Locked]
     public int $missingAudioRowCount = 0;
 
     // -------------------------------------------------------------------------

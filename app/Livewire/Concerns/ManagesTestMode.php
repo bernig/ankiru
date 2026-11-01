@@ -3,6 +3,7 @@
 namespace App\Livewire\Concerns;
 
 use App\Services\RussianTextToSpeechService;
+use Livewire\Attributes\Locked;
 
 /**
  * Manages the Test Mode for the CsvEditor component.
@@ -14,9 +15,11 @@ use App\Services\RussianTextToSpeechService;
 trait ManagesTestMode
 {
     /** Whether the test modal is open. */
+    #[Locked]
     public bool $testModeOpen = false;
 
     /** Shuffled list of row indices for the current session. */
+    #[Locked]
     public array $testQueue = [];
 
     /** Index within $testQueue of the current card. */
@@ -35,6 +38,7 @@ trait ManagesTestMode
     public bool $testAutoplay = true;
 
     /** Whether TTS audio is currently being generated for the current card. */
+    #[Locked]
     public bool $testAudioGenerating = false;
 
     /**
@@ -42,6 +46,7 @@ trait ManagesTestMode
      *
      * @var array<int, string|null>
      */
+    #[Locked]
     public array $testCardAudioUrls = [];
 
     public function openTestMode(): void

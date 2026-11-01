@@ -295,7 +295,7 @@ test('deleteRow resets ttsModalRowIndex to prevent stale references', function (
     Livewire::test(CsvEditor::class)
         ->set('csvRows', [['Je travaille.', 'Я работаю.'], ['Bonjour.', 'Привет.']])
         ->set('hasCsvLoaded', true)
-        ->set('ttsModalRowIndex', 0)
+        ->call('openTtsModal', 0)
         ->call('deleteRow', 0)
         ->assertSet('ttsModalRowIndex', -1);
 });

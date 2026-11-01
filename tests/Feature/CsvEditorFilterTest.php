@@ -145,3 +145,20 @@ test('filters are cleared when creating a new file', function (): void {
         ->assertSet('filterAccentNeeded', false)
         ->assertSet('filterNoAudio', false);
 });
+
+// ── perPage ──────────────────────────────────────────────────────────────────
+
+test('perPage accepts the sizes offered by the selector', function (): void {
+    Livewire::test(CsvEditor::class)
+        ->set('perPage', 25)
+        ->assertSet('perPage', 25);
+});
+
+test('perPage falls back to the default for values outside the selector', function (int $invalidPerPage): void {
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Row A', 'Привет']])
+        ->set('hasCsvLoaded', true)
+        ->set('perPage', $invalidPerPage)
+        ->assertSet('perPage', 50)
+        ->assertOk();
+})->with([0, -5, 1000000]);

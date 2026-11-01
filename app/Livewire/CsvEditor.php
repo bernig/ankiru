@@ -44,6 +44,9 @@ class CsvEditor extends Component
         setPage as paginationSetPage;
     }
 
+    /** @var list<int> Page sizes offered by the per-page selector. */
+    private const array ALLOWED_PER_PAGE = [10, 25, 50, 100];
+
     /** Number of rows displayed per page (user-configurable). */
     public int $perPage = 50;
 
@@ -146,27 +149,6 @@ class CsvEditor extends Component
         $this->generateRowsContext = $user?->learning_context ?? '';
         $this->restoreFromDraft();
         $this->maybeAutoStartMainTour();
-    }
-
-    /**
-     * Auto-starts the full guided tour the first time this user has a loaded
-     * file with at least one row, so there is something on screen to point
-     * at. Marked as seen immediately so it never fires again automatically,
-     * regardless of whether the user finishes or dismisses it; the header's
-     * "Guided tour" button remains available to replay it manually.
-     */
-    private function maybeAutoStartMainTour(): void
-    {
-        $user = auth()->user();
-
-        if (! $user || $user->tour_completed_at || ! $this->hasCsvLoaded || count($this->csvRows) === 0) {
-            return;
-        }
-
-        $user->tour_completed_at = now();
-        $user->save();
-
-        $this->dispatch('start-main-tour');
     }
 
     /**
@@ -289,6 +271,10 @@ class CsvEditor extends Component
 
     public function updatedPerPage(): void
     {
+        if (! in_array($this->perPage, self::ALLOWED_PER_PAGE, true)) {
+            $this->perPage = 50;
+        }
+
         $this->resetPage();
     }
 
@@ -362,25 +348,6 @@ class CsvEditor extends Component
         if ($newRowIndex === 0) {
             $this->maybeStartFirstRowTip();
         }
-    }
-
-    /**
-     * Shows a one-off tip pointing at the row's action icons the first time
-     * this user ever adds a row to a file, since that's the moment the
-     * translate/stress/audio icons first become relevant.
-     */
-    private function maybeStartFirstRowTip(): void
-    {
-        $user = auth()->user();
-
-        if (! $user || $user->tour_first_row_tip_seen_at) {
-            return;
-        }
-
-        $user->tour_first_row_tip_seen_at = now();
-        $user->save();
-
-        $this->dispatch('start-first-row-tip');
     }
 
     /**
@@ -532,25 +499,6 @@ class CsvEditor extends Component
     }
 
     /**
-     * Shows a one-off tip pointing at the "add row" area the first time
-     * this user ever creates a new empty file, since that's the moment
-     * they most need to know how to get started.
-     */
-    private function maybeStartNewFileTip(): void
-    {
-        $user = auth()->user();
-
-        if (! $user || $user->tour_new_file_tip_seen_at) {
-            return;
-        }
-
-        $user->tour_new_file_tip_seen_at = now();
-        $user->save();
-
-        $this->dispatch('start-new-file-tip');
-    }
-
-    /**
      * Show the rename input pre-filled with the current file base name.
      */
     public function startRenameDraft(): void
@@ -635,6 +583,65 @@ class CsvEditor extends Component
         }
 
         return $rows;
+    }
+
+    /**
+     * Auto-starts the full guided tour the first time this user has a loaded
+     * file with at least one row, so there is something on screen to point
+     * at. Marked as seen immediately so it never fires again automatically,
+     * regardless of whether the user finishes or dismisses it; the header's
+     * "Guided tour" button remains available to replay it manually.
+     */
+    private function maybeAutoStartMainTour(): void
+    {
+        $user = auth()->user();
+
+        if (! $user || $user->tour_completed_at || ! $this->hasCsvLoaded || count($this->csvRows) === 0) {
+            return;
+        }
+
+        $user->tour_completed_at = now();
+        $user->save();
+
+        $this->dispatch('start-main-tour');
+    }
+
+    /**
+     * Shows a one-off tip pointing at the row's action icons the first time
+     * this user ever adds a row to a file, since that's the moment the
+     * translate/stress/audio icons first become relevant.
+     */
+    private function maybeStartFirstRowTip(): void
+    {
+        $user = auth()->user();
+
+        if (! $user || $user->tour_first_row_tip_seen_at) {
+            return;
+        }
+
+        $user->tour_first_row_tip_seen_at = now();
+        $user->save();
+
+        $this->dispatch('start-first-row-tip');
+    }
+
+    /**
+     * Shows a one-off tip pointing at the "add row" area the first time
+     * this user ever creates a new empty file, since that's the moment
+     * they most need to know how to get started.
+     */
+    private function maybeStartNewFileTip(): void
+    {
+        $user = auth()->user();
+
+        if (! $user || $user->tour_new_file_tip_seen_at) {
+            return;
+        }
+
+        $user->tour_new_file_tip_seen_at = now();
+        $user->save();
+
+        $this->dispatch('start-new-file-tip');
     }
 
     // -------------------------------------------------------------------------

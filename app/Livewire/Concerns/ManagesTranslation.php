@@ -9,6 +9,7 @@ use App\Services\RussianAccentService;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
+use Livewire\Attributes\Locked;
 
 /**
  * Provides ChatGPT translation and Russian stress-mark correction actions
@@ -22,9 +23,11 @@ use Illuminate\Support\Facades\RateLimiter;
 trait ManagesTranslation
 {
     /** Row index currently being translated via ChatGPT (-1 = none). */
+    #[Locked]
     public int $translatingRowIndex = -1;
 
     /** Row index currently having stress corrected via ChatGPT (-1 = none). */
+    #[Locked]
     public int $correctingStressRowIndex = -1;
 
     /** Error message from the last ChatGPT translation or stress-correction attempt. */

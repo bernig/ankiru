@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Ai\Exceptions\FailoverableException;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Renderless;
 
 /**
@@ -25,6 +26,7 @@ use Livewire\Attributes\Renderless;
 trait ManagesTtsAudio
 {
     /** Row index currently generating TTS audio (-1 = none). */
+    #[Locked]
     public int $ttsGeneratingRowIndex = -1;
 
     /** Error message from the last TTS generation attempt. */
@@ -34,6 +36,7 @@ trait ManagesTtsAudio
      * Row index whose audio is displayed in the TTS player modal (-1 = none).
      * Reset to -1 whenever a row is deleted to prevent stale references.
      */
+    #[Locked]
     public int $ttsModalRowIndex = -1;
 
     /**
