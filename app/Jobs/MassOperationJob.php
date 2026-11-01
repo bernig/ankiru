@@ -47,7 +47,7 @@ class MassOperationJob implements ShouldQueue
 
     /**
      * @param  OperationType  $operationType  The type of bulk operation to perform.
-     * @param  string  $sessionId  Browser session ID, scopes cache keys and broadcast channel.
+     * @param  string  $batchId  Per-batch UUID, scopes the cache keys of this batch.
      * @param  int  $rowIndex  Original CSV row index (0-based).
      * @param  int  $totalRows  Total jobs dispatched for this batch (used to detect completion).
      * @param  string  $sourceText  Column 0 snapshot (French source phrase).
@@ -56,7 +56,7 @@ class MassOperationJob implements ShouldQueue
      */
     public function __construct(
         public readonly OperationType $operationType,
-        public readonly string $sessionId,
+        public readonly string $batchId,
         public readonly int $rowIndex,
         public readonly int $totalRows,
         public readonly string $sourceText,
@@ -103,7 +103,7 @@ class MassOperationJob implements ShouldQueue
             Log::error('MassOperationJob row failed.', [
                 'operationType' => $this->operationType,
                 'rowIndex' => $this->rowIndex,
-                'sessionId' => $this->sessionId,
+                'batchId' => $this->batchId,
                 'error' => $exception->getMessage(),
             ]);
 
@@ -127,7 +127,7 @@ class MassOperationJob implements ShouldQueue
         Log::error('MassOperationJob failed externally.', [
             'operationType' => $this->operationType,
             'rowIndex' => $this->rowIndex,
-            'sessionId' => $this->sessionId,
+            'batchId' => $this->batchId,
             'error' => $exception->getMessage(),
         ]);
 
@@ -277,7 +277,7 @@ class MassOperationJob implements ShouldQueue
      */
     private function stopBatchForInsufficientCredits(): void
     {
-        app(MassOperationService::class)->cancelBatch($this->sessionId, $this->operationType);
+        app(MassOperationService::class)->cancelBatch($this->batchId, $this->operationType);
         Cache::put($this->cacheKey('stopped'), 'insufficient_credits', ttl: 3600);
 
         $this->broadcastProgress(forceDone: true);
@@ -302,9 +302,16 @@ class MassOperationJob implements ShouldQueue
             Cache::put($this->cacheKey('status'), 'done', ttl: 3600);
         }
 
+        // Progress is broadcast on the user's private channel; without a user
+        // there is no one to notify (the editor's polling still catches up).
+        if ($this->userId === null) {
+            return;
+        }
+
         MassOperationProgressEvent::dispatch(
             $this->operationType->value,
-            $this->sessionId,
+            $this->batchId,
+            $this->userId,
             $isDone ? 'done' : 'running',
             $processedCount,
             $this->totalRows,
@@ -315,11 +322,11 @@ class MassOperationJob implements ShouldQueue
     /**
      * Build a namespaced cache key for this batch.
      *
-     * Key pattern: mass_op:{sessionId}:{operationType}:{suffix}
+     * Key pattern: mass_op:{batchId}:{operationType}:{suffix}
      * Example suffixes: 'processed', 'failed', 'status', 'row:42'
      */
     private function cacheKey(string $suffix): string
     {
-        return "mass_op:{$this->sessionId}:{$this->operationType->value}:{$suffix}";
+        return "mass_op:{$this->batchId}:{$this->operationType->value}:{$suffix}";
     }
 }

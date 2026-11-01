@@ -9,6 +9,7 @@ use App\Services\MassOperationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 
@@ -30,6 +31,14 @@ trait ManagesMassOperations
     // -------------------------------------------------------------------------
     // Public state (serialised by Livewire between requests)
     // -------------------------------------------------------------------------
+    /** UUID of the stress batch this editor tracks ('' when none yet). */
+    #[Locked]
+    public string $stressBatchId = '';
+
+    /** UUID of the TTS batch this editor tracks ('' when none yet). */
+    #[Locked]
+    public string $ttsBatchId = '';
+
     /** 'idle' | 'running' | 'done' */
     #[Locked]
     public string $stressBatchStatus = 'idle';
@@ -118,16 +127,20 @@ trait ManagesMassOperations
     // Echo listener
     // -------------------------------------------------------------------------
     /**
-     * Register a dynamic Laravel Echo listener on the session-scoped channel.
+     * Register a dynamic Laravel Echo listener on the user's private channel.
      * Must use getListeners() instead of the #[On] attribute because the
-     * channel name contains a runtime value (session ID).
+     * channel name contains a runtime value (user ID).
      *
      * @return array<string, string>
      */
     public function getListeners(): array
     {
+        if (Auth::id() === null) {
+            return [];
+        }
+
         return [
-            'echo:mass-op.'.$this->getMassOpSessionId().',.operation.progress' => 'handleBatchProgressUpdate',
+            'echo-private:App.Models.User.'.Auth::id().',.operation.progress' => 'handleBatchProgressUpdate',
         ];
     }
 
@@ -164,6 +177,10 @@ trait ManagesMassOperations
             return;
         }
 
+        if ($this->adoptRunningBatchFromAnotherTab(OperationType::Stress)) {
+            return;
+        }
+
         $user = Auth::user();
 
         if ($user->usesPlatformCredits()) {
@@ -183,13 +200,14 @@ trait ManagesMassOperations
         // immediate regardless of the queue driver or WebSocket availability.
         $this->applyYoNormalizationToAllRows();
 
-        $sessionId = $this->getMassOpSessionId();
+        $batchId = (string) Str::uuid();
         $dispatched = $this->massOperationService->dispatchStressBatch(
             $this->csvRows,
-            $sessionId,
+            $batchId,
             $this->activeDraftId > 0 ? $this->activeDraftId : null,
         );
         if ($dispatched > 0) {
+            $this->stressBatchId = $batchId;
             $this->stressBatchStatus = 'running';
             $this->stressBatchTotal = $dispatched;
             $this->stressBatchProgress = 0;
@@ -203,7 +221,7 @@ trait ManagesMassOperations
             // WebSocket broadcast is sent during that call, before the browser
             // is connected to the Echo channel, so it is never received as an
             // Echo event.  Read the cache immediately to catch this case.
-            $this->applyStressBatchCompletionIfAlreadyDone($sessionId);
+            $this->applyStressBatchCompletionIfAlreadyDone($batchId);
         }
     }
 
@@ -221,6 +239,10 @@ trait ManagesMassOperations
             return;
         }
 
+        if ($this->adoptRunningBatchFromAnotherTab(OperationType::Tts)) {
+            return;
+        }
+
         $user = Auth::user();
 
         if ($user->usesPlatformCredits()) {
@@ -234,12 +256,13 @@ trait ManagesMassOperations
             }
         }
 
-        $sessionId = $this->getMassOpSessionId();
+        $batchId = (string) Str::uuid();
         $dispatched = $this->massOperationService->dispatchTtsBatch(
             $this->csvRows,
-            $sessionId,
+            $batchId,
         );
         if ($dispatched > 0) {
+            $this->ttsBatchId = $batchId;
             $this->ttsBatchStatus = 'running';
             $this->ttsBatchTotal = $dispatched;
             $this->ttsBatchProgress = 0;
@@ -250,7 +273,7 @@ trait ManagesMassOperations
             // Same sync-queue guard as dispatchStressBatch(): if all jobs already
             // finished inline, handle completion now before the Livewire response
             // is sent back to the browser.
-            $this->applyTtsBatchCompletionIfAlreadyDone($sessionId);
+            $this->applyTtsBatchCompletionIfAlreadyDone($batchId);
         }
     }
 
@@ -262,19 +285,27 @@ trait ManagesMassOperations
      * Updates the batch state properties; when a stress batch completes,
      * merges the per-row corrected texts from cache back into $csvRows.
      *
-     * @param  array{operationType: string, status: string, processedCount: int, totalCount: int, failedCount: int}  $event
+     * Events for another batch (started from another tab, or an older batch)
+     * are ignored: they share the user's channel but not this editor's state.
+     *
+     * @param  array{operationType: string, batchId: string, status: string, processedCount: int, totalCount: int, failedCount: int}  $event
      */
     public function handleBatchProgressUpdate(array $event): void
     {
         $operationType = $event['operationType'] ?? '';
+        $type = OperationType::tryFrom($operationType);
+
+        if ($type === null || ($event['batchId'] ?? '') === '' || $event['batchId'] !== $this->batchIdFor($type)) {
+            return;
+        }
+
         $status = $event['status'] ?? 'running';
         $processedCount = (int) ($event['processedCount'] ?? 0);
         $totalCount = (int) ($event['totalCount'] ?? 0);
         $failedCount = (int) ($event['failedCount'] ?? 0);
-        match (OperationType::tryFrom($operationType)) {
+        match ($type) {
             OperationType::Stress => $this->applyStressProgressUpdate($status, $processedCount, $totalCount, $failedCount),
             OperationType::Tts => $this->applyTtsProgressUpdate($status, $processedCount, $totalCount, $failedCount),
-            default => null,
         };
     }
 
@@ -348,20 +379,21 @@ trait ManagesMassOperations
      */
     private function syncProgressFromCache(): void
     {
-        $sessionId = $this->getMassOpSessionId();
-        $stressProgress = $this->massOperationService->getOperationProgress($sessionId, OperationType::Stress);
-        $ttsProgress = $this->massOperationService->getOperationProgress($sessionId, OperationType::Tts);
+        $stressBatchId = $this->batchIdFor(OperationType::Stress);
+        $ttsBatchId = $this->batchIdFor(OperationType::Tts);
+        $stressProgress = $this->massOperationService->getOperationProgress($stressBatchId, OperationType::Stress);
+        $ttsProgress = $this->massOperationService->getOperationProgress($ttsBatchId, OperationType::Tts);
 
         // Auto-cancel a batch that is marked running but has no remaining jobs in
         // the queue (e.g. worker was killed mid-run, permission error wiped jobs).
         // Only relevant with the 'database' driver; other drivers don't expose a
         // queryable jobs table, so the check would always return false.
         if (config('queue.default') === 'database') {
-            if ($stressProgress['status'] === 'running' && ! $this->hasActiveJobsInQueue($sessionId, OperationType::Stress)) {
+            if ($stressProgress['status'] === 'running' && ! $this->hasActiveJobsInQueue($stressBatchId, OperationType::Stress)) {
                 $this->cancelBatch(OperationType::Stress);
                 $stressProgress['status'] = 'done';
             }
-            if ($ttsProgress['status'] === 'running' && ! $this->hasActiveJobsInQueue($sessionId, OperationType::Tts)) {
+            if ($ttsProgress['status'] === 'running' && ! $this->hasActiveJobsInQueue($ttsBatchId, OperationType::Tts)) {
                 $this->cancelBatch(OperationType::Tts);
                 $ttsProgress['status'] = 'done';
             }
@@ -402,8 +434,8 @@ trait ManagesMassOperations
      */
     private function mergeStressResultsFromCache(): void
     {
-        $sessionId = $this->getMassOpSessionId();
-        $prefix = "mass_op:{$sessionId}:stress";
+        $batchId = $this->batchIdFor(OperationType::Stress);
+        $prefix = "mass_op:{$batchId}:stress";
         $targetDraftId = Cache::pull("{$prefix}:draft_id");
         $rowIndexes = Cache::pull("{$prefix}:row_indexes") ?? array_keys($this->csvRows);
 
@@ -425,7 +457,7 @@ trait ManagesMassOperations
         }
 
         // Read the exact token usage and corrected-row count accumulated by the jobs.
-        $report = $this->massOperationService->getStressReport($sessionId);
+        $report = $this->massOperationService->getStressReport($batchId);
         $this->stressBatchCorrectedCount = $report['corrected'];
         $this->stressBatchPromptTokens = $report['promptTokens'];
         $this->stressBatchCompletionTokens = $report['completionTokens'];
@@ -439,7 +471,7 @@ trait ManagesMassOperations
      */
     private function mergeTtsReportFromCache(): void
     {
-        $report = $this->massOperationService->getTtsReport($this->getMassOpSessionId());
+        $report = $this->massOperationService->getTtsReport($this->batchIdFor(OperationType::Tts));
         $this->ttsBatchGeneratedCount = $report['generated'];
         $this->ttsBatchActualChars = $report['actualChars'];
 
@@ -509,9 +541,9 @@ trait ManagesMassOperations
      * trigger.  This handles the sync queue driver, where all jobs finish before
      * the browser can connect and listen on the WebSocket channel.
      */
-    private function applyStressBatchCompletionIfAlreadyDone(string $sessionId): void
+    private function applyStressBatchCompletionIfAlreadyDone(string $batchId): void
     {
-        $progress = $this->massOperationService->getOperationProgress($sessionId, OperationType::Stress);
+        $progress = $this->massOperationService->getOperationProgress($batchId, OperationType::Stress);
 
         if ($progress['status'] !== 'done') {
             return;
@@ -529,9 +561,9 @@ trait ManagesMassOperations
      * same post-completion actions that the Echo event handler would normally
      * trigger.  Mirrors applyStressBatchCompletionIfAlreadyDone() for TTS.
      */
-    private function applyTtsBatchCompletionIfAlreadyDone(string $sessionId): void
+    private function applyTtsBatchCompletionIfAlreadyDone(string $batchId): void
     {
-        $progress = $this->massOperationService->getOperationProgress($sessionId, OperationType::Tts);
+        $progress = $this->massOperationService->getOperationProgress($batchId, OperationType::Tts);
 
         if ($progress['status'] !== 'done') {
             return;
@@ -607,29 +639,70 @@ trait ManagesMassOperations
     }
 
     /**
-     * Return the session ID used to namespace cache keys and broadcast channels.
-     * Kept as a method so it can be overridden or mocked in tests.
+     * UUID of the batch this editor tracks for the given type. An editor that
+     * has not started one itself (fresh page load, reload mid-run) adopts the
+     * user's latest batch, so progress and results are never lost.
      */
-    private function getMassOpSessionId(): string
+    private function batchIdFor(OperationType $operationType): string
     {
-        return session()->getId();
+        $property = $operationType === OperationType::Stress ? 'stressBatchId' : 'ttsBatchId';
+
+        if ($this->{$property} === '') {
+            $this->{$property} = $this->latestUserBatchId($operationType) ?? '';
+        }
+
+        return $this->{$property};
+    }
+
+    private function latestUserBatchId(OperationType $operationType): ?string
+    {
+        if (Auth::id() === null) {
+            return null;
+        }
+
+        return Cache::get(MassOperationService::currentBatchCacheKey(Auth::id(), $operationType));
+    }
+
+    /**
+     * One batch per type and user at a time: when another tab already runs
+     * one, track it instead of dispatching a second batch that would bill
+     * and edit the same rows concurrently. Returns true when adopted.
+     */
+    private function adoptRunningBatchFromAnotherTab(OperationType $operationType): bool
+    {
+        $latestBatchId = $this->latestUserBatchId($operationType);
+
+        if ($latestBatchId === null
+            || $this->massOperationService->getOperationProgress($latestBatchId, $operationType)['status'] !== 'running') {
+            return false;
+        }
+
+        if ($operationType === OperationType::Stress) {
+            $this->stressBatchId = $latestBatchId;
+        } else {
+            $this->ttsBatchId = $latestBatchId;
+        }
+
+        $this->syncProgressFromCache();
+
+        return true;
     }
 
     /**
      * Return true if the queue contains any jobs (pending or reserved) for this
-     * session and operation type. Used to detect orphaned 'running' batches.
+     * batch and operation type. Used to detect orphaned 'running' batches.
      */
-    private function hasActiveJobsInQueue(string $sessionId, OperationType $operationType): bool
+    private function hasActiveJobsInQueue(string $batchId, OperationType $operationType): bool
     {
         return DB::table('jobs')
-            ->where('payload', 'like', "%{$sessionId}%")
+            ->where('payload', 'like', "%{$batchId}%")
             ->where('payload', 'like', '%'.$operationType->value.'%')
             ->exists();
     }
 
     private function cancelBatch(OperationType $operationType): void
     {
-        $this->massOperationService->cancelBatch($this->getMassOpSessionId(), $operationType);
+        $this->massOperationService->cancelBatch($this->batchIdFor($operationType), $operationType);
     }
 
     /**
@@ -638,7 +711,7 @@ trait ManagesMassOperations
      */
     private function notifyIfBatchStoppedForCredits(OperationType $operationType): void
     {
-        $stopReason = Cache::pull("mass_op:{$this->getMassOpSessionId()}:{$operationType->value}:stopped");
+        $stopReason = Cache::pull("mass_op:{$this->batchIdFor($operationType)}:{$operationType->value}:stopped");
 
         if ($stopReason === 'insufficient_credits') {
             $this->dispatch('open-credits-shop');

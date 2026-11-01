@@ -49,13 +49,26 @@ function massOpRows(): array
  * effect but do not assert on the estimate values themselves.
  */
 /**
+ * Make the authenticated user's latest batch of the given type a fixed UUID,
+ * as dispatching would, and return it. Editors without a batch of their own
+ * adopt this one, so seeded cache keys and events must use this ID.
+ */
+function trackedBatchId(OperationType $operationType): string
+{
+    $batchId = 'test-batch-'.$operationType->value;
+    Cache::put(MassOperationService::currentBatchCacheKey(auth()->id(), $operationType), $batchId, now()->addHour());
+
+    return $batchId;
+}
+
+/**
  * Mark a batch as running in the cache, as a worker would after dispatch.
  * Batch status is locked against client updates, so tests reach the running
  * state through openBulkActionsModal(), which syncs it from the cache.
  */
 function markBatchRunning(OperationType $operationType, int $total = 1): void
 {
-    $prefix = 'mass_op:'.session()->getId().':'.$operationType->value;
+    $prefix = 'mass_op:'.trackedBatchId($operationType).':'.$operationType->value;
     Cache::put("{$prefix}:status", 'running', now()->addHour());
     Cache::put("{$prefix}:total", $total, now()->addHour());
 }
@@ -127,7 +140,7 @@ it('syncs in-flight stress progress from cache when modal is opened', function (
 it('refreshes running batch progress from cache when a websocket update is missed', function () {
     Storage::fake('local');
 
-    $sessionId = session()->getId();
+    $sessionId = trackedBatchId(OperationType::Stress);
     Cache::put("mass_op:{$sessionId}:stress:row:0", ['original' => 'Я говорю.', 'corrected' => 'Я говор<b>ю</b>.'], now()->addMinutes(10));
 
     $mockService = Mockery::mock(MassOperationService::class);
@@ -256,12 +269,6 @@ it('does not dispatch TTS jobs when batch is already running', function () {
 it('immediately applies stress batch completion when the sync queue driver runs jobs inline', function () {
     Storage::fake('local');
 
-    $sessionId = session()->getId();
-
-    // Pre-seed cache to simulate all jobs having finished inline.
-    Cache::put("mass_op:{$sessionId}:stress:row:0", ['original' => 'Я говорю.', 'corrected' => 'Я говор<b>ю</b>.'], now()->addMinutes(10));
-    Cache::put("mass_op:{$sessionId}:stress:row:1", ['original' => 'Хорошая погода.', 'corrected' => 'Хорош<b>а</b>я погод<b>а</b>.'], now()->addMinutes(10));
-
     $rowsNeedingCorrection = [
         ['Je parle.', 'Я говорю.'],
         ['Il fait beau.', 'Хорошая погода.'],
@@ -269,7 +276,14 @@ it('immediately applies stress batch completion when the sync queue driver runs 
 
     $mockService = Mockery::mock(MassOperationService::class);
 
-    $mockService->shouldReceive('dispatchStressBatch')->once()->andReturn(2);
+    // Simulate all jobs finishing inline: results land under the batch UUID
+    // the component generated for this dispatch.
+    $mockService->shouldReceive('dispatchStressBatch')->once()->andReturnUsing(function (array $rows, string $batchId): int {
+        Cache::put("mass_op:{$batchId}:stress:row:0", ['original' => 'Я говорю.', 'corrected' => 'Я говор<b>ю</b>.'], now()->addMinutes(10));
+        Cache::put("mass_op:{$batchId}:stress:row:1", ['original' => 'Хорошая погода.', 'corrected' => 'Хорош<b>а</b>я погод<b>а</b>.'], now()->addMinutes(10));
+
+        return 2;
+    });
 
     $mockService->shouldReceive('getOperationProgress')
         ->with(Mockery::any(), OperationType::Stress)
@@ -355,7 +369,7 @@ it('pre-normalises ё immediately when batch is dispatched with an async queue d
 it('merges pending stress corrections when the modal is opened after a missed done event', function () {
     Storage::fake('local');
 
-    $sessionId = session()->getId();
+    $sessionId = trackedBatchId(OperationType::Stress);
 
     // Simulate the corrected texts sitting in cache (jobs ran, but 'done' event was missed).
     Cache::put("mass_op:{$sessionId}:stress:row:0", ['original' => 'Я говорю.', 'corrected' => 'Я говор<b>ю</b>.'], now()->addMinutes(10));
@@ -408,6 +422,7 @@ it('updates stress state from a progress broadcast', function () {
     Livewire::test(CsvEditor::class)
         ->call('handleBatchProgressUpdate', [
             'operationType' => 'stress',
+            'batchId' => trackedBatchId(OperationType::Stress),
             'status' => 'running',
             'processedCount' => 2,
             'totalCount' => 5,
@@ -423,6 +438,7 @@ it('updates TTS state from a progress broadcast', function () {
     Livewire::test(CsvEditor::class)
         ->call('handleBatchProgressUpdate', [
             'operationType' => 'tts',
+            'batchId' => trackedBatchId(OperationType::Tts),
             'status' => 'running',
             'processedCount' => 1,
             'totalCount' => 3,
@@ -435,7 +451,7 @@ it('updates TTS state from a progress broadcast', function () {
 });
 
 it('merges stress results from cache into csvRows when stress batch completes', function () {
-    $sessionId = session()->getId();
+    $sessionId = trackedBatchId(OperationType::Stress);
 
     Cache::put("mass_op:{$sessionId}:stress:row:0", ['original' => 'Я раб<b>о</b>таю из д<b>о</b>ма.', 'corrected' => 'Я говорю́.'], now()->addMinutes(10));
     Cache::put("mass_op:{$sessionId}:stress:row:1", ['original' => 'Я веб-разраб<b>о</b>тчик.', 'corrected' => 'Хоро́шая поро́да.'], now()->addMinutes(10));
@@ -447,6 +463,7 @@ it('merges stress results from cache into csvRows when stress batch completes', 
         ->call('openBulkActionsModal')
         ->call('handleBatchProgressUpdate', [
             'operationType' => 'stress',
+            'batchId' => trackedBatchId(OperationType::Stress),
             'status' => 'done',
             'processedCount' => 2,
             'totalCount' => 2,
@@ -488,6 +505,7 @@ it('populates TTS report props when TTS batch completes', function () {
         ->assertSet('ttsBatchStatus', 'running')
         ->call('handleBatchProgressUpdate', [
             'operationType' => 'tts',
+            'batchId' => trackedBatchId(OperationType::Tts),
             'status' => 'done',
             'processedCount' => 8,
             'totalCount' => 8,
@@ -555,9 +573,10 @@ it('cancelling a stress batch sets its status to done and removes pending jobs',
     $lw->call('cancelStressBatch')
         ->assertSet('stressBatchStatus', 'done');
 
-    $sessionId = session()->getId();
-    expect(Cache::get("mass_op:{$sessionId}:stress:cancelled"))->toBeTrue();
-    expect(Cache::get("mass_op:{$sessionId}:stress:status"))->toBe('done');
+    $batchId = $lw->get('stressBatchId');
+    expect($batchId)->not->toBe('')
+        ->and(Cache::get("mass_op:{$batchId}:stress:cancelled"))->toBeTrue();
+    expect(Cache::get("mass_op:{$batchId}:stress:status"))->toBe('done');
 });
 
 it('cancelling a TTS batch sets its status to done', function () {
@@ -577,8 +596,8 @@ it('cancelling a TTS batch sets its status to done', function () {
     $lw->call('cancelTtsBatch')
         ->assertSet('ttsBatchStatus', 'done');
 
-    $sessionId = session()->getId();
-    expect(Cache::get("mass_op:{$sessionId}:tts:cancelled"))->toBeTrue();
+    $batchId = $lw->get('ttsBatchId');
+    expect(Cache::get("mass_op:{$batchId}:tts:cancelled"))->toBeTrue();
 });
 
 it('a cancelled job skips processing', function () {
@@ -590,7 +609,7 @@ it('a cancelled job skips processing', function () {
 
     $job = new MassOperationJob(
         operationType: OperationType::Tts,
-        sessionId: $sessionId,
+        batchId: $sessionId,
         rowIndex: 0,
         totalRows: 1,
         sourceText: 'Je parle.',
@@ -715,7 +734,7 @@ it('renders the TTS button as disabled when a TTS batch is running', function ()
  */
 function seedFinishedStressBatch(array $resultsByRowIndex, ?int $draftId): void
 {
-    $prefix = 'mass_op:'.session()->getId().':stress';
+    $prefix = 'mass_op:'.trackedBatchId(OperationType::Stress).':stress';
 
     Cache::put("{$prefix}:draft_id", $draftId, 600);
     Cache::put("{$prefix}:row_indexes", array_keys($resultsByRowIndex), 600);
@@ -726,11 +745,11 @@ function seedFinishedStressBatch(array $resultsByRowIndex, ?int $draftId): void
 }
 
 /**
- * @return array{operationType: string, status: string, processedCount: int, totalCount: int, failedCount: int}
+ * @return array{operationType: string, batchId: string, status: string, processedCount: int, totalCount: int, failedCount: int}
  */
 function stressDoneEvent(int $total): array
 {
-    return ['operationType' => 'stress', 'status' => 'done', 'processedCount' => $total, 'totalCount' => $total, 'failedCount' => 0];
+    return ['operationType' => 'stress', 'batchId' => trackedBatchId(OperationType::Stress), 'status' => 'done', 'processedCount' => $total, 'totalCount' => $total, 'failedCount' => 0];
 }
 
 it('applies a correction to the row that moved after an earlier row was deleted', function () {
@@ -779,7 +798,7 @@ it('rejects client updates to the batch status', function (string $property) {
 
 it('opens the credits shop when a job stopped the batch for lack of credits', function () {
     Storage::fake('local');
-    Cache::put('mass_op:'.session()->getId().':tts:stopped', 'insufficient_credits', now()->addHour());
+    Cache::put('mass_op:'.trackedBatchId(OperationType::Tts).':tts:stopped', 'insufficient_credits', now()->addHour());
 
     Livewire::test(CsvEditor::class)
         ->set('csvRows', massOpRows())
@@ -788,6 +807,7 @@ it('opens the credits shop when a job stopped the batch for lack of credits', fu
         ->call('openBulkActionsModal')
         ->call('handleBatchProgressUpdate', [
             'operationType' => 'tts',
+            'batchId' => trackedBatchId(OperationType::Tts),
             'status' => 'done',
             'processedCount' => 1,
             'totalCount' => 2,
@@ -795,4 +815,54 @@ it('opens the credits shop when a job stopped the batch for lack of credits', fu
         ])
         ->assertSet('ttsBatchStatus', 'done')
         ->assertDispatched('open-credits-shop');
+});
+
+// ---------------------------------------------------------------------------
+// Per-batch identity: several tabs share the user's private channel
+// ---------------------------------------------------------------------------
+
+it('ignores progress events of a batch it does not track', function () {
+    trackedBatchId(OperationType::Stress);
+
+    Livewire::test(CsvEditor::class)
+        ->call('handleBatchProgressUpdate', [
+            'operationType' => 'stress',
+            'batchId' => 'batch-from-another-tab',
+            'status' => 'running',
+            'processedCount' => 2,
+            'totalCount' => 5,
+            'failedCount' => 0,
+        ])
+        ->assertSet('stressBatchStatus', 'idle')
+        ->assertSet('stressBatchProgress', 0);
+});
+
+it('tracks the batch already running in another tab instead of dispatching a second one', function () {
+    Queue::fake();
+    markBatchRunning(OperationType::Stress, 4);
+
+    Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je parle.', 'Я говорю.']])
+        ->set('hasCsvLoaded', true)
+        ->call('dispatchStressBatch')
+        ->assertSet('stressBatchId', trackedBatchId(OperationType::Stress))
+        ->assertSet('stressBatchStatus', 'running')
+        ->assertSet('stressBatchTotal', 4);
+
+    Queue::assertNothingPushed();
+});
+
+it('gives each dispatched batch its own identifier', function () {
+    Queue::fake();
+    Storage::fake('local');
+
+    $lw = Livewire::test(CsvEditor::class)
+        ->set('csvRows', [['Je parle.', 'Я говорю.']])
+        ->set('hasCsvLoaded', true)
+        ->call('dispatchStressBatch')
+        ->call('dispatchTtsBatch');
+
+    expect($lw->get('stressBatchId'))->toBeUuid()
+        ->and($lw->get('ttsBatchId'))->toBeUuid()
+        ->and($lw->get('stressBatchId'))->not->toBe($lw->get('ttsBatchId'));
 });

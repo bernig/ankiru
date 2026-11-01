@@ -35,6 +35,15 @@ class MassOperationService
         private readonly RussianTextToSpeechService $ttsService,
     ) {}
 
+    /**
+     * Cache key pointing at the user's latest batch of the given type, so an
+     * editor reloaded mid-run can find the batch UUID it lost.
+     */
+    public static function currentBatchCacheKey(int $userId, OperationType $operationType): string
+    {
+        return "mass_op:user:{$userId}:{$operationType->value}:current";
+    }
+
     // -------------------------------------------------------------------------
     // Stress-correction estimation
     // -------------------------------------------------------------------------
@@ -103,20 +112,20 @@ class MassOperationService
      * @param  array<int, array<int, string>>  $csvRows
      * @param  int|null  $draftId  Draft the rows belong to (results are merged back into it).
      */
-    public function dispatchStressBatch(array $csvRows, string $sessionId, ?int $draftId = null): int
+    public function dispatchStressBatch(array $csvRows, string $batchId, ?int $draftId = null): int
     {
         $qualifyingRows = $this->collectStressRows($csvRows);
         if (empty($qualifyingRows)) {
             return 0;
         }
         $total = count($qualifyingRows);
-        $this->initialiseCacheKeys($sessionId, OperationType::Stress, $total);
+        $this->initialiseCacheKeys($batchId, OperationType::Stress, $total);
 
         // Remember which draft and rows this batch targets, so results are merged
         // into the right file even if the user switched files in the meantime.
         Cache::putMany([
-            "mass_op:{$sessionId}:stress:draft_id" => $draftId,
-            "mass_op:{$sessionId}:stress:row_indexes" => array_column($qualifyingRows, 0),
+            "mass_op:{$batchId}:stress:draft_id" => $draftId,
+            "mass_op:{$batchId}:stress:row_indexes" => array_column($qualifyingRows, 0),
         ], 3600);
         $userId = Auth::id();
 
@@ -125,7 +134,7 @@ class MassOperationService
         foreach ($qualifyingRows as [$rowIndex, $sourceText, $russianText]) {
             MassOperationJob::dispatch(
                 operationType: OperationType::Stress,
-                sessionId: $sessionId,
+                batchId: $batchId,
                 rowIndex: $rowIndex,
                 totalRows: $total,
                 sourceText: $sourceText,
@@ -144,14 +153,14 @@ class MassOperationService
      *
      * @param  array<int, array<int, string>>  $csvRows
      */
-    public function dispatchTtsBatch(array $csvRows, string $sessionId): int
+    public function dispatchTtsBatch(array $csvRows, string $batchId): int
     {
         $qualifyingRows = $this->collectTtsRows($csvRows);
         if (empty($qualifyingRows)) {
             return 0;
         }
         $total = count($qualifyingRows);
-        $this->initialiseCacheKeys($sessionId, OperationType::Tts, $total);
+        $this->initialiseCacheKeys($batchId, OperationType::Tts, $total);
         $userId = Auth::id();
 
         $forceDebugError = config('app.debug') && session('debug_force_ai_error');
@@ -159,7 +168,7 @@ class MassOperationService
         foreach ($qualifyingRows as [$rowIndex, $sourceText, $russianText]) {
             MassOperationJob::dispatch(
                 operationType: OperationType::Tts,
-                sessionId: $sessionId,
+                batchId: $batchId,
                 rowIndex: $rowIndex,
                 totalRows: $total,
                 sourceText: $sourceText,
@@ -181,9 +190,9 @@ class MassOperationService
      *
      * @return array{status: string, total: int, processed: int, failed: int}
      */
-    public function getOperationProgress(string $sessionId, OperationType $operationType): array
+    public function getOperationProgress(string $batchId, OperationType $operationType): array
     {
-        $prefix = "mass_op:{$sessionId}:{$operationType->value}";
+        $prefix = "mass_op:{$batchId}:{$operationType->value}";
         $values = Cache::many([
             "{$prefix}:status",
             "{$prefix}:total",
@@ -206,9 +215,9 @@ class MassOperationService
      *
      * @return array{corrected: int, promptTokens: int, completionTokens: int}
      */
-    public function getStressReport(string $sessionId): array
+    public function getStressReport(string $batchId): array
     {
-        $prefix = "mass_op:{$sessionId}:stress";
+        $prefix = "mass_op:{$batchId}:stress";
         $values = Cache::many([
             "{$prefix}:corrected",
             "{$prefix}:prompt_tokens",
@@ -229,9 +238,9 @@ class MassOperationService
      *
      * @return array{generated: int, actualChars: int}
      */
-    public function getTtsReport(string $sessionId): array
+    public function getTtsReport(string $batchId): array
     {
-        $prefix = "mass_op:{$sessionId}:tts";
+        $prefix = "mass_op:{$batchId}:tts";
         $values = Cache::many([
             "{$prefix}:generated",
             "{$prefix}:actual_chars",
@@ -251,14 +260,19 @@ class MassOperationService
      * from the queue. Jobs already reserved by a worker check the cancelled
      * flag at the start of handle() and skip processing.
      */
-    public function cancelBatch(string $sessionId, OperationType $operationType): void
+    public function cancelBatch(string $batchId, OperationType $operationType): void
     {
-        Cache::put("mass_op:{$sessionId}:{$operationType->value}:cancelled", true, ttl: 3600);
-        Cache::put("mass_op:{$sessionId}:{$operationType->value}:status", 'done', ttl: 3600);
+        // An empty ID would turn the LIKE below into a match on every job.
+        if ($batchId === '') {
+            return;
+        }
+
+        Cache::put("mass_op:{$batchId}:{$operationType->value}:cancelled", true, ttl: 3600);
+        Cache::put("mass_op:{$batchId}:{$operationType->value}:status", 'done', ttl: 3600);
 
         DB::table('jobs')
             ->whereNull('reserved_at')
-            ->where('payload', 'like', "%{$sessionId}%")
+            ->where('payload', 'like', "%{$batchId}%")
             ->where('payload', 'like', '%'.$operationType->value.'%')
             ->delete();
     }
@@ -321,9 +335,9 @@ class MassOperationService
      * Write the initial cache keys for a fresh batch so progress starts at zero.
      * Uses Cache::putMany() to write all keys in a single round-trip.
      */
-    private function initialiseCacheKeys(string $sessionId, OperationType $operationType, int $total): void
+    private function initialiseCacheKeys(string $batchId, OperationType $operationType, int $total): void
     {
-        $prefix = "mass_op:{$sessionId}:{$operationType->value}";
+        $prefix = "mass_op:{$batchId}:{$operationType->value}";
         Cache::forget("{$prefix}:cancelled");
         Cache::forget("{$prefix}:stopped");
 
@@ -349,5 +363,9 @@ class MassOperationService
             "{$prefix}:billing" => Auth::user()?->usesPlatformCredits() ? 'credits' : 'personal',
             ...$typeCounters,
         ], 3600);
+
+        if (Auth::id() !== null) {
+            Cache::put(self::currentBatchCacheKey(Auth::id(), $operationType), $batchId, 3600);
+        }
     }
 }

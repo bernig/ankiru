@@ -136,7 +136,7 @@ it('dispatches stress jobs with the correct operation type', function (): void {
     makeService()->dispatchStressBatch(stressSampleRows(), 'sess-1');
     Queue::assertPushed(MassOperationJob::class, function (MassOperationJob $job): bool {
         return $job->operationType === OperationType::Stress
-            && $job->sessionId === 'sess-1'
+            && $job->batchId === 'sess-1'
             && $job->totalRows === 1;
     });
 });

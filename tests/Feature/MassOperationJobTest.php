@@ -72,7 +72,7 @@ it('writes corrected text to the per-row cache key', function (): void {
 
     (new MassOperationJob(
         operationType: OperationType::Stress,
-        sessionId: massOpSessionId(),
+        batchId: massOpSessionId(),
         rowIndex: 3,
         totalRows: 1,
         sourceText: 'Je travaille depuis chez moi.',
@@ -133,16 +133,18 @@ it('broadcasts a MassOperationProgressEvent after a successful stress job', func
     $this->mock(OpenAiTranslationService::class)
         ->shouldReceive('correctRussianStressMarksWithUsage')
         ->andReturn(['text' => 'result', 'promptTokens' => 100, 'completionTokens' => 30]);
+    $user = User::factory()->create(['openai_api_key' => 'sk-personal-key-1234567890', 'credits' => 0]);
 
-    (new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 1, 'source', 'russian'))->handle(
+    (new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 1, 'source', 'russian', $user->id))->handle(
         app(RussianAccentService::class),
         app(OpenAiTranslationService::class),
         app(RussianTextToSpeechService::class),
     );
 
-    Event::assertDispatched(MassOperationProgressEvent::class, function ($event): bool {
+    Event::assertDispatched(MassOperationProgressEvent::class, function ($event) use ($user): bool {
         return $event->operationType === 'stress'
-            && $event->sessionId === massOpSessionId()
+            && $event->batchId === massOpSessionId()
+            && $event->userId === $user->id
             && $event->status === 'done'
             && $event->processedCount === 1
             && $event->totalCount === 1
@@ -246,7 +248,8 @@ it('broadcasts a done event when the last stress row fails externally', function
     Event::fake([MassOperationProgressEvent::class]);
     seedBatchCache('stress', 1);
 
-    $job = new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 1, 'source', 'russian');
+    $user = User::factory()->create();
+    $job = new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 1, 'source', 'russian', $user->id);
     $job->failed(new RuntimeException('boom'));
 
     Event::assertDispatched(MassOperationProgressEvent::class, function ($event): bool {
@@ -507,9 +510,26 @@ it('charges a job paid with credits down to 0 when its cost exceeds the balance'
 // Broadcast contract (the Echo listener references these names verbatim)
 // ---------------------------------------------------------------------------
 
-it('broadcasts progress on the session channel under the operation.progress name', function (): void {
-    $event = new MassOperationProgressEvent('stress', 'abc-123', 'running', 1, 3, 0);
+it('broadcasts progress on the owner private channel under the operation.progress name', function (): void {
+    $event = new MassOperationProgressEvent('stress', 'abc-123', 42, 'running', 1, 3, 0);
 
-    expect($event->broadcastOn()->name)->toBe('mass-op.abc-123')
-        ->and($event->broadcastAs())->toBe('operation.progress');
+    expect($event->broadcastOn()->name)->toBe('private-App.Models.User.42')
+        ->and($event->broadcastAs())->toBe('operation.progress')
+        ->and($event->broadcastWith())->toBe([
+            'operationType' => 'stress',
+            'batchId' => 'abc-123',
+            'status' => 'running',
+            'processedCount' => 1,
+            'totalCount' => 3,
+            'failedCount' => 0,
+        ]);
+});
+
+it('does not broadcast progress for a job without user', function (): void {
+    Event::fake([MassOperationProgressEvent::class]);
+    seedBatchCache('stress', 1);
+
+    (new MassOperationJob(OperationType::Stress, massOpSessionId(), 0, 1, 'source', 'russian'))->failed(new RuntimeException('boom'));
+
+    Event::assertNotDispatched(MassOperationProgressEvent::class);
 });
