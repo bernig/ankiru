@@ -20,7 +20,33 @@ document.addEventListener('alpine:init', () => {
     });
 });
 
+/**
+ * Livewire requests still waiting for their response. Clicking an export link
+ * blurs the cell being edited, which sends its save right before the download
+ * request: the export waits for these first, or it could read the deck
+ * without that last edit.
+ *
+ * @type {Set<Promise<void>>}
+ */
+const pendingCommits = new Set();
+
+/** Longest wait for pending saves before an export goes ahead anyway. */
+const EXPORT_SAVE_WAIT_MS = 5000;
+
 document.addEventListener('livewire:init', () => {
+    Livewire.hook('commit', ({ succeed, fail }) => {
+        let settle;
+        const pending = new Promise(resolve => { settle = resolve; });
+        pendingCommits.add(pending);
+
+        const done = () => {
+            pendingCommits.delete(pending);
+            settle();
+        };
+        succeed(done);
+        fail(done);
+    });
+
     const paginationMethods = ['gotoPage', 'previousPage', 'nextPage', 'setPage'];
 
     Livewire.hook('commit', ({ commit, succeed }) => {
@@ -584,4 +610,35 @@ window.exportUrl = function (url, params = {}) {
     query.set('tz', Intl.DateTimeFormat().resolvedOptions().timeZone);
 
     return `${url}?${query}`;
+};
+
+/**
+ * Click handler of the export links: waits for the pending Livewire saves,
+ * then follows the link with the browser's time zone (see exportUrl). A
+ * modifier click (new tab, new window) is left to the browser, with the time
+ * zone added, since it cannot be delayed.
+ *
+ * @param {MouseEvent|KeyboardEvent} event
+ * @param {string} url
+ * @param {Object<string, string>} [params]
+ */
+window.followExportLink = async function (event, url, params = {}) {
+    const target = window.exportUrl(url, params);
+
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.button === 1) {
+        event.currentTarget.href = target;
+
+        return;
+    }
+
+    event.preventDefault();
+
+    if (pendingCommits.size > 0) {
+        await Promise.race([
+            Promise.all(pendingCommits),
+            new Promise(resolve => setTimeout(resolve, EXPORT_SAVE_WAIT_MS)),
+        ]);
+    }
+
+    window.location.href = target;
 };
