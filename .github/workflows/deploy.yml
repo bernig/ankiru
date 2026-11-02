@@ -1,14 +1,24 @@
 name: deploy
 
+# Deploys only once the tests workflow has passed on master, and deploys the
+# exact commit that was tested (not whatever master points at by then).
 on:
-  push:
+  workflow_run:
+    workflows:
+      - tests
+    types:
+      - completed
     branches:
       - master
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    needs: []
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
 
     steps:
       - name: Deploy to VPS
@@ -21,13 +31,21 @@ jobs:
             set -e
             cd /var/www/ankiru.org
 
+            TESTED_SHA="${{ github.event.workflow_run.head_sha }}"
+            git fetch origin master
+
+            # A slower run of an older push must not roll back a newer deploy.
+            if ! git merge-base --is-ancestor HEAD "$TESTED_SHA"; then
+              echo "Commit $TESTED_SHA is older than the deployed one, skipping."
+              exit 0
+            fi
+
             # Ensure the site is brought back up even if a subsequent step fails
             trap 'php artisan up' EXIT
 
             php artisan down --retry=10
 
-            git fetch origin master
-            git reset --hard FETCH_HEAD
+            git reset --hard "$TESTED_SHA"
 
             composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
             composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
